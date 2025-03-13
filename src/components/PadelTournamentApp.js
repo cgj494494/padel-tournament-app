@@ -784,38 +784,37 @@ const PadelTournamentApp = () => {
   };
 
   // Render number buttons for games
-  const renderGameButtons = (court, team) => {
-    const options = [0, 1, 2, 3, 4, 5, 6];
-    const current = 
-      court === 1 
-        ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
-        : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
-    
-    return (
-      <div className="flex flex-wrap gap-2">
-        {options.map(value => (
-          <button
-            key={value}
-            className={`w-16 h-16 text-3xl font-bold rounded-lg border-2 ${
-              current === value
-                ? 'bg-blue-500 text-white border-blue-700
-                ? 'bg-blue-500 text-white border-blue-700'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-            }`}
-            onClick={() => updateGames(court, team, value)}
-          >
-            {value}
-          </button>
-        ))}
+const renderGameButtons = (court, team) => {
+  const options = [0, 1, 2, 3, 4, 5, 6];
+  const current = 
+    court === 1 
+      ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
+      : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
+  
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map(value => (
         <button
-          className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
-          onClick={() => updateGames(court, team, null)}
+          key={value}
+          className={`w-16 h-16 text-3xl font-bold rounded-lg border-2 ${
+            current === value
+              ? 'bg-blue-500 text-white border-blue-700'
+              : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+          }`}
+          onClick={() => updateGames(court, team, value)}
         >
-          Clear
+          {value}
         </button>
-      </div>
-    );
-  };
+      ))}
+      <button
+        className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
+        onClick={() => updateGames(court, team, null)}
+      >
+        Clear
+      </button>
+    </div>
+  );
+};
 
   // Render tennis score buttons
   const renderScoreButtons = (court, team) => {
