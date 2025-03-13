@@ -215,6 +215,7 @@ const PadelTournamentApp = () => {
   const [headToHeadWinners, setHeadToHeadWinners] = useState([]); // Track players positioned by H2H
   const [exportDate, setExportDate] = useState(new Date().toLocaleDateString()); // Date for export filename
   const [tournamentComplete, setTournamentComplete] = useState(false);
+  const [tieGroups, setTieGroups] = useState([]); // Track groups of tied players
 
   // Tennis scoring options
   const tennisScores = ["0", "15", "30", "40", "AD"];
@@ -228,6 +229,15 @@ const PadelTournamentApp = () => {
     
     setTournamentComplete(hasCompletedMatches);
   }, [matches]);
+
+  // Auto-calculate head-to-head when viewing detailed standings
+  useEffect(() => {
+    if (viewMode === 'detailedStandings') {
+      setTimeout(() => {
+        sortPlayersWithHeadToHead();
+      }, 100);
+    }
+  }, [viewMode]);
 
   // Find player name by id
   const getPlayerName = (id) => {
@@ -460,7 +470,7 @@ const PadelTournamentApp = () => {
       });
 
     // Find groups of players with identical scores, differentials, and games won
-    const tieGroups = [];
+    const newTieGroups = [];
     let currentGroup = [sortedPlayers[0]];
 
     for (let i = 1; i < sortedPlayers.length; i++) {
@@ -475,7 +485,7 @@ const PadelTournamentApp = () => {
       } else {
         // If we had a tie group with more than one player, save it
         if (currentGroup.length > 1) {
-          tieGroups.push([...currentGroup]);
+          newTieGroups.push([...currentGroup]);
         }
         // Start a new group
         currentGroup = [current];
@@ -484,17 +494,19 @@ const PadelTournamentApp = () => {
     
     // Check the last group
     if (currentGroup.length > 1) {
-      tieGroups.push(currentGroup);
+      newTieGroups.push(currentGroup);
     }
+
+    setTieGroups(newTieGroups);
 
     // If we have tie groups, resolve with head-to-head
     const h2hWinners = [];
     
-    if (tieGroups.length > 0) {
+    if (newTieGroups.length > 0) {
       const h2hRecords = buildHeadToHeadRecords();
       
       // For each tie group
-      tieGroups.forEach(group => {
+      newTieGroups.forEach(group => {
         // Create mini-league of just these players
         const miniLeague = {};
         group.forEach(player => {
@@ -782,39 +794,38 @@ const PadelTournamentApp = () => {
     // Export the file
     XLSX.writeFile(workbook, fileName);
   };
-
   // Render number buttons for games
-const renderGameButtons = (court, team) => {
-  const options = [0, 1, 2, 3, 4, 5, 6];
-  const current = 
-    court === 1 
-      ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
-      : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
-  
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map(value => (
+  const renderGameButtons = (court, team) => {
+    const options = [0, 1, 2, 3, 4, 5, 6];
+    const current = 
+      court === 1 
+        ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
+        : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
+    
+    return (
+      <div className="flex flex-wrap gap-4 justify-center">
+        {options.map(value => (
+          <button
+            key={value}
+            className={`w-20 h-20 text-4xl font-bold rounded-xl border-4 shadow-lg transform transition-all duration-150 ${
+              current === value
+                ? 'bg-gradient-to-b from-blue-500 to-blue-600 text-white border-blue-700 scale-110'
+                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 hover:scale-105 active:scale-95'
+            }`}
+            onClick={() => updateGames(court, team, value)}
+          >
+            {value}
+          </button>
+        ))}
         <button
-          key={value}
-          className={`w-16 h-16 text-3xl font-bold rounded-lg border-2 ${
-            current === value
-              ? 'bg-blue-500 text-white border-blue-700'
-              : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-          }`}
-          onClick={() => updateGames(court, team, value)}
+          className="w-20 h-20 text-2xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg transform transition-all hover:scale-105 active:scale-95"
+          onClick={() => updateGames(court, team, null)}
         >
-          {value}
+          Clear
         </button>
-      ))}
-      <button
-        className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
-        onClick={() => updateGames(court, team, null)}
-      >
-        Clear
-      </button>
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
   // Render tennis score buttons
   const renderScoreButtons = (court, team) => {
@@ -824,14 +835,14 @@ const renderGameButtons = (court, team) => {
         : (team === 'A' ? currentMatch.court2.scoreA : currentMatch.court2.scoreB);
     
     return (
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-4 justify-center">
         {tennisScores.map(value => (
           <button
             key={value}
-            className={`w-16 h-16 text-2xl font-bold rounded-lg border-2 ${
+            className={`w-20 h-20 text-3xl font-bold rounded-xl border-4 shadow-lg transform transition-all duration-150 ${
               current === value
-                ? 'bg-green-500 text-white border-green-700'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                ? 'bg-gradient-to-b from-green-500 to-green-600 text-white border-green-700 scale-110'
+                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 hover:scale-105 active:scale-95'
             }`}
             onClick={() => updateScore(court, team, value)}
           >
@@ -839,7 +850,7 @@ const renderGameButtons = (court, team) => {
           </button>
         ))}
         <button
-          className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
+          className="w-20 h-20 text-2xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg transform transition-all hover:scale-105 active:scale-95"
           onClick={() => updateScore(court, team, null)}
         >
           Clear
@@ -851,18 +862,22 @@ const renderGameButtons = (court, team) => {
   // Render team
   const renderTeam = (court, team) => {
     return (
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-2">
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-md">
           <div>
-            <div className="text-3xl font-bold">
+            <div className="text-4xl font-bold">
               {getTeamName(court, team)}
             </div>
-            <div className="text-xl">
-              Games: {getGames(court, team)}
-              {getScore(court, team) !== '-' && `, Current: ${getScore(court, team)}`}
+            <div className="text-2xl mt-2">
+              Games: <span className="font-bold">{getGames(court, team)}</span>
+              {getScore(court, team) !== '-' && 
+                <span className="ml-3">
+                  Current: <span className="font-bold">{getScore(court, team)}</span>
+                </span>
+              }
             </div>
           </div>
-          <div className="text-2xl font-bold bg-blue-100 px-3 py-1 rounded-lg">
+          <div className="text-3xl font-bold bg-blue-100 px-5 py-2 rounded-xl shadow-inner border border-blue-200">
             Points: {getTournamentPoints(court, team)}
           </div>
         </div>
@@ -874,249 +889,275 @@ const renderGameButtons = (court, team) => {
     );
   };
 
+  // App style constants for consistent professional look
+  const mainBg = "min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8";
+  const cardStyle = "bg-white rounded-2xl shadow-xl border border-gray-200";
+  const headerText = "text-6xl font-bold text-center text-blue-800 mb-8 tracking-tight";
+  const buttonPrimary = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300";
+  const buttonSecondary = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl shadow-lg hover:from-gray-300 hover:to-gray-400 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-gray-200";
+  const buttonSuccess = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-300";
+  const navButtonActive = "px-8 py-5 text-3xl font-bold rounded-xl shadow-lg transition-all transform focus:outline-none focus:ring-4 focus:ring-blue-300 bg-gradient-to-r from-blue-600 to-blue-700 text-white";
+  const navButtonInactive = "px-8 py-5 text-3xl font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-200 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 hover:bg-gray-300";
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6" style={{ fontSize: '16px' }}>
+    <div className={mainBg} style={{ fontSize: '18px' }}>
       {/* Header */}
-      <header className="mb-8">
-        <h1 className="text-5xl font-bold text-center text-blue-800 mb-6">Padel Tournament</h1>
-        <div className="flex justify-center mt-4 flex-wrap">
-          <button
-            className={`px-6 py-4 text-3xl font-bold ${
-              viewMode === 'input' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            } ${viewMode === 'input' ? 'rounded-l-lg' : 'rounded-tl-lg rounded-bl-lg'}`}
-            onClick={() => setViewMode('input')}
-          >
-            Input Scores
-          </button>
-          <button
-            className={`px-6 py-4 text-3xl font-bold ${
-              viewMode === 'standings' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-            onClick={() => setViewMode('standings')}
-          >
-            Standings
-          </button>
-          <button
-            className={`px-6 py-4 text-3xl font-bold ${
-              viewMode === 'detailedStandings' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            } ${viewMode === 'detailedStandings' ? 'rounded-r-lg' : 'rounded-tr-lg rounded-br-lg'}`}
-            onClick={() => {
-              setViewMode('detailedStandings');
-              // When switching to detailed view, recalculate head-to-head
-              sortPlayersWithHeadToHead();
-            }}
-          >
-            Detailed
-          </button>
-        </div>
-        
-        {/* Export Button - Only Show After Tournament Completion */}
-        {tournamentComplete && (
-          <div className="mt-6 flex justify-center">
+      <header className="max-w-5xl mx-auto mb-10">
+        <div className={`${cardStyle} p-8 mb-8`}>
+          <h1 className={headerText}>
+            Padel Tournament
+          </h1>
+          <div className="flex justify-center mt-6 flex-wrap gap-2">
             <button
-              className="px-6 py-4 text-2xl font-bold bg-green-600 text-white rounded-lg flex items-center shadow-lg hover:bg-green-700 transition-colors"
-              onClick={exportToExcel}
+              className={viewMode === 'input' ? navButtonActive : navButtonInactive}
+              onClick={() => setViewMode('input')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Export Final Results
+              Input Scores
+            </button>
+            <button
+              className={viewMode === 'standings' ? navButtonActive : navButtonInactive}
+              onClick={() => setViewMode('standings')}
+            >
+              Standings
+            </button>
+            <button
+              className={viewMode === 'detailedStandings' ? navButtonActive : navButtonInactive}
+              onClick={() => {
+                setViewMode('detailedStandings');
+                sortPlayersWithHeadToHead();
+              }}
+            >
+              Detailed
             </button>
           </div>
-        )}
+          
+          {/* Export Button - Only Show After Tournament Completion */}
+          {tournamentComplete && (
+            <div className="mt-8 flex justify-center">
+              <button
+                className={`${buttonSuccess} flex items-center`}
+                onClick={exportToExcel}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export Final Results
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
-      {/* Score Input View */}
-      {viewMode === 'input' && (
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <button
-              className="px-5 py-3 text-3xl font-bold bg-blue-100 text-blue-800 rounded-lg shadow-md hover:bg-blue-200 active:bg-blue-300 transition-colors"
-              onClick={prevRound}
-              disabled={currentRound === 1}
-              style={{opacity: currentRound === 1 ? 0.5 : 1}}
-            >
-              &lt; Prev
-            </button>
-            <h2 className="text-4xl font-bold">
-              Round {currentRound} - {currentMatch.time}
-            </h2>
-            <button
-              className="px-5 py-3 text-3xl font-bold bg-blue-100 text-blue-800 rounded-lg shadow-md hover:bg-blue-200 active:bg-blue-300 transition-colors"
-              onClick={nextRound}
-              disabled={currentRound === matches.length}
-              style={{opacity: currentRound === matches.length ? 0.5 : 1}}
-            >
-              Next &gt;
-            </button>
-          </div>
-
-          {/* Input Mode Toggle */}
-          <div className="flex justify-center mb-6">
-            <button
-              className={`px-6 py-3 text-2xl font-bold rounded-lg ${
-                inputMode === 'games' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              } mr-4 shadow`}
-              onClick={() => setInputMode('games')}
-            >
-              Games Won
-            </button>
-            <button
-              className={`px-6 py-3 text-2xl font-bold rounded-lg ${
-                inputMode === 'points' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              } shadow`}
-              onClick={() => setInputMode('points')}
-            >
-              Current Point
-            </button>
-          </div>
-
-          {/* Not Playing */}
-          <div className="text-center mb-8 p-4 bg-gray-100 rounded-lg shadow-inner">
-            <p className="text-3xl">
-              <span className="font-bold">Not Playing:</span>{' '}
-              {getPlayerName(currentMatch.notPlaying)}
-            </p>
-          </div>
-
-          {/* Court 1 */}
-          <div className="mb-10 p-6 bg-blue-50 rounded-xl shadow-lg">
-            <h3 className="text-3xl font-bold text-center mb-6">Court 5</h3>
-            
-            {/* Team A */}
-            {renderTeam(1, 'A')}
-            
-            <div className="flex justify-center my-5">
-              <div className="w-full border-t-4 border-blue-300"></div>
-            </div>
-            
-            {/* Team B */}
-            {renderTeam(1, 'B')}
-          </div>
-
-          {/* Court 2 */}
-          <div className="p-6 bg-green-50 rounded-xl shadow-lg">
-            <h3 className="text-3xl font-bold text-center mb-6">Court 6</h3>
-            
-            {/* Team A */}
-            {renderTeam(2, 'A')}
-            
-            <div className="flex justify-center my-5">
-              <div className="w-full border-t-4 border-green-300"></div>
-            </div>
-            
-            {/* Team B */}
-            {renderTeam(2, 'B')}
-          </div>
-        </div>
-      )}
-
-      {/* Standings View */}
-      {viewMode === 'standings' && (
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-4xl font-bold text-center mb-8">Tournament Standings</h2>
-          
-          <div className="overflow-hidden rounded-xl border border-gray-200">
-            {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
-              <div 
-                key={player.id} 
-                className={`flex justify-between items-center p-5 ${
-                  index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
-                } ${index === 0 ? 'bg-yellow-100' : ''}`}
+      {/* Main Content Area */}
+      <div className="max-w-5xl mx-auto">
+        {/* Score Input View */}
+        {viewMode === 'input' && (
+          <div className={`${cardStyle} p-8 mb-8`}>
+            <div className="flex justify-between items-center mb-8">
+              <button
+                className="px-6 py-4 text-4xl font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-xl shadow-lg hover:from-blue-200 hover:to-blue-300 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                onClick={prevRound}
+                disabled={currentRound === 1}
               >
-                <div className="flex items-center">
-                  <span className="text-4xl font-bold w-14">{index + 1}.</span>
-                  <span className="text-4xl">{player.name}</span>
-                </div>
-                <span className="text-5xl font-bold">{player.score}</span>
+                ← Prev
+              </button>
+              <h2 className="text-5xl font-bold text-center text-blue-800">
+                Round {currentRound}
+                <div className="text-3xl font-medium mt-2 text-blue-600">{currentMatch.time}</div>
+              </h2>
+              <button
+                className="px-6 py-4 text-4xl font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-xl shadow-lg hover:from-blue-200 hover:to-blue-300 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                onClick={nextRound}
+                disabled={currentRound === matches.length}
+              >
+                Next →
+              </button>
+            </div>
+
+            {/* Input Mode Toggle */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-gray-200 p-2 rounded-xl shadow-inner flex">
+                <button
+                  className={`px-6 py-4 text-3xl font-bold rounded-lg transition-all ${
+                    inputMode === 'games' 
+                      ? 'bg-white text-blue-800 shadow-md' 
+                      : 'text-gray-600 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setInputMode('games')}
+                >
+                  Games Won
+                </button>
+                <button
+                  className={`px-6 py-4 text-3xl font-bold rounded-lg ml-4 transition-all ${
+                    inputMode === 'points' 
+                      ? 'bg-white text-blue-800 shadow-md' 
+                      : 'text-gray-600 hover:bg-gray-300'
+                  }`}
+                  onClick={() => setInputMode('points')}
+                >
+                  Current Point
+                </button>
               </div>
-            ))}
+            </div>
+
+            {/* Not Playing */}
+            <div className="text-center mb-10 p-6 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl shadow-md border border-amber-200">
+              <p className="text-4xl">
+                <span className="font-bold">Not Playing:</span>{' '}
+                <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
+              </p>
+            </div>
+
+            {/* Court 1 */}
+            <div className="mb-10 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-100">
+              <h3 className="text-4xl font-bold text-center mb-8 text-blue-800">Court 5</h3>
+              
+              {/* Team A */}
+              {renderTeam(1, 'A')}
+              
+              <div className="flex justify-center my-6">
+                <div className="w-full border-t-4 border-blue-300 rounded-full"></div>
+              </div>
+              
+              {/* Team B */}
+              {renderTeam(1, 'B')}
+            </div>
+
+            {/* Court 2 */}
+            <div className="p-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-lg border border-green-100">
+              <h3 className="text-4xl font-bold text-center mb-8 text-green-800">Court 6</h3>
+              
+              {/* Team A */}
+              {renderTeam(2, 'A')}
+              
+              <div className="flex justify-center my-6">
+                <div className="w-full border-t-4 border-green-300 rounded-full"></div>
+              </div>
+              
+              {/* Team B */}
+              {renderTeam(2, 'B')}
+            </div>
           </div>
-          
-          {/* Return button */}
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => setViewMode('input')}
-              className="px-6 py-3 text-2xl font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700"
-            >
-              Return to Input
-            </button>
+        )}
+
+        {/* Standings View */}
+        {viewMode === 'standings' && (
+          <div className={`${cardStyle} p-8`}>
+            <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Tournament Standings</h2>
+            
+            <div className="overflow-hidden rounded-xl border-4 border-blue-100 shadow-lg">
+              {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
+                <div 
+                  key={player.id} 
+                  className={`flex justify-between items-center p-6 ${
+                    index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
+                  } ${index === 0 ? 'bg-gradient-to-r from-yellow-100 to-amber-100' : ''}`}
+                >
+                  <div className="flex items-center">
+                    <span className="text-5xl font-bold w-16 text-blue-800">{index + 1}.</span>
+                    <span className="text-5xl">{player.name}</span>
+                  </div>
+                  <span className="text-6xl font-bold text-blue-800">{player.score}</span>
+                </div>
+              ))}
+            </div>
+            
+            {/* Return button */}
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={() => setViewMode('input')}
+                className={buttonPrimary}
+              >
+                Return to Input
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-      
-      {/* Detailed Standings View */}
-      {viewMode === 'detailedStandings' && (
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-4xl font-bold text-center mb-8">Detailed Standings</h2>
-          
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
-            <table className="w-full text-2xl">
-              <thead className="bg-blue-100">
-                <tr>
-                  <th className="p-4 text-left">Pos</th>
-                  <th className="p-4 text-left">Player</th>
-                  <th className="p-4 text-center">Points</th>
-                  <th className="p-4 text-center">Games Won</th>
-                  <th className="p-4 text-center">Games Lost</th>
-                  <th className="p-4 text-center">Diff</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortPlayersWithHeadToHead().map((player, index, array) => {
-                  // Determine if this player won by head-to-head
-                  const wonByH2H = headToHeadWinners.includes(player.id);
-                  
-                  // Determine row class based on position and head-to-head result
-                  let rowClass = `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`;
-                  if (index === 0) rowClass = 'bg-yellow-100';
-                  if (wonByH2H) rowClass = 'bg-green-100'; // Highlight head-to-head winners
-                  
-                  return (
-                    <tr 
-                      key={player.id} 
-                      className={rowClass}
-                    >
-                      <td className="p-4 text-center font-bold">{index + 1}</td>
-                      <td className="p-4 font-bold">
-                        {player.name}
-                        {wonByH2H && (
-                          <span className="ml-2 text-lg bg-green-600 text-white px-3 py-1 rounded-full">
-                            H2H
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-center font-bold">{player.score}</td>
-                      <td className="p-4 text-center">{player.gamesWon}</td>
-                      <td className="p-4 text-center">{player.gamesLost}</td>
-                      <td className="p-4 text-center font-bold">{player.gameDifferential}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        )}
+        
+        {/* Detailed Standings View */}
+        {viewMode === 'detailedStandings' && (
+          <div className={`${cardStyle} p-8`}>
+            <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Detailed Standings</h2>
+            
+            <div className="overflow-x-auto rounded-xl border-4 border-blue-100 shadow-lg mb-6">
+              <table className="w-full text-2xl">
+                <thead>
+                  <tr className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                    <th className="p-5 text-left rounded-tl-lg">Pos</th>
+                    <th className="p-5 text-left">Player</th>
+                    <th className="p-5 text-center">Points</th>
+                    <th className="p-5 text-center">Games Won</th>
+                    <th className="p-5 text-center">Games Lost</th>
+                    <th className="p-5 text-center rounded-tr-lg">Diff</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortPlayersWithHeadToHead().map((player, index, array) => {
+                    // Determine if this player won by head-to-head
+                    const wonByH2H = headToHeadWinners.includes(player.id);
+                    
+                    // Find if player is in a tie group
+                    const inTieGroup = tieGroups.some(group => 
+                      group.some(p => p.id === player.id)
+                    );
+                    
+                    // Determine row class based on position and head-to-head result
+                    let rowClass = `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`;
+                    if (index === 0) rowClass = 'bg-gradient-to-r from-yellow-100 to-amber-100';
+                    if (wonByH2H) rowClass = 'bg-gradient-to-r from-green-100 to-green-200';
+                    if (inTieGroup && !wonByH2H) rowClass = 'bg-gradient-to-r from-blue-50 to-blue-100';
+                    
+                    return (
+                      <tr 
+                        key={player.id} 
+                        className={rowClass}
+                      >
+                        <td className="p-5 text-center font-bold text-3xl">{index + 1}</td>
+                        <td className="p-5 font-bold text-3xl">
+                          {player.name}
+                          {wonByH2H && (
+                            <span className="ml-3 text-xl bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1 rounded-full shadow">
+                              H2H
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-5 text-center font-bold text-3xl">{player.score}</td>
+                        <td className="p-5 text-center text-3xl">{player.gamesWon}</td>
+                        <td className="p-5 text-center text-3xl">{player.gamesLost}</td>
+                        <td className="p-5 text-center font-bold text-3xl">{player.gameDifferential}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Explanation for H2H badge */}
+            <div className="mt-8 bg-gradient-to-r from-green-100 to-green-200 p-6 rounded-xl border border-green-300 shadow-md">
+              <p className="text-2xl">
+                <span className="font-bold mr-2">Note:</span>
+                Players marked with <span className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1 rounded-full mx-1 text-xl">H2H</span> are positioned based on 
+                their head-to-head record against players with equal points, game differential, and games won.
+              </p>
+            </div>
+            
+            {/* Return button */}
+            <div className="mt-10 flex justify-center">
+              <button
+                onClick={() => setViewMode('input')}
+                className={buttonPrimary}
+              >
+                Return to Input
+              </button>
+            </div>
           </div>
-          
-          {/* Explanation for H2H badge */}
-          <div className="mt-6 bg-green-100 p-4 rounded-lg border border-green-300 shadow-sm">
-            <p className="text-xl">
-              <span className="font-bold mr-2">Note:</span>
-              Players marked with <span className="bg-green-600 text-white px-3 py-1 rounded-full mx-1 text-lg">H2H</span> are positioned based on 
-              their head-to-head record against players with equal points, game differential, and games won.
-            </p>
-          </div>
-          
-          {/* Return button */}
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => setViewMode('input')}
-              className="px-6 py-3 text-2xl font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700"
-            >
-              Return to Input
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Footer with credits */}
+      <footer className="max-w-5xl mx-auto mt-10 mb-4 text-center text-gray-500 text-xl">
+        <p>"Born in 67" Padel Tournament Scoring App</p>
+      </footer>
     </div>
   );
 };
