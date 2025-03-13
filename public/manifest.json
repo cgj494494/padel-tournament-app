@@ -1,6 +1,3 @@
-`public/manifest.json`
-
-```json
 {
   "short_name": "Padel Tournament",
   "name": "Padel Tournament Scoring App",
@@ -16,4 +13,3 @@
   "theme_color": "#000000",
   "background_color": "#ffffff"
 }
-```

@@ -1,6 +1,3 @@
-`src/App.js`
-
-```javascript
 import React from 'react';
 import PadelTournamentApp from './components/PadelTournamentApp';
 
@@ -13,4 +10,3 @@ function App() {
 }
 
 export default App;
-```
