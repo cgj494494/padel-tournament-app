@@ -215,7 +215,8 @@ const PadelTournamentApp = () => {
   const [headToHeadWinners, setHeadToHeadWinners] = useState([]); // Track players positioned by H2H
   const [exportDate, setExportDate] = useState(new Date().toLocaleDateString()); // Date for export filename
   const [tournamentComplete, setTournamentComplete] = useState(false);
-  const [tieGroups, setTieGroups] = useState([]); // Track groups of tied players
+  const [detailedStandingsData, setDetailedStandingsData] = useState([]); // Store pre-calculated detailed standings
+  const [detailedCalculated, setDetailedCalculated] = useState(false); // Track if detailed standings have been calculated
 
   // Tennis scoring options
   const tennisScores = ["0", "15", "30", "40", "AD"];
@@ -230,12 +231,15 @@ const PadelTournamentApp = () => {
     setTournamentComplete(hasCompletedMatches);
   }, [matches]);
 
-  // Auto-calculate head-to-head when viewing detailed standings
+  // Auto-calculate on load to ensure data is ready
+  useEffect(() => {
+    updatePlayerScores();
+  }, []);
+
+  // Auto-calculate when viewing detailed standings
   useEffect(() => {
     if (viewMode === 'detailedStandings') {
-      setTimeout(() => {
-        sortPlayersWithHeadToHead();
-      }, 100);
+      prepareDetailedStandings();
     }
   }, [viewMode]);
 
@@ -363,6 +367,97 @@ const PadelTournamentApp = () => {
     return h2hRecords;
   };
 
+  // Pre-calculate detailed standings data
+  const prepareDetailedStandings = () => {
+    // First update player scores
+    updatePlayerScores();
+    
+    // Sort players by standard criteria
+    const sortedPlayers = [...players]
+      .sort((a, b) => b.gameDifferential - a.gameDifferential)
+      .sort((a, b) => {
+        if (b.score === a.score && b.gameDifferential === a.gameDifferential) {
+          return b.gamesWon - a.gamesWon;
+        }
+        return 0;
+      })
+      .sort((a, b) => b.score - a.score);
+    
+    // Find tie groups
+    const tieGroups = [];
+    let currentGroup = [sortedPlayers[0]];
+
+    for (let i = 1; i < sortedPlayers.length; i++) {
+      const current = sortedPlayers[i];
+      const previous = sortedPlayers[i-1];
+      
+      if (current.score === previous.score && 
+          current.gameDifferential === previous.gameDifferential &&
+          current.gamesWon === previous.gamesWon) {
+        // Add to current tie group
+        currentGroup.push(current);
+      } else {
+        // If we had a tie group with more than one player, save it
+        if (currentGroup.length > 1) {
+          tieGroups.push([...currentGroup]);
+        }
+        // Start a new group
+        currentGroup = [current];
+      }
+    }
+    
+    // Check the last group
+    if (currentGroup.length > 1) {
+      tieGroups.push(currentGroup);
+    }
+
+    // If we have tie groups, resolve with head-to-head
+    const h2hWinners = [];
+    const h2hRecords = buildHeadToHeadRecords();
+    
+    // Process each tie group
+    if (tieGroups.length > 0) {
+      tieGroups.forEach(group => {
+        // Create mini-league of just these players
+        const miniLeague = {};
+        group.forEach(player => {
+          miniLeague[player.id] = 0;
+        });
+        
+        // Calculate head-to-head points
+        group.forEach(player => {
+          group.forEach(opponent => {
+            if (player.id !== opponent.id) {
+              miniLeague[player.id] += h2hRecords[player.id][opponent.id];
+            }
+          });
+        });
+        
+        // Mark players who won head-to-head tiebreakers
+        for (let i = 0; i < group.length; i++) {
+          for (let j = 0; j < group.length; j++) {
+            if (i !== j && miniLeague[group[i].id] > miniLeague[group[j].id]) {
+              if (!h2hWinners.includes(group[i].id)) {
+                h2hWinners.push(group[i].id);
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Create standings data array with H2H info
+    const standingsData = sortedPlayers.map(player => ({
+      ...player,
+      isInTieGroup: tieGroups.some(group => group.some(p => p.id === player.id)),
+      isH2HWinner: h2hWinners.includes(player.id)
+    }));
+    
+    setHeadToHeadWinners(h2hWinners);
+    setDetailedStandingsData(standingsData);
+    setDetailedCalculated(true);
+  };
+
   // Update player scores and calculate game differentials
   const updatePlayerScores = () => {
     const newPlayers = [...players].map(p => ({ 
@@ -445,97 +540,9 @@ const PadelTournamentApp = () => {
     });
     
     setPlayers(newPlayers);
-  };
-
-  // Sort players with head-to-head tiebreaker
-  const sortPlayersWithHeadToHead = () => {
-    // First sort by basic criteria
-    const sortedPlayers = [...players]
-      // First sort by game differential in case of tie
-      .sort((a, b) => b.gameDifferential - a.gameDifferential)
-      // Then sort by games won in case of tie on points and differential
-      .sort((a, b) => {
-        if (b.score === a.score && b.gameDifferential === a.gameDifferential) {
-          return b.gamesWon - a.gamesWon;
-        }
-        return 0;
-      })
-      // Then sort by score (tournament points)
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
-        // If scores are tied, use the game differential (already sorted)
-        return 0;
-      });
-
-    // Find groups of players with identical scores, differentials, and games won
-    const newTieGroups = [];
-    let currentGroup = [sortedPlayers[0]];
-
-    for (let i = 1; i < sortedPlayers.length; i++) {
-      const current = sortedPlayers[i];
-      const previous = sortedPlayers[i-1];
-      
-      if (current.score === previous.score && 
-          current.gameDifferential === previous.gameDifferential &&
-          current.gamesWon === previous.gamesWon) {
-        // Add to current tie group
-        currentGroup.push(current);
-      } else {
-        // If we had a tie group with more than one player, save it
-        if (currentGroup.length > 1) {
-          newTieGroups.push([...currentGroup]);
-        }
-        // Start a new group
-        currentGroup = [current];
-      }
-    }
     
-    // Check the last group
-    if (currentGroup.length > 1) {
-      newTieGroups.push(currentGroup);
-    }
-
-    setTieGroups(newTieGroups);
-
-    // If we have tie groups, resolve with head-to-head
-    const h2hWinners = [];
-    
-    if (newTieGroups.length > 0) {
-      const h2hRecords = buildHeadToHeadRecords();
-      
-      // For each tie group
-      newTieGroups.forEach(group => {
-        // Create mini-league of just these players
-        const miniLeague = {};
-        group.forEach(player => {
-          miniLeague[player.id] = 0;
-        });
-        
-        // Calculate head-to-head points
-        group.forEach(player => {
-          group.forEach(opponent => {
-            if (player.id !== opponent.id) {
-              miniLeague[player.id] += h2hRecords[player.id][opponent.id];
-            }
-          });
-        });
-        
-        // Sort the group by head-to-head results
-        group.sort((a, b) => miniLeague[b.id] - miniLeague[a.id]);
-        
-        // Mark players who won head-to-head tiebreakers
-        for (let i = 0; i < group.length - 1; i++) {
-          if (miniLeague[group[i].id] > miniLeague[group[i+1].id]) {
-            h2hWinners.push(group[i].id);
-          }
-        }
-      });
-    }
-    
-    setHeadToHeadWinners(h2hWinners);
-    return sortedPlayers;
+    // Reset detailed standings flag when scores change
+    setDetailedCalculated(false);
   };
 
   // Update whenever matches change
@@ -674,9 +681,11 @@ const PadelTournamentApp = () => {
     XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
     
     // Sheet 2: Detailed Standings
-    const sortedPlayers = sortPlayersWithHeadToHead();
-    const detailedData = sortedPlayers.map((player, index) => {
-      const wonByH2H = headToHeadWinners.includes(player.id);
+    if (!detailedCalculated) {
+      prepareDetailedStandings();
+    }
+    
+    const detailedData = detailedStandingsData.map((player, index) => {
       return {
         Position: index + 1,
         Player: player.name,
@@ -684,7 +693,7 @@ const PadelTournamentApp = () => {
         "Games Won": player.gamesWon,
         "Games Lost": player.gamesLost,
         Differential: player.gameDifferential,
-        "H2H Win": wonByH2H ? "Yes" : ""
+        "H2H Win": player.isH2HWinner ? "Yes" : ""
       };
     });
     
@@ -794,6 +803,7 @@ const PadelTournamentApp = () => {
     // Export the file
     XLSX.writeFile(workbook, fileName);
   };
+
   // Render number buttons for games
   const renderGameButtons = (court, team) => {
     const options = [0, 1, 2, 3, 4, 5, 6];
@@ -803,14 +813,14 @@ const PadelTournamentApp = () => {
         : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
     
     return (
-      <div className="flex flex-wrap gap-4 justify-center">
+      <div className="flex flex-wrap gap-6 justify-center">
         {options.map(value => (
           <button
             key={value}
-            className={`w-20 h-20 text-4xl font-bold rounded-xl border-4 shadow-lg transform transition-all duration-150 ${
+            className={`w-24 h-24 text-5xl font-bold rounded-xl border-4 shadow-lg ${
               current === value
-                ? 'bg-gradient-to-b from-blue-500 to-blue-600 text-white border-blue-700 scale-110'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 hover:scale-105 active:scale-95'
+                ? 'bg-blue-500 text-white border-blue-700'
+                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
             }`}
             onClick={() => updateGames(court, team, value)}
           >
@@ -818,7 +828,7 @@ const PadelTournamentApp = () => {
           </button>
         ))}
         <button
-          className="w-20 h-20 text-2xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg transform transition-all hover:scale-105 active:scale-95"
+          className="w-24 h-24 text-3xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg"
           onClick={() => updateGames(court, team, null)}
         >
           Clear
@@ -835,14 +845,14 @@ const PadelTournamentApp = () => {
         : (team === 'A' ? currentMatch.court2.scoreA : currentMatch.court2.scoreB);
     
     return (
-      <div className="flex flex-wrap gap-4 justify-center">
+      <div className="flex flex-wrap gap-6 justify-center">
         {tennisScores.map(value => (
           <button
             key={value}
-            className={`w-20 h-20 text-3xl font-bold rounded-xl border-4 shadow-lg transform transition-all duration-150 ${
+            className={`w-24 h-24 text-4xl font-bold rounded-xl border-4 shadow-lg ${
               current === value
-                ? 'bg-gradient-to-b from-green-500 to-green-600 text-white border-green-700 scale-110'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200 hover:scale-105 active:scale-95'
+                ? 'bg-green-500 text-white border-green-700'
+                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
             }`}
             onClick={() => updateScore(court, team, value)}
           >
@@ -850,7 +860,7 @@ const PadelTournamentApp = () => {
           </button>
         ))}
         <button
-          className="w-20 h-20 text-2xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg transform transition-all hover:scale-105 active:scale-95"
+          className="w-24 h-24 text-3xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg"
           onClick={() => updateScore(court, team, null)}
         >
           Clear
@@ -862,13 +872,13 @@ const PadelTournamentApp = () => {
   // Render team
   const renderTeam = (court, team) => {
     return (
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-xl shadow-md">
+      <div className="mb-10">
+        <div className="flex justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-md">
           <div>
             <div className="text-4xl font-bold">
               {getTeamName(court, team)}
             </div>
-            <div className="text-2xl mt-2">
+            <div className="text-3xl mt-2">
               Games: <span className="font-bold">{getGames(court, team)}</span>
               {getScore(court, team) !== '-' && 
                 <span className="ml-3">
@@ -877,7 +887,7 @@ const PadelTournamentApp = () => {
               }
             </div>
           </div>
-          <div className="text-3xl font-bold bg-blue-100 px-5 py-2 rounded-xl shadow-inner border border-blue-200">
+          <div className="text-4xl font-bold bg-blue-100 px-5 py-3 rounded-xl shadow border-2 border-blue-200">
             Points: {getTournamentPoints(court, team)}
           </div>
         </div>
@@ -889,42 +899,46 @@ const PadelTournamentApp = () => {
     );
   };
 
-  // App style constants for consistent professional look
-  const mainBg = "min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8";
-  const cardStyle = "bg-white rounded-2xl shadow-xl border border-gray-200";
-  const headerText = "text-6xl font-bold text-center text-blue-800 mb-8 tracking-tight";
-  const buttonPrimary = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-300";
-  const buttonSecondary = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl shadow-lg hover:from-gray-300 hover:to-gray-400 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-gray-200";
-  const buttonSuccess = "px-8 py-4 text-3xl font-bold bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-300";
-  const navButtonActive = "px-8 py-5 text-3xl font-bold rounded-xl shadow-lg transition-all transform focus:outline-none focus:ring-4 focus:ring-blue-300 bg-gradient-to-r from-blue-600 to-blue-700 text-white";
-  const navButtonInactive = "px-8 py-5 text-3xl font-bold rounded-xl shadow-lg transition-all transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-200 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 hover:bg-gray-300";
-
   return (
-    <div className={mainBg} style={{ fontSize: '18px' }}>
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8" style={{ fontSize: '18px' }}>
       {/* Header */}
       <header className="max-w-5xl mx-auto mb-10">
-        <div className={`${cardStyle} p-8 mb-8`}>
-          <h1 className={headerText}>
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <h1 className="text-6xl font-bold text-center text-blue-800 mb-8">
             Padel Tournament
           </h1>
-          <div className="flex justify-center mt-6 flex-wrap gap-2">
+          <div className="flex justify-center mt-6 flex-wrap gap-3">
             <button
-              className={viewMode === 'input' ? navButtonActive : navButtonInactive}
+              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
+                viewMode === 'input' 
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
               onClick={() => setViewMode('input')}
             >
               Input Scores
             </button>
             <button
-              className={viewMode === 'standings' ? navButtonActive : navButtonInactive}
+              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
+                viewMode === 'standings'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
               onClick={() => setViewMode('standings')}
             >
               Standings
             </button>
             <button
-              className={viewMode === 'detailedStandings' ? navButtonActive : navButtonInactive}
+              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
+                viewMode === 'detailedStandings'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
               onClick={() => {
                 setViewMode('detailedStandings');
-                sortPlayersWithHeadToHead();
+                if (!detailedCalculated) {
+                  prepareDetailedStandings();
+                }
               }}
             >
               Detailed
@@ -935,7 +949,7 @@ const PadelTournamentApp = () => {
           {tournamentComplete && (
             <div className="mt-8 flex justify-center">
               <button
-                className={`${buttonSuccess} flex items-center`}
+                className="px-8 py-5 text-3xl font-bold bg-green-600 text-white rounded-xl shadow-lg hover:bg-green-700 flex items-center"
                 onClick={exportToExcel}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -952,10 +966,10 @@ const PadelTournamentApp = () => {
       <div className="max-w-5xl mx-auto">
         {/* Score Input View */}
         {viewMode === 'input' && (
-          <div className={`${cardStyle} p-8 mb-8`}>
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
             <div className="flex justify-between items-center mb-8">
               <button
-                className="px-6 py-4 text-4xl font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-xl shadow-lg hover:from-blue-200 hover:to-blue-300 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="px-8 py-5 text-4xl font-bold bg-blue-100 text-blue-800 rounded-xl shadow-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={prevRound}
                 disabled={currentRound === 1}
               >
@@ -966,7 +980,7 @@ const PadelTournamentApp = () => {
                 <div className="text-3xl font-medium mt-2 text-blue-600">{currentMatch.time}</div>
               </h2>
               <button
-                className="px-6 py-4 text-4xl font-bold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-xl shadow-lg hover:from-blue-200 hover:to-blue-300 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="px-8 py-5 text-4xl font-bold bg-blue-100 text-blue-800 rounded-xl shadow-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={nextRound}
                 disabled={currentRound === matches.length}
               >
@@ -978,7 +992,7 @@ const PadelTournamentApp = () => {
             <div className="flex justify-center mb-8">
               <div className="bg-gray-200 p-2 rounded-xl shadow-inner flex">
                 <button
-                  className={`px-6 py-4 text-3xl font-bold rounded-lg transition-all ${
+                  className={`px-8 py-4 text-3xl font-bold rounded-lg ${
                     inputMode === 'games' 
                       ? 'bg-white text-blue-800 shadow-md' 
                       : 'text-gray-600 hover:bg-gray-300'
@@ -988,7 +1002,7 @@ const PadelTournamentApp = () => {
                   Games Won
                 </button>
                 <button
-                  className={`px-6 py-4 text-3xl font-bold rounded-lg ml-4 transition-all ${
+                  className={`px-8 py-4 text-3xl font-bold rounded-lg ml-4 ${
                     inputMode === 'points' 
                       ? 'bg-white text-blue-800 shadow-md' 
                       : 'text-gray-600 hover:bg-gray-300'
@@ -1001,7 +1015,7 @@ const PadelTournamentApp = () => {
             </div>
 
             {/* Not Playing */}
-            <div className="text-center mb-10 p-6 bg-gradient-to-r from-amber-50 to-amber-100 rounded-xl shadow-md border border-amber-200">
+            <div className="text-center mb-10 p-6 bg-amber-50 rounded-xl shadow-md border-2 border-amber-200">
               <p className="text-4xl">
                 <span className="font-bold">Not Playing:</span>{' '}
                 <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
@@ -1009,14 +1023,14 @@ const PadelTournamentApp = () => {
             </div>
 
             {/* Court 1 */}
-            <div className="mb-10 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-100">
+            <div className="mb-10 p-8 bg-blue-50 rounded-xl shadow-lg border-2 border-blue-100">
               <h3 className="text-4xl font-bold text-center mb-8 text-blue-800">Court 5</h3>
               
               {/* Team A */}
               {renderTeam(1, 'A')}
               
               <div className="flex justify-center my-6">
-                <div className="w-full border-t-4 border-blue-300 rounded-full"></div>
+                <div className="w-full border-t-4 border-blue-300"></div>
               </div>
               
               {/* Team B */}
@@ -1024,14 +1038,14 @@ const PadelTournamentApp = () => {
             </div>
 
             {/* Court 2 */}
-            <div className="p-8 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-lg border border-green-100">
+            <div className="p-8 bg-green-50 rounded-xl shadow-lg border-2 border-green-100">
               <h3 className="text-4xl font-bold text-center mb-8 text-green-800">Court 6</h3>
               
               {/* Team A */}
               {renderTeam(2, 'A')}
               
               <div className="flex justify-center my-6">
-                <div className="w-full border-t-4 border-green-300 rounded-full"></div>
+                <div className="w-full border-t-4 border-green-300"></div>
               </div>
               
               {/* Team B */}
@@ -1042,16 +1056,16 @@ const PadelTournamentApp = () => {
 
         {/* Standings View */}
         {viewMode === 'standings' && (
-          <div className={`${cardStyle} p-8`}>
+          <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Tournament Standings</h2>
             
-            <div className="overflow-hidden rounded-xl border-4 border-blue-100 shadow-lg">
+            <div className="overflow-hidden rounded-xl border-2 border-blue-100 shadow-lg">
               {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
                 <div 
                   key={player.id} 
                   className={`flex justify-between items-center p-6 ${
                     index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
-                  } ${index === 0 ? 'bg-gradient-to-r from-yellow-100 to-amber-100' : ''}`}
+                  } ${index === 0 ? 'bg-yellow-100' : ''}`}
                 >
                   <div className="flex items-center">
                     <span className="text-5xl font-bold w-16 text-blue-800">{index + 1}.</span>
@@ -1066,7 +1080,7 @@ const PadelTournamentApp = () => {
             <div className="mt-10 flex justify-center">
               <button
                 onClick={() => setViewMode('input')}
-                className={buttonPrimary}
+                className="px-8 py-5 text-3xl font-bold bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700"
               >
                 Return to Input
               </button>
@@ -1076,13 +1090,13 @@ const PadelTournamentApp = () => {
         
         {/* Detailed Standings View */}
         {viewMode === 'detailedStandings' && (
-          <div className={`${cardStyle} p-8`}>
+          <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Detailed Standings</h2>
             
-            <div className="overflow-x-auto rounded-xl border-4 border-blue-100 shadow-lg mb-6">
+            <div className="overflow-x-auto rounded-xl border-2 border-blue-100 shadow-lg mb-6">
               <table className="w-full text-2xl">
                 <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                  <tr className="bg-blue-600 text-white">
                     <th className="p-5 text-left rounded-tl-lg">Pos</th>
                     <th className="p-5 text-left">Player</th>
                     <th className="p-5 text-center">Points</th>
@@ -1092,20 +1106,12 @@ const PadelTournamentApp = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortPlayersWithHeadToHead().map((player, index, array) => {
-                    // Determine if this player won by head-to-head
-                    const wonByH2H = headToHeadWinners.includes(player.id);
-                    
-                    // Find if player is in a tie group
-                    const inTieGroup = tieGroups.some(group => 
-                      group.some(p => p.id === player.id)
-                    );
-                    
+                  {detailedStandingsData.map((player, index) => {
                     // Determine row class based on position and head-to-head result
                     let rowClass = `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`;
-                    if (index === 0) rowClass = 'bg-gradient-to-r from-yellow-100 to-amber-100';
-                    if (wonByH2H) rowClass = 'bg-gradient-to-r from-green-100 to-green-200';
-                    if (inTieGroup && !wonByH2H) rowClass = 'bg-gradient-to-r from-blue-50 to-blue-100';
+                    if (index === 0) rowClass = 'bg-yellow-100';
+                    if (player.isH2HWinner) rowClass = 'bg-green-100';
+                    if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
                     
                     return (
                       <tr 
@@ -1115,8 +1121,8 @@ const PadelTournamentApp = () => {
                         <td className="p-5 text-center font-bold text-3xl">{index + 1}</td>
                         <td className="p-5 font-bold text-3xl">
                           {player.name}
-                          {wonByH2H && (
-                            <span className="ml-3 text-xl bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1 rounded-full shadow">
+                          {player.isH2HWinner && (
+                            <span className="ml-3 text-xl bg-green-600 text-white px-4 py-1 rounded-full shadow">
                               H2H
                             </span>
                           )}
@@ -1133,10 +1139,10 @@ const PadelTournamentApp = () => {
             </div>
             
             {/* Explanation for H2H badge */}
-            <div className="mt-8 bg-gradient-to-r from-green-100 to-green-200 p-6 rounded-xl border border-green-300 shadow-md">
+            <div className="mt-8 bg-green-100 p-6 rounded-xl border-2 border-green-300 shadow">
               <p className="text-2xl">
                 <span className="font-bold mr-2">Note:</span>
-                Players marked with <span className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 py-1 rounded-full mx-1 text-xl">H2H</span> are positioned based on 
+                Players marked with <span className="bg-green-600 text-white px-4 py-1 rounded-full mx-1 text-xl">H2H</span> are positioned based on 
                 their head-to-head record against players with equal points, game differential, and games won.
               </p>
             </div>
@@ -1145,7 +1151,7 @@ const PadelTournamentApp = () => {
             <div className="mt-10 flex justify-center">
               <button
                 onClick={() => setViewMode('input')}
-                className={buttonPrimary}
+                className="px-8 py-5 text-3xl font-bold bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700"
               >
                 Return to Input
               </button>
@@ -1153,11 +1159,6 @@ const PadelTournamentApp = () => {
           </div>
         )}
       </div>
-
-      {/* Footer with credits */}
-      <footer className="max-w-5xl mx-auto mt-10 mb-4 text-center text-gray-500 text-xl">
-        <p>"Born in 67" Padel Tournament Scoring App</p>
-      </footer>
     </div>
   );
 };
