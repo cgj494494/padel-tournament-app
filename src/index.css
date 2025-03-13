@@ -1,6 +1,3 @@
-`src/index.css`
-
-```css
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
@@ -24,4 +21,3 @@ code {
 button {
   touch-action: manipulation;
 }
-```
