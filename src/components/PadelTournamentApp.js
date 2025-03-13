@@ -214,9 +214,20 @@ const PadelTournamentApp = () => {
   const [inputMode, setInputMode] = useState('games'); // 'games' or 'points'
   const [headToHeadWinners, setHeadToHeadWinners] = useState([]); // Track players positioned by H2H
   const [exportDate, setExportDate] = useState(new Date().toLocaleDateString()); // Date for export filename
+  const [tournamentComplete, setTournamentComplete] = useState(false);
 
   // Tennis scoring options
   const tennisScores = ["0", "15", "30", "40", "AD"];
+
+  // Check if tournament has finished at least 1 match in round 9
+  useEffect(() => {
+    const finalRound = matches[matches.length - 1];
+    const hasCompletedMatches = 
+      (finalRound.court1.gamesA !== null && finalRound.court1.gamesB !== null) ||
+      (finalRound.court2.gamesA !== null && finalRound.court2.gamesB !== null);
+    
+    setTournamentComplete(hasCompletedMatches);
+  }, [matches]);
 
   // Find player name by id
   const getPlayerName = (id) => {
@@ -785,8 +796,9 @@ const PadelTournamentApp = () => {
         {options.map(value => (
           <button
             key={value}
-            className={`w-14 h-14 text-3xl font-bold rounded-lg border-2 ${
+            className={`w-16 h-16 text-3xl font-bold rounded-lg border-2 ${
               current === value
+                ? 'bg-blue-500 text-white border-blue-700
                 ? 'bg-blue-500 text-white border-blue-700'
                 : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
             }`}
@@ -796,7 +808,7 @@ const PadelTournamentApp = () => {
           </button>
         ))}
         <button
-          className="w-14 h-14 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
+          className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
           onClick={() => updateGames(court, team, null)}
         >
           Clear
@@ -817,7 +829,7 @@ const PadelTournamentApp = () => {
         {tennisScores.map(value => (
           <button
             key={value}
-            className={`w-14 h-14 text-2xl font-bold rounded-lg border-2 ${
+            className={`w-16 h-16 text-2xl font-bold rounded-lg border-2 ${
               current === value
                 ? 'bg-green-500 text-white border-green-700'
                 : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
@@ -828,7 +840,7 @@ const PadelTournamentApp = () => {
           </button>
         ))}
         <button
-          className="w-14 h-14 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
+          className="w-16 h-16 text-xl font-bold rounded-lg bg-red-100 text-red-800 border-2 border-red-300 hover:bg-red-200"
           onClick={() => updateScore(court, team, null)}
         >
           Clear
@@ -864,13 +876,13 @@ const PadelTournamentApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-6" style={{ fontSize: '16px' }}>
       {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-4xl font-bold text-center text-blue-800">Padel Tournament</h1>
+      <header className="mb-8">
+        <h1 className="text-5xl font-bold text-center text-blue-800 mb-6">Padel Tournament</h1>
         <div className="flex justify-center mt-4 flex-wrap">
           <button
-            className={`px-6 py-3 text-2xl font-bold ${
+            className={`px-6 py-4 text-3xl font-bold ${
               viewMode === 'input' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
             } ${viewMode === 'input' ? 'rounded-l-lg' : 'rounded-tl-lg rounded-bl-lg'}`}
             onClick={() => setViewMode('input')}
@@ -878,7 +890,7 @@ const PadelTournamentApp = () => {
             Input Scores
           </button>
           <button
-            className={`px-6 py-3 text-2xl font-bold ${
+            className={`px-6 py-4 text-3xl font-bold ${
               viewMode === 'standings' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
             }`}
             onClick={() => setViewMode('standings')}
@@ -886,7 +898,7 @@ const PadelTournamentApp = () => {
             Standings
           </button>
           <button
-            className={`px-6 py-3 text-2xl font-bold ${
+            className={`px-6 py-4 text-3xl font-bold ${
               viewMode === 'detailedStandings' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
             } ${viewMode === 'detailedStandings' ? 'rounded-r-lg' : 'rounded-tr-lg rounded-br-lg'}`}
             onClick={() => {
@@ -899,38 +911,42 @@ const PadelTournamentApp = () => {
           </button>
         </div>
         
-        {/* Export Button */}
-        <div className="mt-4 flex justify-center">
-          <button
-            className="px-6 py-3 text-2xl font-bold bg-green-600 text-white rounded-lg flex items-center"
-            onClick={exportToExcel}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Export to Excel
-          </button>
-        </div>
+        {/* Export Button - Only Show After Tournament Completion */}
+        {tournamentComplete && (
+          <div className="mt-6 flex justify-center">
+            <button
+              className="px-6 py-4 text-2xl font-bold bg-green-600 text-white rounded-lg flex items-center shadow-lg hover:bg-green-700 transition-colors"
+              onClick={exportToExcel}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export Final Results
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Score Input View */}
       {viewMode === 'input' && (
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-6">
             <button
-              className="px-4 py-2 text-2xl font-bold bg-blue-100 text-blue-800 rounded-lg"
+              className="px-5 py-3 text-3xl font-bold bg-blue-100 text-blue-800 rounded-lg shadow-md hover:bg-blue-200 active:bg-blue-300 transition-colors"
               onClick={prevRound}
               disabled={currentRound === 1}
+              style={{opacity: currentRound === 1 ? 0.5 : 1}}
             >
               &lt; Prev
             </button>
-            <h2 className="text-3xl font-bold">
+            <h2 className="text-4xl font-bold">
               Round {currentRound} - {currentMatch.time}
             </h2>
             <button
-              className="px-4 py-2 text-2xl font-bold bg-blue-100 text-blue-800 rounded-lg"
+              className="px-5 py-3 text-3xl font-bold bg-blue-100 text-blue-800 rounded-lg shadow-md hover:bg-blue-200 active:bg-blue-300 transition-colors"
               onClick={nextRound}
               disabled={currentRound === matches.length}
+              style={{opacity: currentRound === matches.length ? 0.5 : 1}}
             >
               Next &gt;
             </button>
@@ -939,17 +955,17 @@ const PadelTournamentApp = () => {
           {/* Input Mode Toggle */}
           <div className="flex justify-center mb-6">
             <button
-              className={`px-4 py-2 text-xl font-bold rounded-lg ${
+              className={`px-6 py-3 text-2xl font-bold rounded-lg ${
                 inputMode === 'games' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              } mr-2`}
+              } mr-4 shadow`}
               onClick={() => setInputMode('games')}
             >
               Games Won
             </button>
             <button
-              className={`px-4 py-2 text-xl font-bold rounded-lg ${
+              className={`px-6 py-3 text-2xl font-bold rounded-lg ${
                 inputMode === 'points' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-              }`}
+              } shadow`}
               onClick={() => setInputMode('points')}
             >
               Current Point
@@ -957,21 +973,21 @@ const PadelTournamentApp = () => {
           </div>
 
           {/* Not Playing */}
-          <div className="text-center mb-6 p-2 bg-gray-100 rounded-lg">
-            <p className="text-2xl">
+          <div className="text-center mb-8 p-4 bg-gray-100 rounded-lg shadow-inner">
+            <p className="text-3xl">
               <span className="font-bold">Not Playing:</span>{' '}
               {getPlayerName(currentMatch.notPlaying)}
             </p>
           </div>
 
           {/* Court 1 */}
-          <div className="mb-8 p-4 bg-blue-50 rounded-xl">
-            <h3 className="text-2xl font-bold text-center mb-4">Court 5</h3>
+          <div className="mb-10 p-6 bg-blue-50 rounded-xl shadow-lg">
+            <h3 className="text-3xl font-bold text-center mb-6">Court 5</h3>
             
             {/* Team A */}
             {renderTeam(1, 'A')}
             
-            <div className="flex justify-center my-3">
+            <div className="flex justify-center my-5">
               <div className="w-full border-t-4 border-blue-300"></div>
             </div>
             
@@ -980,13 +996,13 @@ const PadelTournamentApp = () => {
           </div>
 
           {/* Court 2 */}
-          <div className="p-4 bg-green-50 rounded-xl">
-            <h3 className="text-2xl font-bold text-center mb-4">Court 6</h3>
+          <div className="p-6 bg-green-50 rounded-xl shadow-lg">
+            <h3 className="text-3xl font-bold text-center mb-6">Court 6</h3>
             
             {/* Team A */}
             {renderTeam(2, 'A')}
             
-            <div className="flex justify-center my-3">
+            <div className="flex justify-center my-5">
               <div className="w-full border-t-4 border-green-300"></div>
             </div>
             
@@ -998,43 +1014,53 @@ const PadelTournamentApp = () => {
 
       {/* Standings View */}
       {viewMode === 'standings' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-3xl font-bold text-center mb-6">Tournament Standings</h2>
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <h2 className="text-4xl font-bold text-center mb-8">Tournament Standings</h2>
           
-          <div className="overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-gray-200">
             {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
               <div 
                 key={player.id} 
-                className={`flex justify-between items-center p-4 ${
+                className={`flex justify-between items-center p-5 ${
                   index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
                 } ${index === 0 ? 'bg-yellow-100' : ''}`}
               >
                 <div className="flex items-center">
-                  <span className="text-3xl font-bold w-12">{index + 1}.</span>
-                  <span className="text-3xl">{player.name}</span>
+                  <span className="text-4xl font-bold w-14">{index + 1}.</span>
+                  <span className="text-4xl">{player.name}</span>
                 </div>
-                <span className="text-4xl font-bold">{player.score}</span>
+                <span className="text-5xl font-bold">{player.score}</span>
               </div>
             ))}
+          </div>
+          
+          {/* Return button */}
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setViewMode('input')}
+              className="px-6 py-3 text-2xl font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700"
+            >
+              Return to Input
+            </button>
           </div>
         </div>
       )}
       
       {/* Detailed Standings View */}
       {viewMode === 'detailedStandings' && (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-3xl font-bold text-center mb-6">Detailed Standings</h2>
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <h2 className="text-4xl font-bold text-center mb-8">Detailed Standings</h2>
           
-          <div className="overflow-x-auto">
-            <table className="w-full text-xl">
+          <div className="overflow-x-auto rounded-xl border border-gray-200">
+            <table className="w-full text-2xl">
               <thead className="bg-blue-100">
                 <tr>
-                  <th className="p-3 text-left">Pos</th>
-                  <th className="p-3 text-left">Player</th>
-                  <th className="p-3 text-center">Points</th>
-                  <th className="p-3 text-center">Games Won</th>
-                  <th className="p-3 text-center">Games Lost</th>
-                  <th className="p-3 text-center">Diff</th>
+                  <th className="p-4 text-left">Pos</th>
+                  <th className="p-4 text-left">Player</th>
+                  <th className="p-4 text-center">Points</th>
+                  <th className="p-4 text-center">Games Won</th>
+                  <th className="p-4 text-center">Games Lost</th>
+                  <th className="p-4 text-center">Diff</th>
                 </tr>
               </thead>
               <tbody>
@@ -1052,19 +1078,19 @@ const PadelTournamentApp = () => {
                       key={player.id} 
                       className={rowClass}
                     >
-                      <td className="p-3 text-center font-bold">{index + 1}</td>
-                      <td className="p-3 font-bold">
+                      <td className="p-4 text-center font-bold">{index + 1}</td>
+                      <td className="p-4 font-bold">
                         {player.name}
                         {wonByH2H && (
-                          <span className="ml-2 text-sm bg-green-600 text-white px-2 py-1 rounded-full">
+                          <span className="ml-2 text-lg bg-green-600 text-white px-3 py-1 rounded-full">
                             H2H
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-center font-bold">{player.score}</td>
-                      <td className="p-3 text-center">{player.gamesWon}</td>
-                      <td className="p-3 text-center">{player.gamesLost}</td>
-                      <td className="p-3 text-center font-bold">{player.gameDifferential}</td>
+                      <td className="p-4 text-center font-bold">{player.score}</td>
+                      <td className="p-4 text-center">{player.gamesWon}</td>
+                      <td className="p-4 text-center">{player.gamesLost}</td>
+                      <td className="p-4 text-center font-bold">{player.gameDifferential}</td>
                     </tr>
                   );
                 })}
@@ -1073,12 +1099,22 @@ const PadelTournamentApp = () => {
           </div>
           
           {/* Explanation for H2H badge */}
-          <div className="mt-4 bg-green-100 p-3 rounded-lg border border-green-300">
-            <p className="text-lg">
+          <div className="mt-6 bg-green-100 p-4 rounded-lg border border-green-300 shadow-sm">
+            <p className="text-xl">
               <span className="font-bold mr-2">Note:</span>
-              Players marked with <span className="bg-green-600 text-white px-2 py-1 rounded-full mx-1 text-sm">H2H</span> are positioned based on 
+              Players marked with <span className="bg-green-600 text-white px-3 py-1 rounded-full mx-1 text-lg">H2H</span> are positioned based on 
               their head-to-head record against players with equal points, game differential, and games won.
             </p>
+          </div>
+          
+          {/* Return button */}
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => setViewMode('input')}
+              className="px-6 py-3 text-2xl font-bold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700"
+            >
+              Return to Input
+            </button>
           </div>
         </div>
       )}
