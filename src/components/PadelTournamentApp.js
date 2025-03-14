@@ -1026,7 +1026,7 @@ const PadelTournamentApp = () => {
   };
 
   // Tournament selector view
-// modified your renderTournamentSelector function to remove the useState call
+// Then completely replace your renderTournamentSelector function with this version
 const renderTournamentSelector = () => {
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
@@ -1056,6 +1056,40 @@ const renderTournamentSelector = () => {
         </div>
       </div>
       
+      {/* Load existing tournament */}
+      <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
+        
+        {savedTournaments.length === 0 ? (
+          <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {savedTournaments.map((tournament) => (
+              <div
+                key={tournament.id}
+                onClick={() => loadTournament(tournament)}
+                className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
+              >
+                <div>
+                  <div className="font-bold text-xl">{tournament.name}</div>
+                  <div className="text-sm text-gray-500">{tournament.date}</div>
+                </div>
+                <button
+                  onClick={(e) => deleteTournament(tournament.id, e)}
+                  className="p-1 text-red-600 hover:bg-red-100 rounded"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
         
         {/* Load existing tournament */}
         <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
