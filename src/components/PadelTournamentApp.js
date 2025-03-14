@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { v4 as uuidv4 } from 'uuid';
 
 const PadelTournamentApp = () => {
   // Player data
@@ -208,18 +209,57 @@ const PadelTournamentApp = () => {
     }
   ]);
 
-  // States
+  // Original States
   const [currentRound, setCurrentRound] = useState(1);
   const [viewMode, setViewMode] = useState('input'); // 'input', 'standings' or 'detailedStandings'
   const [inputMode, setInputMode] = useState('games'); // 'games' or 'points'
-  const [headToHeadWinners, setHeadToHeadWinners] = useState([]); // Track players positioned by H2H
-  const [exportDate, setExportDate] = useState(new Date().toLocaleDateString()); // Date for export filename
+  const [headToHeadWinners, setHeadToHeadWinners] = useState([]);
+  
+  // New States for Persistence
+  const [tournamentId, setTournamentId] = useState(null);
+  const [tournamentName, setTournamentName] = useState('');
+  const [savedTournaments, setSavedTournaments] = useState([]);
+  const [showTournamentSelector, setShowTournamentSelector] = useState(true);
+  const [exportDate, setExportDate] = useState(new Date().toLocaleDateString());
   const [tournamentComplete, setTournamentComplete] = useState(false);
-  const [detailedStandingsData, setDetailedStandingsData] = useState([]); // Store pre-calculated detailed standings
-  const [detailedCalculated, setDetailedCalculated] = useState(false); // Track if detailed standings have been calculated
+  const [detailedStandingsData, setDetailedStandingsData] = useState([]);
+  const [detailedCalculated, setDetailedCalculated] = useState(false);
 
   // Tennis scoring options
   const tennisScores = ["0", "15", "30", "40", "AD"];
+  // Load saved tournaments from localStorage on initial render
+  useEffect(() => {
+    const savedData = localStorage.getItem('padelTournaments');
+    if (savedData) {
+      setSavedTournaments(JSON.parse(savedData));
+    }
+  }, []);
+
+  // Save current tournament state to localStorage whenever it changes
+  useEffect(() => {
+    if (!tournamentId) return;
+    
+    // Only save if we're not in tournament selector mode
+    if (!showTournamentSelector) {
+      const currentTournament = {
+        id: tournamentId,
+        name: tournamentName,
+        date: new Date().toLocaleString(),
+        players,
+        matches,
+        currentRound
+      };
+      
+      const updatedTournaments = [...savedTournaments.filter(t => t.id !== tournamentId), currentTournament];
+      localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
+      setSavedTournaments(updatedTournaments);
+    }
+  }, [players, matches, currentRound, tournamentId, tournamentName, savedTournaments, showTournamentSelector]);
+
+  // Auto-calculate on load to ensure data is ready
+  useEffect(() => {
+    updatePlayerScores();
+  }, []);
 
   // Check if tournament has finished at least 1 match in round 9
   useEffect(() => {
@@ -231,17 +271,18 @@ const PadelTournamentApp = () => {
     setTournamentComplete(hasCompletedMatches);
   }, [matches]);
 
-  // Auto-calculate on load to ensure data is ready
-  useEffect(() => {
-    updatePlayerScores();
-  }, []);
-
   // Auto-calculate when viewing detailed standings
   useEffect(() => {
-    if (viewMode === 'detailedStandings') {
+    if (viewMode === 'detailedStandings' && !detailedCalculated) {
       prepareDetailedStandings();
     }
-  }, [viewMode]);
+  }, [viewMode, detailedCalculated]);
+
+  // Update whenever matches change
+  useEffect(() => {
+    updatePlayerScores();
+    setDetailedCalculated(false);
+  }, [matches]);
 
   // Find player name by id
   const getPlayerName = (id) => {
@@ -540,18 +581,251 @@ const PadelTournamentApp = () => {
     });
     
     setPlayers(newPlayers);
-    
-    // Reset detailed standings flag when scores change
-    setDetailedCalculated(false);
   };
-
-  // Update whenever matches change
-  useEffect(() => {
-    updatePlayerScores();
-  }, [matches]);
-
   // Current match data
   const currentMatch = matches[currentRound - 1];
+
+  // Function to create a new tournament
+  const createNewTournament = (name) => {
+    const newId = uuidv4();
+    setTournamentId(newId);
+    setTournamentName(name);
+    
+    // Reset to default values
+    setPlayers([
+      { id: 1, name: 'Amo', score: 0 },
+      { id: 2, name: 'James', score: 0 },
+      { id: 3, name: 'Paul', score: 0 },
+      { id: 4, name: 'Ian', score: 0 },
+      { id: 5, name: 'David', score: 0 },
+      { id: 6, name: 'Michael', score: 0 },
+      { id: 7, name: 'Chris', score: 0 },
+      { id: 8, name: 'Mariano', score: 0 },
+      { id: 9, name: 'Alistair', score: 0 }
+    ]);
+    
+    // Reset all scores in matches to null
+    setMatches([
+      {
+        round: 1,
+        time: "11:15",
+        court1: { 
+          teamA: [1, 6], 
+          teamB: [2, 7], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [3, 8], 
+          teamB: [4, 9], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 5
+      },
+      {
+        round: 2,
+        time: "11:28",
+        court1: { 
+          teamA: [9, 2], 
+          teamB: [5, 4], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [7, 6], 
+          teamB: [8, 1], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 3
+      },
+      {
+        round: 3,
+        time: "11:41",
+        court1: { 
+          teamA: [1, 8], 
+          teamB: [7, 9], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [5, 3], 
+          teamB: [4, 2], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 6
+      },
+      {
+        round: 4,
+        time: "11:54",
+        court1: { 
+          teamA: [2, 3], 
+          teamB: [4, 6], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [5, 1], 
+          teamB: [9, 7], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 8
+      },
+      {
+        round: 5,
+        time: "12:07",
+        court1: { 
+          teamA: [5, 9], 
+          teamB: [8, 7], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [3, 2], 
+          teamB: [6, 4], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 1
+      },
+      {
+        round: 6,
+        time: "12:20",
+        court1: { 
+          teamA: [1, 5], 
+          teamB: [9, 3], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [2, 8], 
+          teamB: [6, 7], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 4
+      },
+      {
+        round: 7,
+        time: "12:33",
+        court1: { 
+          teamA: [9, 6], 
+          teamB: [7, 5], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [3, 1], 
+          teamB: [8, 4], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 2
+      },
+      {
+        round: 8,
+        time: "12:45",
+        court1: { 
+          teamA: [3, 9], 
+          teamB: [4, 5], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [6, 8], 
+          teamB: [1, 2], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 7
+      },
+      {
+        round: 9,
+        time: "12:58",
+        court1: { 
+          teamA: [8, 4], 
+          teamB: [7, 2], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: { 
+          teamA: [6, 5], 
+          teamB: [1, 3], 
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 9
+      }
+    ]);
+    
+    setCurrentRound(1);
+    setViewMode('input');
+    setShowTournamentSelector(false);
+  };
+  
+  // Function to load an existing tournament
+  const loadTournament = (tournament) => {
+    setTournamentId(tournament.id);
+    setTournamentName(tournament.name);
+    setPlayers(tournament.players);
+    setMatches(tournament.matches);
+    setCurrentRound(tournament.currentRound);
+    setViewMode('input');
+    setShowTournamentSelector(false);
+  };
+  
+  // Function to delete a tournament
+  const deleteTournament = (id, event) => {
+    event.stopPropagation(); // Prevent triggering the parent click event
+    
+    const updatedTournaments = savedTournaments.filter(t => t.id !== id);
+    localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
+    setSavedTournaments(updatedTournaments);
+  };
+  
+  // Function to go back to tournament selection
+  const backToTournamentSelector = () => {
+    setShowTournamentSelector(true);
+  };
 
   // Update games
   const updateGames = (court, team, games) => {
@@ -742,61 +1016,6 @@ const PadelTournamentApp = () => {
     const matchResultsSheet = XLSX.utils.json_to_sheet(matchResultsData);
     XLSX.utils.book_append_sheet(workbook, matchResultsSheet, "Match Results");
     
-    // Sheet 4: Match Schedule
-    const scheduleData = [];
-    
-    matches.forEach(match => {
-      scheduleData.push({
-        Round: match.round,
-        Time: match.time,
-        Court: "Court 5",
-        "Team A": match.court1.teamA.map(id => getPlayerName(id)).join(' & '),
-        "Team B": match.court1.teamB.map(id => getPlayerName(id)).join(' & ')
-      });
-      
-      scheduleData.push({
-        Round: match.round,
-        Time: match.time,
-        Court: "Court 6",
-        "Team A": match.court2.teamA.map(id => getPlayerName(id)).join(' & '),
-        "Team B": match.court2.teamB.map(id => getPlayerName(id)).join(' & ')
-      });
-      
-      scheduleData.push({
-        Round: match.round,
-        Time: match.time,
-        Court: "Not Playing",
-        "Team A": getPlayerName(match.notPlaying),
-        "Team B": ""
-      });
-    });
-    
-    const scheduleSheet = XLSX.utils.json_to_sheet(scheduleData);
-    XLSX.utils.book_append_sheet(workbook, scheduleSheet, "Match Schedule");
-    
-    // Sheet 5: Head-to-Head Records
-    const h2hRecords = buildHeadToHeadRecords();
-    const h2hData = [];
-    
-    players.forEach(player => {
-      const row = {
-        Player: player.name
-      };
-      
-      players.forEach(opponent => {
-        if (player.id !== opponent.id) {
-          row[opponent.name] = h2hRecords[player.id][opponent.id];
-        } else {
-          row[opponent.name] = "-";
-        }
-      });
-      
-      h2hData.push(row);
-    });
-    
-    const h2hSheet = XLSX.utils.json_to_sheet(h2hData);
-    XLSX.utils.book_append_sheet(workbook, h2hSheet, "Head-to-Head");
-    
     // Generate filename with date
     const fileName = `Padel_Tournament_Results_${exportDate.replace(/\//g, '-')}.xlsx`;
     
@@ -804,361 +1023,651 @@ const PadelTournamentApp = () => {
     XLSX.writeFile(workbook, fileName);
   };
 
-  // Render number buttons for games
-  const renderGameButtons = (court, team) => {
-    const options = [0, 1, 2, 3, 4, 5, 6];
-    const current = 
-      court === 1 
-        ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
-        : (team === 'A' ? currentMatch.court2.gamesA : currentMatch.court2.gamesB);
+  // Tournament selector view
+  const renderTournamentSelector = () => {
+    const [newTournamentName, setNewTournamentName] = useState('');
     
     return (
-      <div className="flex flex-wrap gap-6 justify-center">
-        {options.map(value => (
-          <button
-            key={value}
-            className={`w-24 h-24 text-5xl font-bold rounded-xl border-4 shadow-lg ${
-              current === value
-                ? 'bg-blue-500 text-white border-blue-700'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-            }`}
-            onClick={() => updateGames(court, team, value)}
-          >
-            {value}
-          </button>
-        ))}
-        <button
-          className="w-24 h-24 text-3xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg"
-          onClick={() => updateGames(court, team, null)}
-        >
-          Clear
-        </button>
-      </div>
-    );
-  };
-
-  // Render tennis score buttons
-  const renderScoreButtons = (court, team) => {
-    const current = 
-      court === 1 
-        ? (team === 'A' ? currentMatch.court1.scoreA : currentMatch.court1.scoreB)
-        : (team === 'A' ? currentMatch.court2.scoreA : currentMatch.court2.scoreB);
-    
-    return (
-      <div className="flex flex-wrap gap-6 justify-center">
-        {tennisScores.map(value => (
-          <button
-            key={value}
-            className={`w-24 h-24 text-4xl font-bold rounded-xl border-4 shadow-lg ${
-              current === value
-                ? 'bg-green-500 text-white border-green-700'
-                : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
-            }`}
-            onClick={() => updateScore(court, team, value)}
-          >
-            {value}
-          </button>
-        ))}
-        <button
-          className="w-24 h-24 text-3xl font-bold rounded-xl bg-red-100 text-red-800 border-4 border-red-300 hover:bg-red-200 shadow-lg"
-          onClick={() => updateScore(court, team, null)}
-        >
-          Clear
-        </button>
-      </div>
-    );
-  };
-
-  // Render team
-  const renderTeam = (court, team) => {
-    return (
-      <div className="mb-10">
-        <div className="flex justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-md">
-          <div>
-            <div className="text-4xl font-bold">
-              {getTeamName(court, team)}
-            </div>
-            <div className="text-3xl mt-2">
-              Games: <span className="font-bold">{getGames(court, team)}</span>
-              {getScore(court, team) !== '-' && 
-                <span className="ml-3">
-                  Current: <span className="font-bold">{getScore(court, team)}</span>
-                </span>
-              }
-            </div>
-          </div>
-          <div className="text-4xl font-bold bg-blue-100 px-5 py-3 rounded-xl shadow border-2 border-blue-200">
-            Points: {getTournamentPoints(court, team)}
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
+        <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
+        
+        {/* Create new tournament */}
+        <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              value={newTournamentName}
+              onChange={(e) => setNewTournamentName(e.target.value)}
+              placeholder="Tournament Name"
+              className="flex-1 px-4 py-2 text-lg border rounded-lg"
+            />
+            <button
+              onClick={() => createNewTournament(newTournamentName)}
+              disabled={!newTournamentName.trim()}
+              className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
+            >
+              Create
+            </button>
           </div>
         </div>
         
-        {inputMode === 'games' ? 
-          renderGameButtons(court, team) : 
-          renderScoreButtons(court, team)}
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 p-4 md:p-8" style={{ fontSize: '18px' }}>
-      {/* Header */}
-      <header className="max-w-5xl mx-auto mb-10">
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-          <h1 className="text-6xl font-bold text-center text-blue-800 mb-8">
-            Padel Tournament
-          </h1>
-          <div className="flex justify-center mt-6 flex-wrap gap-3">
-            <button
-              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
-                viewMode === 'input' 
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setViewMode('input')}
-            >
-              Input Scores
-            </button>
-            <button
-              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
-                viewMode === 'standings'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setViewMode('standings')}
-            >
-              Standings
-            </button>
-            <button
-              className={`px-8 py-5 text-3xl font-bold rounded-xl shadow-lg ${
-                viewMode === 'detailedStandings'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => {
-                setViewMode('detailedStandings');
-                if (!detailedCalculated) {
-                  prepareDetailedStandings();
-                }
-              }}
-            >
-              Detailed
-            </button>
-          </div>
+        {/* Load existing tournament */}
+        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
           
-          {/* Export Button - Only Show After Tournament Completion */}
-          {tournamentComplete && (
-            <div className="mt-8 flex justify-center">
-              <button
-                className="px-8 py-5 text-3xl font-bold bg-green-600 text-white rounded-xl shadow-lg hover:bg-green-700 flex items-center"
-                onClick={exportToExcel}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Export Final Results
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <div className="max-w-5xl mx-auto">
-        {/* Score Input View */}
-        {viewMode === 'input' && (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <div className="flex justify-between items-center mb-8">
-              <button
-                className="px-8 py-5 text-4xl font-bold bg-blue-100 text-blue-800 rounded-xl shadow-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={prevRound}
-                disabled={currentRound === 1}
-              >
-                ← Prev
-              </button>
-              <h2 className="text-5xl font-bold text-center text-blue-800">
-                Round {currentRound}
-                <div className="text-3xl font-medium mt-2 text-blue-600">{currentMatch.time}</div>
-              </h2>
-              <button
-                className="px-8 py-5 text-4xl font-bold bg-blue-100 text-blue-800 rounded-xl shadow-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={nextRound}
-                disabled={currentRound === matches.length}
-              >
-                Next →
-              </button>
-            </div>
-
-            {/* Input Mode Toggle */}
-            <div className="flex justify-center mb-8">
-              <div className="bg-gray-200 p-2 rounded-xl shadow-inner flex">
-                <button
-                  className={`px-8 py-4 text-3xl font-bold rounded-lg ${
-                    inputMode === 'games' 
-                      ? 'bg-white text-blue-800 shadow-md' 
-                      : 'text-gray-600 hover:bg-gray-300'
-                  }`}
-                  onClick={() => setInputMode('games')}
+          {savedTournaments.length === 0 ? (
+            <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {savedTournaments.map((tournament) => (
+                <div
+                  key={tournament.id}
+                  onClick={() => loadTournament(tournament)}
+                  className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
                 >
-                  Games Won
-                </button>
-                <button
-                  className={`px-8 py-4 text-3xl font-bold rounded-lg ml-4 ${
-                    inputMode === 'points' 
-                      ? 'bg-white text-blue-800 shadow-md' 
-                      : 'text-gray-600 hover:bg-gray-300'
-                  }`}
-                  onClick={() => setInputMode('points')}
-                >
-                  Current Point
-                </button>
-              </div>
-            </div>
-
-            {/* Not Playing */}
-            <div className="text-center mb-10 p-6 bg-amber-50 rounded-xl shadow-md border-2 border-amber-200">
-              <p className="text-4xl">
-                <span className="font-bold">Not Playing:</span>{' '}
-                <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
-              </p>
-            </div>
-
-            {/* Court 1 */}
-            <div className="mb-10 p-8 bg-blue-50 rounded-xl shadow-lg border-2 border-blue-100">
-              <h3 className="text-4xl font-bold text-center mb-8 text-blue-800">Court 5</h3>
-              
-              {/* Team A */}
-              {renderTeam(1, 'A')}
-              
-              <div className="flex justify-center my-6">
-                <div className="w-full border-t-4 border-blue-300"></div>
-              </div>
-              
-              {/* Team B */}
-              {renderTeam(1, 'B')}
-            </div>
-
-            {/* Court 2 */}
-            <div className="p-8 bg-green-50 rounded-xl shadow-lg border-2 border-green-100">
-              <h3 className="text-4xl font-bold text-center mb-8 text-green-800">Court 6</h3>
-              
-              {/* Team A */}
-              {renderTeam(2, 'A')}
-              
-              <div className="flex justify-center my-6">
-                <div className="w-full border-t-4 border-green-300"></div>
-              </div>
-              
-              {/* Team B */}
-              {renderTeam(2, 'B')}
-            </div>
-          </div>
-        )}
-
-        {/* Standings View */}
-        {viewMode === 'standings' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Tournament Standings</h2>
-            
-            <div className="overflow-hidden rounded-xl border-2 border-blue-100 shadow-lg">
-              {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
-                <div 
-                  key={player.id} 
-                  className={`flex justify-between items-center p-6 ${
-                    index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
-                  } ${index === 0 ? 'bg-yellow-100' : ''}`}
-                >
-                  <div className="flex items-center">
-                    <span className="text-5xl font-bold w-16 text-blue-800">{index + 1}.</span>
-                    <span className="text-5xl">{player.name}</span>
+                  <div>
+                    <div className="font-bold text-xl">{tournament.name}</div>
+                    <div className="text-sm text-gray-500">{tournament.date}</div>
                   </div>
-                  <span className="text-6xl font-bold text-blue-800">{player.score}</span>
+                  <button
+                    onClick={(e) => deleteTournament(tournament.id, e)}
+                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               ))}
             </div>
-            
-            {/* Return button */}
-            <div className="mt-10 flex justify-center">
-              <button
-                onClick={() => setViewMode('input')}
-                className="px-8 py-5 text-3xl font-bold bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700"
-              >
-                Return to Input
-              </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Tournament navbar
+  const renderTournamentNavbar = () => {
+    return (
+      <div className="bg-blue-800 text-white p-4 flex justify-between items-center mb-6 rounded-lg shadow-md">
+        <div className="flex items-center">
+          <button 
+            onClick={backToTournamentSelector}
+            className="mr-4 p-2 hover:bg-blue-700 rounded transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <h3 className="text-2xl font-bold truncate">
+            {tournamentName || 'Tournament'}
+          </h3>
+        </div>
+        <div className="text-sm opacity-75">
+          Auto-saving
+        </div>
+      </div>
+    );
+  };
+  // Complete component return
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Tournament Selector Mode */}
+      {showTournamentSelector ? (
+        renderTournamentSelector()
+      ) : (
+        <div className="max-w-4xl mx-auto p-4">
+          {/* Tournament Navigation Bar */}
+          {renderTournamentNavbar()}
+          
+          {/* Header */}
+          <header className="mb-6">
+            <h1 className="text-3xl font-bold text-center text-blue-800">Padel Tournament</h1>
+            <div className="flex justify-center mt-4">
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <button
+                  className={`px-6 py-3 font-bold ${
+                    viewMode === 'input' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setViewMode('input')}
+                >
+                  Input Scores
+                </button>
+                <button
+                  className={`px-6 py-3 font-bold ${
+                    viewMode === 'standings' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => setViewMode('standings')}
+                >
+                  Standings
+                </button>
+                <button
+                  className={`px-6 py-3 font-bold ${
+                    viewMode === 'detailedStandings' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => {
+                    setViewMode('detailedStandings');
+                    if (!detailedCalculated) {
+                      prepareDetailedStandings();
+                    }
+                  }}
+                >
+                  Detailed
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-        
-        {/* Detailed Standings View */}
-        {viewMode === 'detailedStandings' && (
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-5xl font-bold text-center mb-10 text-blue-800">Detailed Standings</h2>
             
-            <div className="overflow-x-auto rounded-xl border-2 border-blue-100 shadow-lg mb-6">
-              <table className="w-full text-2xl">
-                <thead>
-                  <tr className="bg-blue-600 text-white">
-                    <th className="p-5 text-left rounded-tl-lg">Pos</th>
-                    <th className="p-5 text-left">Player</th>
-                    <th className="p-5 text-center">Points</th>
-                    <th className="p-5 text-center">Games Won</th>
-                    <th className="p-5 text-center">Games Lost</th>
-                    <th className="p-5 text-center rounded-tr-lg">Diff</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {detailedStandingsData.map((player, index) => {
-                    // Determine row class based on position and head-to-head result
-                    let rowClass = `${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`;
-                    if (index === 0) rowClass = 'bg-yellow-100';
-                    if (player.isH2HWinner) rowClass = 'bg-green-100';
-                    if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
-                    
-                    return (
+            {/* Export Button - Only Show After Tournament Completion */}
+            {tournamentComplete && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  className="px-6 py-2 font-bold bg-green-600 text-white rounded-lg shadow flex items-center hover:bg-green-700"
+                  onClick={exportToExcel}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export Final Results
+                </button>
+              </div>
+            )}
+          </header>
+
+          {/* Score Input View */}
+          {viewMode === 'input' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              {/* Round Navigation */}
+              <div className="flex justify-between items-center mb-4">
+                <button
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
+                  onClick={prevRound}
+                  disabled={currentRound === 1}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Prev
+                </button>
+                <h2 className="text-xl font-bold">
+                  Round {currentRound}
+                  <span className="ml-2 text-blue-600 font-normal">({currentMatch.time})</span>
+                </h2>
+                <button
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
+                  onClick={nextRound}
+                  disabled={currentRound === matches.length}
+                >
+                  Next
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Input Mode Toggle */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium ${
+                      inputMode === 'games' 
+                        ? 'bg-white shadow text-blue-800' 
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setInputMode('games')}
+                  >
+                    Games Won
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-md text-sm font-medium ${
+                      inputMode === 'points' 
+                        ? 'bg-white shadow text-blue-800' 
+                        : 'text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setInputMode('points')}
+                  >
+                    Current Point
+                  </button>
+                </div>
+              </div>
+
+              {/* Not Playing */}
+              <div className="text-center mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p>
+                  <span className="font-semibold">Not Playing:</span>{' '}
+                  <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
+                </p>
+              </div>
+
+              {/* Court 1 */}
+              <div className="mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden">
+                <div className="bg-blue-600 text-white py-2 px-4 text-center font-bold">
+                  Court 5
+                </div>
+                
+                {/* Team A */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(1, 'A')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(1, 'A')}</span>
+                        {getScore(1, 'A') !== '-' && 
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(1, 'A')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
+                      {getTournamentPoints(1, 'A')} pts
+                    </div>
+                  </div>
+                  
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court1.gamesA === value
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateGames(1, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(1, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court1.scoreA === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateScore(1, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(1, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="border-t border-blue-200"></div>
+                
+                {/* Team B */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(1, 'B')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(1, 'B')}</span>
+                        {getScore(1, 'B') !== '-' && 
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(1, 'B')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
+                      {getTournamentPoints(1, 'B')} pts
+                    </div>
+                  </div>
+                  
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court1.gamesB === value
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateGames(1, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(1, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court1.scoreB === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateScore(1, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(1, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Court 2 */}
+              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 overflow-hidden">
+                <div className="bg-green-600 text-white py-2 px-4 text-center font-bold">
+                  Court 6
+                </div>
+                
+                {/* Team A */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(2, 'A')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(2, 'A')}</span>
+                        {getScore(2, 'A') !== '-' && 
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(2, 'A')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
+                      {getTournamentPoints(2, 'A')} pts
+                    </div>
+                  </div>
+                  
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court2.gamesA === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateGames(2, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(2, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court2.scoreA === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateScore(2, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(2, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="border-t border-green-200"></div>
+                
+                {/* Team B */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(2, 'B')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(2, 'B')}</span>
+                        {getScore(2, 'B') !== '-' && 
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(2, 'B')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
+                      {getTournamentPoints(2, 'B')} pts
+                    </div>
+                  </div>
+                  
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court2.gamesB === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateGames(2, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(2, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${
+                              currentMatch.court2.scoreB === value
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                            }`}
+                            onClick={() => updateScore(2, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(2, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standings View */}
+          {viewMode === 'standings' && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Tournament Standings</h2>
+              
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pos
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Points
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
                       <tr 
                         key={player.id} 
-                        className={rowClass}
+                        className={index === 0 ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
                       >
-                        <td className="p-5 text-center font-bold text-3xl">{index + 1}</td>
-                        <td className="p-5 font-bold text-3xl">
-                          {player.name}
-                          {player.isH2HWinner && (
-                            <span className="ml-3 text-xl bg-green-600 text-white px-4 py-1 rounded-full shadow">
-                              H2H
-                            </span>
-                          )}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                          {index + 1}
                         </td>
-                        <td className="p-5 text-center font-bold text-3xl">{player.score}</td>
-                        <td className="p-5 text-center text-3xl">{player.gamesWon}</td>
-                        <td className="p-5 text-center text-3xl">{player.gamesLost}</td>
-                        <td className="p-5 text-center font-bold text-3xl">{player.gameDifferential}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm font-bold text-blue-800">{player.score}</div>
+                        </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            
-            {/* Explanation for H2H badge */}
-            <div className="mt-8 bg-green-100 p-6 rounded-xl border-2 border-green-300 shadow">
-              <p className="text-2xl">
-                <span className="font-bold mr-2">Note:</span>
-                Players marked with <span className="bg-green-600 text-white px-4 py-1 rounded-full mx-1 text-xl">H2H</span> are positioned based on 
-                their head-to-head record against players with equal points, game differential, and games won.
-              </p>
+          )}
+
+          {/* Detailed Standings View */}
+          {viewMode === 'detailedStandings' && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Detailed Standings</h2>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pos</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Won</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Lost</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {detailedStandingsData.map((player, index) => {
+                      // Determine row class based on position and head-to-head result
+                      let rowClass = ``;
+                      if (index === 0) rowClass = 'bg-yellow-50';
+                      else if (player.isH2HWinner) rowClass = 'bg-green-50';
+                      else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
+                      else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                      
+                      return (
+                        <tr 
+                          key={player.id} 
+                          className={rowClass}
+                        >
+                          <td className="px-4 py-3 text-center text-sm font-medium">{index + 1}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium text-gray-900">{player.name}</span>
+                              {player.isH2HWinner && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  H2H
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm font-bold">{player.score}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesWon}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesLost}</td>
+                          <td className="px-4 py-3 text-center text-sm font-medium">
+                            <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
+                              {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Legend */}
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-yellow-50 border border-yellow-200 mr-1"></div>
+                  <span>Tournament leader</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-green-50 border border-green-200 mr-1"></div>
+                  <span>H2H winner</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
+                  <span>In tie group</span>
+                </div>
+              </div>
             </div>
-            
-            {/* Return button */}
-            <div className="mt-10 flex justify-center">
-              <button
-                onClick={() => setViewMode('input')}
-                className="px-8 py-5 text-3xl font-bold bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700"
-              >
-                Return to Input
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
