@@ -1012,151 +1012,50 @@ const PadelTournamentApp = () => {
     }
   };
   // Export data to Excel
-  const exportToExcel = () => {
-    try {
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
-      
-      // Sheet 1: Overall Standings
-      const standingsData = [...players]
-        .sort((a, b) => b.score - a.score)
-        .map((player, index) => ({
-          Position: index + 1,
-          Player: player.name,
-          Points: player.score
-        }));
-      
-      const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
-      XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
-      
-// Sheet 2: Detailed Standings
-if (!detailedCalculated) {
-  prepareDetailedStandings();
-}
-
-const detailedData = detailedStandingsData.map((player, index) => {
-  return {
-    Position: index + 1,
-    Player: player.name,
-    Points: player.score,
-    "Games Won": player.gamesWon,
-    "Games Lost": player.gamesLost,
-    Differential: player.gameDifferential,
-    "H2H Winner": player.isH2HWinner ? "Yes" : "",
-    "In Tie Group": player.isInTieGroup ? "Yes" : ""
-  };
-});
-
-const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
-XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
-      
-      // Sheet 3: Match Results
-      const matchResultsData = [];
-      
-      matches.forEach(match => {
-        // Court 1
-        const teamA1Players = match.court1.teamA.map(id => getPlayerName(id)).join(' & ');
-        const teamB1Players = match.court1.teamB.map(id => getPlayerName(id)).join(' & ');
-        
-        // Court 2
-        const teamA2Players = match.court2.teamA.map(id => getPlayerName(id)).join(' & ');
-        const teamB2Players = match.court2.teamB.map(id => getPlayerName(id)).join(' & ');
-        
-        // Add Court 1 data
-        matchResultsData.push({
-          Round: match.round,
-          Time: match.time,
-          Court: "Court 5",
-          "Team A": teamA1Players,
-          "Games A": match.court1.gamesA !== null ? match.court1.gamesA : "-",
-          "Score A": match.court1.scoreA !== null ? match.court1.scoreA : "-",
-          "Team B": teamB1Players,
-          "Games B": match.court1.gamesB !== null ? match.court1.gamesB : "-",
-          "Score B": match.court1.scoreB !== null ? match.court1.scoreB : "-"
-        });
-        
-        // Add Court 2 data
-        matchResultsData.push({
-          Round: match.round,
-          Time: match.time,
-          Court: "Court 6",
-          "Team A": teamA2Players,
-          "Games A": match.court2.gamesA !== null ? match.court2.gamesA : "-",
-          "Score A": match.court2.scoreA !== null ? match.court2.scoreA : "-",
-          "Team B": teamB2Players,
-          "Games B": match.court2.gamesB !== null ? match.court2.gamesB : "-",
-          "Score B": match.court2.scoreB !== null ? match.court2.scoreB : "-"
-        });
-      });
-      
-      const matchResultsSheet = XLSX.utils.json_to_sheet(matchResultsData);
-      XLSX.utils.book_append_sheet(workbook, matchResultsSheet, "Match Results");
-      
-      // Sheet 4: Match Schedule
-      const scheduleData = [];
-      
-      matches.forEach(match => {
-        scheduleData.push({
-          Round: match.round,
-          Time: match.time,
-          Court: "Court 5",
-          "Team A": match.court1.teamA.map(id => getPlayerName(id)).join(' & '),
-          "Team B": match.court1.teamB.map(id => getPlayerName(id)).join(' & ')
-        });
-        
-        scheduleData.push({
-          Round: match.round,
-          Time: match.time,
-          Court: "Court 6",
-          "Team A": match.court2.teamA.map(id => getPlayerName(id)).join(' & '),
-          "Team B": match.court2.teamB.map(id => getPlayerName(id)).join(' & ')
-        });
-        
-        scheduleData.push({
-          Round: match.round,
-          Time: match.time,
-          Court: "Not Playing",
-          "Team A": getPlayerName(match.notPlaying),
-          "Team B": ""
-        });
-      });
-      
-      const scheduleSheet = XLSX.utils.json_to_sheet(scheduleData);
-      XLSX.utils.book_append_sheet(workbook, scheduleSheet, "Match Schedule");
-      
-      // Sheet 5: Head-to-Head Records
-      const h2hRecords = buildHeadToHeadRecords();
-      const h2hData = [];
-      
-      players.forEach(player => {
-        const row = {
-          Player: player.name
-        };
-        
-        players.forEach(opponent => {
-          if (player.id !== opponent.id) {
-            row[opponent.name] = h2hRecords[player.id][opponent.id];
-          } else {
-            row[opponent.name] = "-";
-          }
-        });
-        
-        h2hData.push(row);
-      });
-      
-      const h2hSheet = XLSX.utils.json_to_sheet(h2hData);
-      XLSX.utils.book_append_sheet(workbook, h2hSheet, "Head-to-Head");
-      
-      // Generate filename with date
-      const fileName = `Padel_Tournament_Results_${exportDate.replace(/\//g, '-')}.xlsx`;
-      
-      // Export the file
-      XLSX.writeFile(workbook, fileName);
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      alert("There was an error exporting to Excel. Make sure the XLSX library is properly loaded.");
+const exportToExcel = () => {
+  try {
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Sheet 1: Overall Standings
+    const standingsData = [...players]
+      .sort((a, b) => b.score - a.score)
+      .map((player, index) => ({
+        Position: index + 1,
+        Player: player.name,
+        Points: player.score
+      }));
+    
+    const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
+    XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
+    
+    // Sheet 2: Detailed Standings
+    if (!detailedCalculated) {
+      prepareDetailedStandings();
     }
-  };
+
+    const detailedData = detailedStandingsData.map((player, index) => {
+      return {
+        Position: index + 1,
+        Player: player.name,
+        Points: player.score,
+        "Games Won": player.gamesWon,
+        "Games Lost": player.gamesLost,
+        Differential: player.gameDifferential,
+        "H2H Winner": player.isH2HWinner ? "Yes" : "",
+        "In Tie Group": player.isInTieGroup ? "Yes" : ""
+      };
+    });
+
+    const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+    XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
+    
+    // ... rest of the function ...
+  } catch (error) {
+    console.error("Error exporting to Excel:", error);
+    alert("There was an error exporting to Excel. Make sure the XLSX library is properly loaded.");
+  }
+};
 
   // Tournament navbar
   const renderTournamentNavbar = () => {
