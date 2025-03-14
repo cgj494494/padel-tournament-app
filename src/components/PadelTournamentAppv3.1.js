@@ -1029,26 +1029,25 @@ const PadelTournamentApp = () => {
       const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
       XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
       
-// Sheet 2: Detailed Standings
-if (!detailedCalculated) {
-  prepareDetailedStandings();
-}
-
-const detailedData = detailedStandingsData.map((player, index) => {
-  return {
-    Position: index + 1,
-    Player: player.name,
-    Points: player.score,
-    "Games Won": player.gamesWon,
-    "Games Lost": player.gamesLost,
-    Differential: player.gameDifferential,
-    "H2H Winner": player.isH2HWinner ? "Yes" : "",
-    "In Tie Group": player.isInTieGroup ? "Yes" : ""
-  };
-});
-
-const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
-XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
+      // Sheet 2: Detailed Standings
+      if (!detailedCalculated) {
+        prepareDetailedStandings();
+      }
+      
+      const detailedData = detailedStandingsData.map((player, index) => {
+        return {
+          Position: index + 1,
+          Player: player.name,
+          Points: player.score,
+          "Games Won": player.gamesWon,
+          "Games Lost": player.gamesLost,
+          Differential: player.gameDifferential,
+          "H2H Win": player.isH2HWinner ? "Yes" : ""
+        };
+      });
+      
+      const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+      XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
       
       // Sheet 3: Match Results
       const matchResultsData = [];
@@ -1198,12 +1197,12 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
           {renderTournamentNavbar()}
           
           {/* Header */}
-          <header className="mb-8">
-            <h1 className="text-5xl font-bold text-center text-blue-800 mb-6">Padel Tournament</h1>
-            <div className="flex justify-center mt-6">
+          <header className="mb-6">
+            <h1 className="text-3xl font-bold text-center text-blue-800">Padel Tournament</h1>
+            <div className="flex justify-center mt-4">
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
                 <button
-                  className={`px-8 py-4 text-2x1 font-bold ${
+                  className={`px-6 py-3 font-bold ${
                     viewMode === 'input' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -1213,7 +1212,7 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                   Input Scores
                 </button>
                 <button
-                  className={`px-8 py-4 font-bold ${
+                  className={`px-6 py-3 font-bold ${
                     viewMode === 'standings' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -1223,7 +1222,7 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                   Standings
                 </button>
                 <button
-                  className={`px-8 py-4 text-2xl font-bold ${
+                  className={`px-6 py-3 font-bold ${
                     viewMode === 'detailedStandings' 
                       ? 'bg-blue-600 text-white' 
                       : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -1259,29 +1258,29 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
           {viewMode === 'input' && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               {/* Round Navigation */}
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4">
                 <button
-                  className="px-6 py-3 text-2xl font-bold bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
                   onClick={prevRound}
                   disabled={currentRound === 1}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Prev
                 </button>
-                <h2 className="text-3xl font-bold">
+                <h2 className="text-xl font-bold">
                   Round {currentRound}
-                  <span className="ml-3 text-2xl text-blue-600 font-semibold">({currentMatch.time})</span>
+                  <span className="ml-2 text-blue-600 font-normal">({currentMatch.time})</span>
                 </h2>
                 <button
-                  className="px-6 py-3 text-2xl font-bold bg-blue-100 text-blue-800 rounded-xl hover:bg-blue-200 disabled:opacity-50 transition-colors flex items-center"
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
                   onClick={nextRound}
                   disabled={currentRound === matches.length}
                 >
                   Next
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
               </div>
@@ -1313,27 +1312,27 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
               </div>
 
               {/* Not Playing */}
-              <div className="text-center mb-6 p-4 bg-amber-50 rounded-xl border-2 border-amber-200 shadow-sm">
-                <p className="text-2xl">
-                  <span className="font-bold">Not Playing:</span>{' '}
-                  <span className="text-amber-800 font-bold text-2xl">{getPlayerName(currentMatch.notPlaying)}</span>
+              <div className="text-center mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p>
+                  <span className="font-semibold">Not Playing:</span>{' '}
+                  <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
                 </p>
               </div>
 
               {/* Court 1 */}
-              <div className="bg-blue-600 text-white py-3 px-4 text-center font-bold text-2xl rounded-t-lg">
+              <div className="mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden">
                 <div className="bg-blue-600 text-white py-2 px-4 text-center font-bold">
                   Court 5
                 </div>
                 
                 {/* Team A */}
-                <div className="p-5">
+                <div className="p-4">
                   <div className="flex justify-between items-center mb-2">
                     <div>
-                      <div className="text-2x1 font-bold text-lg">
+                      <div className="font-bold text-lg">
                         {getTeamName(1, 'A')}
                       </div>
-                      <div className="text-xl mt-1">
+                      <div className="text-sm">
                         Games: <span className="font-semibold">{getGames(1, 'A')}</span>
                         {getScore(1, 'A') !== '-' && 
                           <span className="ml-2">
@@ -1342,7 +1341,7 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                         }
                       </div>
                     </div>
-                    <div className="px-5 py-2 bg-blue-100 text-blue-800 text-2xl font-bold rounded-xl border border-blue-200 shadow-sm">
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
                       {getTournamentPoints(1, 'A')} pts
                     </div>
                   </div>
@@ -1350,14 +1349,14 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                   {/* Score Input Buttons */}
                   <div className="mt-2">
                     {inputMode === 'games' ? (
-                      <div className="grid grid-cols-4 gap-3 mt-4">
+                      <div className="grid grid-cols-4 gap-2">
                         {[0, 1, 2, 3, 4, 5, 6].map((value) => (
                           <button
                             key={value}
-                            className={`py-4 text-2xl rounded-xl font-bold ${
+                            className={`py-2 rounded font-bold ${
                               currentMatch.court1.gamesA === value
-                                ? 'bg-blue-500 text-white shadow-md'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border-2 border-gray-200 hover:border-blue-300'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
                             }`}
                             onClick={() => updateGames(1, 'A', value)}
                           >
@@ -1365,21 +1364,21 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                           </button>
                         ))}
                         <button
-                          className="py-4 text-xl text-red-600 bg-white hover:bg-red-50 border-2 border-red-200 rounded-xl font-semibold"
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
                           onClick={() => updateGames(1, 'A', null)}
                         >
                           Clear
                         </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-3 gap-3 mt-4">
+                      <div className="grid grid-cols-3 gap-2">
                         {tennisScores.map((value) => (
                           <button
                             key={value}
-                            className={`py-4 text-2xl rounded-xl font-bold ${
+                            className={`py-2 rounded font-bold ${
                               currentMatch.court1.scoreA === value
-                                ? 'bg-green-500 text-white shadow-md'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border-2 border-gray-200 hover:border-green-300'
+                                ? 'bg-green-500 text-white'
+                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
                             }`}
                             onClick={() => updateScore(1, 'A', value)}
                           >
@@ -1387,7 +1386,7 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
                           </button>
                         ))}
                         <button
-                          className="py-4 text-xl text-red-600 bg-white hover:bg-red-50 border-2 border-red-200 rounded-xl font-semibold"
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
                           onClick={() => updateScore(1, 'A', null)}
                         >
                           Clear
@@ -1624,99 +1623,103 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
           )}
           {/* Standings View */}
           {viewMode === 'standings' && (
-            <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-3xl font-bold text-center mb-6 text-blue-800">Tournament Standings</h2>
-            
-            <div className="overflow-hidden rounded-xl border-2 border-gray-200 shadow-sm">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-blue-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-4 text-center text-lg font-semibold text-blue-800 uppercase tracking-wider">
-                      Pos
-                    </th>
-                    <th scope="col" className="px-6 py-4 text-left text-lg font-semibold text-blue-800 uppercase tracking-wider">
-                      Player
-                    </th>
-                    <th scope="col" className="px-6 py-4 text-right text-lg font-semibold text-blue-800 uppercase tracking-wider">
-                      Points
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
-                    <tr 
-                      key={player.id} 
-                      className={index === 0 ? 'bg-yellow-100' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
-                    >
-                      <td className="px-6 py-5 whitespace-nowrap text-center">
-                        <div className="text-2xl font-bold text-blue-800">{index + 1}</div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="text-2xl font-medium">{player.name}</div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap text-right">
-                        <div className="text-3xl font-bold text-blue-800">{player.score}</div>
-                      </td>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Tournament Standings</h2>
+              
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pos
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Points
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
+                      <tr 
+                        key={player.id} 
+                        className={index === 0 ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm font-bold text-blue-800">{player.score}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
           )}
           
           {/* Detailed Standings View */}
-          <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
-  <table className="min-w-full divide-y divide-gray-200">
-    <thead className="bg-blue-100">
-      <tr>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Pos</th>
-        <th className="px-5 py-4 text-left text-lg font-semibold text-blue-800 uppercase">Player</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Points</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Won</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Lost</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Diff</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-      {detailedStandingsData.map((player, index) => {
-        // Determine row class based on position and head-to-head result
-        let rowClass = ``;
-        if (index === 0) rowClass = 'bg-yellow-100';
-        else if (player.isH2HWinner) rowClass = 'bg-green-100';
-        else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
-        else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-        
-        return (
-          <tr 
-            key={player.id} 
-            className={rowClass}
-          >
-            <td className="px-5 py-4 text-center text-xl font-bold">{index + 1}</td>
-            <td className="px-5 py-4 whitespace-nowrap">
-              <div className="flex items-center">
-                <span className="text-xl font-medium">{player.name}</span>
-                {player.isH2HWinner && (
-                  <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-200 text-green-800">
-                    H2H
-                  </span>
-                )}
+          {viewMode === 'detailedStandings' && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Detailed Standings</h2>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pos</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Won</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Lost</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {detailedStandingsData.map((player, index) => {
+                      // Determine row class based on position and head-to-head result
+                      let rowClass = ``;
+                      if (index === 0) rowClass = 'bg-yellow-50';
+                      else if (player.isH2HWinner) rowClass = 'bg-green-50';
+                      else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
+                      else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                      
+                      return (
+                        <tr 
+                          key={player.id} 
+                          className={rowClass}
+                        >
+                          <td className="px-4 py-3 text-center text-sm font-medium">{index + 1}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium text-gray-900">{player.name}</span>
+                              {player.isH2HWinner && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  H2H
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center text-sm font-bold">{player.score}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesWon}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesLost}</td>
+                          <td className="px-4 py-3 text-center text-sm font-medium">
+                            <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
+                              {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </td>
-            <td className="px-5 py-4 text-center text-2xl font-bold">{player.score}</td>
-            <td className="px-5 py-4 text-center text-xl">{player.gamesWon}</td>
-            <td className="px-5 py-4 text-center text-xl">{player.gamesLost}</td>
-            <td className="px-5 py-4 text-center text-xl font-medium">
-              <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
-                {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
-              </span>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </table>
-</div>
               
               {/* Legend */}
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
