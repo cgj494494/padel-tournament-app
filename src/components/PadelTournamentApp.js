@@ -3,7 +3,72 @@ import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 //new insert1
 const [newTournamentName, setNewTournamentName] = useState('');
-
+// Add this near the top of your file, outside of your main component
+const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
+    const [newTournamentName, setNewTournamentName] = useState('');
+  
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
+        <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
+        
+        {/* Create new tournament */}
+        <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              value={newTournamentName}
+              onChange={(e) => setNewTournamentName(e.target.value)}
+              placeholder="Tournament Name"
+              className="flex-1 px-4 py-2 text-lg border rounded-lg"
+            />
+            <button
+              onClick={() => {
+                onCreateTournament(newTournamentName);
+                setNewTournamentName(''); // Clear input after creating
+              }}
+              disabled={!newTournamentName.trim()}
+              className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
+            >
+              Create
+            </button>
+          </div>
+        </div>
+        
+        {/* Load existing tournament */}
+        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
+          
+          {tournaments.length === 0 ? (
+            <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
+          ) : (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {tournaments.map((tournament) => (
+                <div
+                  key={tournament.id}
+                  onClick={() => onLoadTournament(tournament)}
+                  className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
+                >
+                  <div>
+                    <div className="font-bold text-xl">{tournament.name}</div>
+                    <div className="text-sm text-gray-500">{tournament.date}</div>
+                  </div>
+                  <button
+                    onClick={(e) => onDeleteTournament(tournament.id, e)}
+                    className="p-1 text-red-600 hover:bg-red-100 rounded"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 const PadelTournamentApp = () => {
   // Player data
   const [players, setPlayers] = useState([
@@ -1026,35 +1091,7 @@ const PadelTournamentApp = () => {
   };
 
   // Tournament selector view
-// Then completely replace your renderTournamentSelector function with this version
-const renderTournamentSelector = () => {
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
-      <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
-      
-      {/* Create new tournament */}
-      <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
-        <div className="flex items-center gap-4">
-          <input
-            type="text"
-            value={newTournamentName}
-            onChange={(e) => setNewTournamentName(e.target.value)}
-            placeholder="Tournament Name"
-            className="flex-1 px-4 py-2 text-lg border rounded-lg"
-          />
-          <button
-            onClick={() => {
-              createNewTournament(newTournamentName);
-              setNewTournamentName(''); // Clear input after creating
-            }}
-            disabled={!newTournamentName.trim()}
-            className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
-          >
-            Create
-          </button>
-        </div>
-      </div>
+
       
       {/* Load existing tournament */}
       <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
@@ -1154,8 +1191,15 @@ const renderTournamentSelector = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Tournament Selector Mode */}
       {showTournamentSelector ? (
-        renderTournamentSelector()
-      ) : (
+  <TournamentSelector 
+    tournaments={savedTournaments}
+    onCreateTournament={createNewTournament}
+    onLoadTournament={loadTournament}
+    onDeleteTournament={deleteTournament}
+  />
+) : (
+  // ...rest of the code
+)}
         <div className="max-w-4xl mx-auto p-4">
           {/* Tournament Navigation Bar */}
           {renderTournamentNavbar()}
