@@ -1039,9 +1039,9 @@ const PadelTournamentApp = () => {
           Position: index + 1,
           Player: player.name,
           Points: player.score,
+          Differential: player.gameDifferential,
           "Games Won": player.gamesWon,
           "Games Lost": player.gamesLost,
-          Differential: player.gameDifferential,
           "H2H Win": player.isH2HWinner ? "Yes" : ""
         };
       });
