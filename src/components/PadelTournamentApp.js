@@ -1738,6 +1738,6 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
       </div>
     </div>
   </div>
-)}
+}
               
 export default PadelTournamentApp;
