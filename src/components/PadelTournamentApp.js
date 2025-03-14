@@ -1,74 +1,78 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
-//new insert1
-const [newTournamentName, setNewTournamentName] = useState('');
-// Add this near the top of your file, outside of your main component
+
+// Tournament Selector Component
 const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
-    const [newTournamentName, setNewTournamentName] = useState('');
+  const [newTournamentName, setNewTournamentName] = useState('');
   
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
-        <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
-        
-        {/* Create new tournament */}
-        <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
-          <div className="flex items-center gap-4">
-            <input
-              type="text"
-              value={newTournamentName}
-              onChange={(e) => setNewTournamentName(e.target.value)}
-              placeholder="Tournament Name"
-              className="flex-1 px-4 py-2 text-lg border rounded-lg"
-            />
-            <button
-              onClick={() => {
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
+      <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
+      
+      {/* Create new tournament */}
+      <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            value={newTournamentName}
+            onChange={(e) => setNewTournamentName(e.target.value)}
+            placeholder="Tournament Name"
+            className="flex-1 px-4 py-2 text-lg border rounded-lg"
+          />
+          <button
+            onClick={() => {
+              if (newTournamentName.trim()) {
                 onCreateTournament(newTournamentName);
                 setNewTournamentName(''); // Clear input after creating
-              }}
-              disabled={!newTournamentName.trim()}
-              className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
-            >
-              Create
-            </button>
-          </div>
-        </div>
-        
-        {/* Load existing tournament */}
-        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
-          
-          {tournaments.length === 0 ? (
-            <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {tournaments.map((tournament) => (
-                <div
-                  key={tournament.id}
-                  onClick={() => onLoadTournament(tournament)}
-                  className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
-                >
-                  <div>
-                    <div className="font-bold text-xl">{tournament.name}</div>
-                    <div className="text-sm text-gray-500">{tournament.date}</div>
-                  </div>
-                  <button
-                    onClick={(e) => onDeleteTournament(tournament.id, e)}
-                    className="p-1 text-red-600 hover:bg-red-100 rounded"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+              }
+            }}
+            disabled={!newTournamentName.trim()}
+            className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
+          >
+            Create
+          </button>
         </div>
       </div>
-    );
-  };
+      
+      {/* Load existing tournament */}
+      <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
+        
+        {tournaments.length === 0 ? (
+          <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {tournaments.map((tournament) => (
+              <div
+                key={tournament.id}
+                onClick={() => onLoadTournament(tournament)}
+                className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
+              >
+                <div>
+                  <div className="font-bold text-xl">{tournament.name}</div>
+                  <div className="text-sm text-gray-500">{tournament.date}</div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteTournament(tournament.id);
+                  }}
+                  className="p-1 text-red-600 hover:bg-red-100 rounded"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 const PadelTournamentApp = () => {
   // Player data
   const [players, setPlayers] = useState([
@@ -83,7 +87,7 @@ const PadelTournamentApp = () => {
     { id: 9, name: 'Alistair', score: 0 }
   ]);
 
-  // Match schedule with doubles teams
+  // Match schedule with doubles teams (Rounds 1-3)
   const [matches, setMatches] = useState([
     {
       round: 1,
@@ -393,7 +397,6 @@ const PadelTournamentApp = () => {
       return [0, 3];
     }
   };
-
   // Build head-to-head records for all players
   const buildHeadToHeadRecords = () => {
     // Initialize head-to-head records matrix
@@ -565,7 +568,6 @@ const PadelTournamentApp = () => {
     setDetailedStandingsData(standingsData);
     setDetailedCalculated(true);
   };
-
   // Update player scores and calculate game differentials
   const updatePlayerScores = () => {
     const newPlayers = [...players].map(p => ({ 
@@ -649,6 +651,7 @@ const PadelTournamentApp = () => {
     
     setPlayers(newPlayers);
   };
+  
   // Current match data
   const currentMatch = matches[currentRound - 1];
 
@@ -671,7 +674,7 @@ const PadelTournamentApp = () => {
       { id: 9, name: 'Alistair', score: 0 }
     ]);
     
-    // Reset all scores in matches to null
+    // Reset all scores in matches
     setMatches([
       {
         round: 1,
@@ -875,15 +878,13 @@ const PadelTournamentApp = () => {
     setTournamentName(tournament.name);
     setPlayers(tournament.players);
     setMatches(tournament.matches);
-    setCurrentRound(tournament.currentRound);
+    setCurrentRound(tournament.currentRound || 1);
     setViewMode('input');
     setShowTournamentSelector(false);
   };
   
   // Function to delete a tournament
-  const deleteTournament = (id, event) => {
-    event.stopPropagation(); // Prevent triggering the parent click event
-    
+  const deleteTournament = (id) => {
     const updatedTournaments = savedTournaments.filter(t => t.id !== id);
     localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
     setSavedTournaments(updatedTournaments);
@@ -893,7 +894,6 @@ const PadelTournamentApp = () => {
   const backToTournamentSelector = () => {
     setShowTournamentSelector(true);
   };
-
   // Update games
   const updateGames = (court, team, games) => {
     setMatches(prevMatches => {
@@ -955,6 +955,8 @@ const PadelTournamentApp = () => {
 
   // Get team names
   const getTeamName = (court, team) => {
+    if (!currentMatch) return '';
+    
     const players = 
       court === 1 
         ? (team === 'A' ? currentMatch.court1.teamA : currentMatch.court1.teamB)
@@ -965,6 +967,8 @@ const PadelTournamentApp = () => {
 
   // Get games
   const getGames = (court, team) => {
+    if (!currentMatch) return '-';
+    
     const games = 
       court === 1 
         ? (team === 'A' ? currentMatch.court1.gamesA : currentMatch.court1.gamesB)
@@ -975,6 +979,8 @@ const PadelTournamentApp = () => {
 
   // Get score
   const getScore = (court, team) => {
+    if (!currentMatch) return '-';
+    
     const score = 
       court === 1 
         ? (team === 'A' ? currentMatch.court1.scoreA : currentMatch.court1.scoreB)
@@ -985,6 +991,8 @@ const PadelTournamentApp = () => {
 
   // Get tournament points
   const getTournamentPoints = (court, team) => {
+    if (!currentMatch) return 0;
+    
     if (court === 1) {
       const [pointsA, pointsB] = calculatePoints(
         currentMatch.court1.gamesA,
@@ -1003,165 +1011,150 @@ const PadelTournamentApp = () => {
       return team === 'A' ? pointsA : pointsB;
     }
   };
-
   // Export data to Excel
   const exportToExcel = () => {
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    
-    // Sheet 1: Overall Standings
-    const standingsData = [...players]
-      .sort((a, b) => b.score - a.score)
-      .map((player, index) => ({
-        Position: index + 1,
-        Player: player.name,
-        Points: player.score
-      }));
-    
-    const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
-    XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
-    
-    // Sheet 2: Detailed Standings
-    if (!detailedCalculated) {
-      prepareDetailedStandings();
-    }
-    
-    const detailedData = detailedStandingsData.map((player, index) => {
-      return {
-        Position: index + 1,
-        Player: player.name,
-        Points: player.score,
-        "Games Won": player.gamesWon,
-        "Games Lost": player.gamesLost,
-        Differential: player.gameDifferential,
-        "H2H Win": player.isH2HWinner ? "Yes" : ""
-      };
-    });
-    
-    const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
-    XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
-    
-    // Sheet 3: Match Results
-    const matchResultsData = [];
-    
-    matches.forEach(match => {
-      // Court 1
-      const teamA1Players = match.court1.teamA.map(id => getPlayerName(id)).join(' & ');
-      const teamB1Players = match.court1.teamB.map(id => getPlayerName(id)).join(' & ');
+    try {
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
       
-      // Court 2
-      const teamA2Players = match.court2.teamA.map(id => getPlayerName(id)).join(' & ');
-      const teamB2Players = match.court2.teamB.map(id => getPlayerName(id)).join(' & ');
+      // Sheet 1: Overall Standings
+      const standingsData = [...players]
+        .sort((a, b) => b.score - a.score)
+        .map((player, index) => ({
+          Position: index + 1,
+          Player: player.name,
+          Points: player.score
+        }));
       
-      // Add Court 1 data
-      matchResultsData.push({
-        Round: match.round,
-        Time: match.time,
-        Court: "Court 5",
-        "Team A": teamA1Players,
-        "Games A": match.court1.gamesA !== null ? match.court1.gamesA : "-",
-        "Score A": match.court1.scoreA !== null ? match.court1.scoreA : "-",
-        "Team B": teamB1Players,
-        "Games B": match.court1.gamesB !== null ? match.court1.gamesB : "-",
-        "Score B": match.court1.scoreB !== null ? match.court1.scoreB : "-"
+      const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
+      XLSX.utils.book_append_sheet(workbook, standingsSheet, "Standings");
+      
+      // Sheet 2: Detailed Standings
+      if (!detailedCalculated) {
+        prepareDetailedStandings();
+      }
+      
+      const detailedData = detailedStandingsData.map((player, index) => {
+        return {
+          Position: index + 1,
+          Player: player.name,
+          Points: player.score,
+          "Games Won": player.gamesWon,
+          "Games Lost": player.gamesLost,
+          Differential: player.gameDifferential,
+          "H2H Win": player.isH2HWinner ? "Yes" : ""
+        };
       });
       
-      // Add Court 2 data
-      matchResultsData.push({
-        Round: match.round,
-        Time: match.time,
-        Court: "Court 6",
-        "Team A": teamA2Players,
-        "Games A": match.court2.gamesA !== null ? match.court2.gamesA : "-",
-        "Score A": match.court2.scoreA !== null ? match.court2.scoreA : "-",
-        "Team B": teamB2Players,
-        "Games B": match.court2.gamesB !== null ? match.court2.gamesB : "-",
-        "Score B": match.court2.scoreB !== null ? match.court2.scoreB : "-"
-      });
-    });
-    
-    const matchResultsSheet = XLSX.utils.json_to_sheet(matchResultsData);
-    XLSX.utils.book_append_sheet(workbook, matchResultsSheet, "Match Results");
-    
-    // Generate filename with date
-    const fileName = `Padel_Tournament_Results_${exportDate.replace(/\//g, '-')}.xlsx`;
-    
-    // Export the file
-    XLSX.writeFile(workbook, fileName);
-  };
-
-  // Tournament selector view
-
+      const detailedSheet = XLSX.utils.json_to_sheet(detailedData);
+      XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
       
-      {/* Load existing tournament */}
-        <div className="min-h-screen bg-gray-50">
-          {/* Load existing tournament */}
-          <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
-            
-            {savedTournaments.length === 0 ? (
-              <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {savedTournaments.map((tournament) => (
-                  <div
-                    key={tournament.id}
-                    onClick={() => loadTournament(tournament)}
-                    className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
-                  >
-                    <div>
-                      <div className="font-bold text-xl">{tournament.name}</div>
-                      <div className="text-sm text-gray-500">{tournament.date}</div>
-                    </div>
-                    <button
-                      onClick={(e) => deleteTournament(tournament.id, e)}
-                      className="p-1 text-red-600 hover:bg-red-100 rounded"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      );
+      // Sheet 3: Match Results
+      const matchResultsData = [];
+      
+      matches.forEach(match => {
+        // Court 1
+        const teamA1Players = match.court1.teamA.map(id => getPlayerName(id)).join(' & ');
+        const teamB1Players = match.court1.teamB.map(id => getPlayerName(id)).join(' & ');
         
-        {/* Load existing tournament */}
-        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
-          
-          {savedTournaments.length === 0 ? (
-            <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
-          ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {savedTournaments.map((tournament) => (
-                <div
-                  key={tournament.id}
-                  onClick={() => loadTournament(tournament)}
-                  className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
-                >
-                  <div>
-                    <div className="font-bold text-xl">{tournament.name}</div>
-                    <div className="text-sm text-gray-500">{tournament.date}</div>
-                  </div>
-                  <button
-                    onClick={(e) => deleteTournament(tournament.id, e)}
-                    className="p-1 text-red-600 hover:bg-red-100 rounded"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+        // Court 2
+        const teamA2Players = match.court2.teamA.map(id => getPlayerName(id)).join(' & ');
+        const teamB2Players = match.court2.teamB.map(id => getPlayerName(id)).join(' & ');
+        
+        // Add Court 1 data
+        matchResultsData.push({
+          Round: match.round,
+          Time: match.time,
+          Court: "Court 5",
+          "Team A": teamA1Players,
+          "Games A": match.court1.gamesA !== null ? match.court1.gamesA : "-",
+          "Score A": match.court1.scoreA !== null ? match.court1.scoreA : "-",
+          "Team B": teamB1Players,
+          "Games B": match.court1.gamesB !== null ? match.court1.gamesB : "-",
+          "Score B": match.court1.scoreB !== null ? match.court1.scoreB : "-"
+        });
+        
+        // Add Court 2 data
+        matchResultsData.push({
+          Round: match.round,
+          Time: match.time,
+          Court: "Court 6",
+          "Team A": teamA2Players,
+          "Games A": match.court2.gamesA !== null ? match.court2.gamesA : "-",
+          "Score A": match.court2.scoreA !== null ? match.court2.scoreA : "-",
+          "Team B": teamB2Players,
+          "Games B": match.court2.gamesB !== null ? match.court2.gamesB : "-",
+          "Score B": match.court2.scoreB !== null ? match.court2.scoreB : "-"
+        });
+      });
+      
+      const matchResultsSheet = XLSX.utils.json_to_sheet(matchResultsData);
+      XLSX.utils.book_append_sheet(workbook, matchResultsSheet, "Match Results");
+      
+      // Sheet 4: Match Schedule
+      const scheduleData = [];
+      
+      matches.forEach(match => {
+        scheduleData.push({
+          Round: match.round,
+          Time: match.time,
+          Court: "Court 5",
+          "Team A": match.court1.teamA.map(id => getPlayerName(id)).join(' & '),
+          "Team B": match.court1.teamB.map(id => getPlayerName(id)).join(' & ')
+        });
+        
+        scheduleData.push({
+          Round: match.round,
+          Time: match.time,
+          Court: "Court 6",
+          "Team A": match.court2.teamA.map(id => getPlayerName(id)).join(' & '),
+          "Team B": match.court2.teamB.map(id => getPlayerName(id)).join(' & ')
+        });
+        
+        scheduleData.push({
+          Round: match.round,
+          Time: match.time,
+          Court: "Not Playing",
+          "Team A": getPlayerName(match.notPlaying),
+          "Team B": ""
+        });
+      });
+      
+      const scheduleSheet = XLSX.utils.json_to_sheet(scheduleData);
+      XLSX.utils.book_append_sheet(workbook, scheduleSheet, "Match Schedule");
+      
+      // Sheet 5: Head-to-Head Records
+      const h2hRecords = buildHeadToHeadRecords();
+      const h2hData = [];
+      
+      players.forEach(player => {
+        const row = {
+          Player: player.name
+        };
+        
+        players.forEach(opponent => {
+          if (player.id !== opponent.id) {
+            row[opponent.name] = h2hRecords[player.id][opponent.id];
+          } else {
+            row[opponent.name] = "-";
+          }
+        });
+        
+        h2hData.push(row);
+      });
+      
+      const h2hSheet = XLSX.utils.json_to_sheet(h2hData);
+      XLSX.utils.book_append_sheet(workbook, h2hSheet, "Head-to-Head");
+      
+      // Generate filename with date
+      const fileName = `Padel_Tournament_Results_${exportDate.replace(/\//g, '-')}.xlsx`;
+      
+      // Export the file
+      XLSX.writeFile(workbook, fileName);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      alert("There was an error exporting to Excel. Make sure the XLSX library is properly loaded.");
+    }
   };
 
   // Tournament navbar
@@ -1189,19 +1182,17 @@ const PadelTournamentApp = () => {
   };
   // Complete component return
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 p-4">
       {/* Tournament Selector Mode */}
       {showTournamentSelector ? (
-  <TournamentSelector 
-    tournaments={savedTournaments}
-    onCreateTournament={createNewTournament}
-    onLoadTournament={loadTournament}
-    onDeleteTournament={deleteTournament}
-  />
-) : (
-  // ...rest of the code
-)}
-        <div className="max-w-4xl mx-auto p-4">
+        <TournamentSelector 
+          tournaments={savedTournaments}
+          onCreateTournament={createNewTournament}
+          onLoadTournament={loadTournament}
+          onDeleteTournament={deleteTournament}
+        />
+      ) : (
+        <div className="max-w-4xl mx-auto">
           {/* Tournament Navigation Bar */}
           {renderTournamentNavbar()}
           
@@ -1263,7 +1254,6 @@ const PadelTournamentApp = () => {
               </div>
             )}
           </header>
-
           {/* Score Input View */}
           {viewMode === 'input' && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -1479,7 +1469,6 @@ const PadelTournamentApp = () => {
                   </div>
                 </div>
               </div>
-
               {/* Court 2 */}
               <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 overflow-hidden">
                 <div className="bg-green-600 text-white py-2 px-4 text-center font-bold">
@@ -1632,7 +1621,6 @@ const PadelTournamentApp = () => {
               </div>
             </div>
           )}
-
           {/* Standings View */}
           {viewMode === 'standings' && (
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -1675,7 +1663,7 @@ const PadelTournamentApp = () => {
               </div>
             </div>
           )}
-
+          
           {/* Detailed Standings View */}
           {viewMode === 'detailedStandings' && (
             <div className="bg-white rounded-lg shadow-md p-6">
