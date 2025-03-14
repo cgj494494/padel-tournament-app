@@ -1124,9 +1124,7 @@ const PadelTournamentApp = () => {
           </div>
         )}
       </div>
-    </div>
-  );
-};
+      );
         
         {/* Load existing tournament */}
         <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
