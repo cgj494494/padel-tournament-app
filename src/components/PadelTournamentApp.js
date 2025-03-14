@@ -1665,80 +1665,79 @@ XLSX.utils.book_append_sheet(workbook, detailedSheet, "Detailed Standings");
           </div>
           )}
           
-          {/* Detailed Standings View */}
-          <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
-  <table className="min-w-full divide-y divide-gray-200">
-    <thead className="bg-blue-100">
-      <tr>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Pos</th>
-        <th className="px-5 py-4 text-left text-lg font-semibold text-blue-800 uppercase">Player</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Points</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Won</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Lost</th>
-        <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Diff</th>
-      </tr>
-    </thead>
-    <tbody className="bg-white divide-y divide-gray-200">
-      {detailedStandingsData.map((player, index) => {
-        // Determine row class based on position and head-to-head result
-        let rowClass = ``;
-        if (index === 0) rowClass = 'bg-yellow-100';
-        else if (player.isH2HWinner) rowClass = 'bg-green-100';
-        else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
-        else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-        
-        return (
-          <tr 
-            key={player.id} 
-            className={rowClass}
-          >
-            <td className="px-5 py-4 text-center text-xl font-bold">{index + 1}</td>
-            <td className="px-5 py-4 whitespace-nowrap">
-              <div className="flex items-center">
-                <span className="text-xl font-medium">{player.name}</span>
-                {player.isH2HWinner && (
-                  <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-200 text-green-800">
-                    H2H
-                  </span>
-                )}
-              </div>
-            </td>
-            <td className="px-5 py-4 text-center text-2xl font-bold">{player.score}</td>
-            <td className="px-5 py-4 text-center text-xl">{player.gamesWon}</td>
-            <td className="px-5 py-4 text-center text-xl">{player.gamesLost}</td>
-            <td className="px-5 py-4 text-center text-xl font-medium">
-              <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
-                {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
-              </span>
-            </td>
+     {/* Detailed Standings View */}
+{viewMode === 'detailedStandings' && (
+  <div className="bg-white rounded-lg shadow-md p-6">
+    <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Detailed Standings</h2>
+    
+    <div className="overflow-x-auto rounded-xl border-2 border-gray-200 shadow-sm">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-blue-100">
+          <tr>
+            <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Pos</th>
+            <th className="px-5 py-4 text-left text-lg font-semibold text-blue-800 uppercase">Player</th>
+            <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Points</th>
+            <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Won</th>
+            <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Games Lost</th>
+            <th className="px-5 py-4 text-center text-lg font-semibold text-blue-800 uppercase">Diff</th>
           </tr>
-        );
-      })}
-    </tbody>
-  </table>
-</div>
-              
-              {/* Legend */}
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-yellow-50 border border-yellow-200 mr-1"></div>
-                  <span>Tournament leader</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-green-50 border border-green-200 mr-1"></div>
-                  <span>H2H winner</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
-                  <span>In tie group</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {detailedStandingsData.map((player, index) => {
+            // Determine row class based on position and head-to-head result
+            let rowClass = ``;
+            if (index === 0) rowClass = 'bg-yellow-100';
+            else if (player.isH2HWinner) rowClass = 'bg-green-100';
+            else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
+            else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+            
+            return (
+              <tr 
+                key={player.id} 
+                className={rowClass}
+              >
+                <td className="px-5 py-4 text-center text-xl font-bold">{index + 1}</td>
+                <td className="px-5 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <span className="text-xl font-medium">{player.name}</span>
+                    {player.isH2HWinner && (
+                      <span className="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-green-200 text-green-800">
+                        H2H
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-5 py-4 text-center text-2xl font-bold">{player.score}</td>
+                <td className="px-5 py-4 text-center text-xl">{player.gamesWon}</td>
+                <td className="px-5 py-4 text-center text-xl">{player.gamesLost}</td>
+                <td className="px-5 py-4 text-center text-xl font-medium">
+                  <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
+                    {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
-  );
-};
-
+    
+    {/* Legend */}
+    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+      <div className="flex items-center">
+        <div className="w-4 h-4 bg-yellow-50 border border-yellow-200 mr-1"></div>
+        <span>Tournament leader</span>
+      </div>
+      <div className="flex items-center">
+        <div className="w-4 h-4 bg-green-50 border border-green-200 mr-1"></div>
+        <span>H2H winner</span>
+      </div>
+      <div className="flex items-center">
+        <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
+        <span>In tie group</span>
+      </div>
+    </div>
+  </div>
+)}
+              
 export default PadelTournamentApp;
