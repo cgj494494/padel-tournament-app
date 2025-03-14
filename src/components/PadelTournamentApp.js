@@ -1637,6 +1637,6 @@ const exportToExcel = () => {
       </div>
     </div>
   </div>
-}
+
               
 export default PadelTournamentApp;
