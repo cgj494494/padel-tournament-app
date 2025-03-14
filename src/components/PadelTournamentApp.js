@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
+//new insert1
+const [newTournamentName, setNewTournamentName] = useState('');
 
 const PadelTournamentApp = () => {
   // Player data
@@ -1024,33 +1026,36 @@ const PadelTournamentApp = () => {
   };
 
   // Tournament selector view
-  const renderTournamentSelector = () => {
-    const [newTournamentName, setNewTournamentName] = useState('');
-    
-    return (
-      <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
-        <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
-        
-        {/* Create new tournament */}
-        <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
-          <div className="flex items-center gap-4">
-            <input
-              type="text"
-              value={newTournamentName}
-              onChange={(e) => setNewTournamentName(e.target.value)}
-              placeholder="Tournament Name"
-              className="flex-1 px-4 py-2 text-lg border rounded-lg"
-            />
-            <button
-              onClick={() => createNewTournament(newTournamentName)}
-              disabled={!newTournamentName.trim()}
-              className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
-            >
-              Create
-            </button>
-          </div>
+// modified your renderTournamentSelector function to remove the useState call
+const renderTournamentSelector = () => {
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
+      <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
+      
+      {/* Create new tournament */}
+      <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
+        <div className="flex items-center gap-4">
+          <input
+            type="text"
+            value={newTournamentName}
+            onChange={(e) => setNewTournamentName(e.target.value)}
+            placeholder="Tournament Name"
+            className="flex-1 px-4 py-2 text-lg border rounded-lg"
+          />
+          <button
+            onClick={() => {
+              createNewTournament(newTournamentName);
+              setNewTournamentName(''); // Clear input after creating
+            }}
+            disabled={!newTournamentName.trim()}
+            className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
+          >
+            Create
+          </button>
         </div>
+      </div>
+      
         
         {/* Load existing tournament */}
         <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
