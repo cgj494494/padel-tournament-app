@@ -1,0 +1,55 @@
+/* 
+This CSS file contains overrides to fix potential styling conflicts.
+Add this to your project and import it AFTER all other CSS files.
+*/
+
+/* Reset any problematic global styles that might be overriding Tailwind */
+* {
+  box-sizing: border-box;
+}
+
+/* Explicitly enforce some critical Tailwind styles that might be getting overridden */
+.bg-white {
+  background-color: white !important;
+}
+
+.bg-blue-600 {
+  background-color: #2563eb !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem !important;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+/* If circular-buttons.css is causing issues, we can scope or disable its styles */
+/* Uncomment and modify these if needed to prevent circular-buttons.css from affecting your app */
+/*
+.nav li:before {
+  display: none !important;
+}
+
+.nav a:before {
+  display: none !important;
+}
+
+.screen-reader-text,
+[class*="icon-"],
+.icon-home:after,
+.icon-cog:after,
+.icon-cw:after,
+.icon-location:after {
+  display: none !important;
+}
+*/
