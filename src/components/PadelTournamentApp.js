@@ -1198,7 +1198,7 @@ const PadelTournamentApp = () => {
 
           {/* Header */}
           <header className="mb-6">
-            <h1 className="text-3xl font-bold text-center text-blue-800">Padel Tournament</h1>
+            <h1 className="text-3xl font-bold text-center text-red-800">TESTING DEPLOYMENT</h1>
             <div className="flex justify-center mt-4">
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
                 <button
