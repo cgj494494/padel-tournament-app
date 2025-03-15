@@ -1348,9 +1348,9 @@ const PadelTournamentApp = () => {
                         {[0, 1, 2, 3, 4, 5, 6].map((value) => (
                           <button
                             key={value}
-                            className={`w-14 h-14 rounded-full font-bold text-xl flex items-center justify-center shadow-md ${currentMatch.court1.gamesA === value
-                              ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                              : 'bg-white text-gray-800 hover:bg-blue-50 border border-gray-200'
+                            className={`w-16 h-16 rounded-full font-bold text-2xl flex items-center justify-center shadow-lg ${currentMatch.court1.gamesA === value
+                                ? 'bg-purple-600 text-white ring-4 ring-purple-300'
+                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border-2 border-gray-300'
                               }`}
                             onClick={() => updateGames(1, 'A', value)}
                           >
@@ -1358,13 +1358,12 @@ const PadelTournamentApp = () => {
                           </button>
                         ))}
                         <button
-                          className="w-14 h-14 text-base text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded-full shadow-md flex items-center justify-center"
+                          className="w-16 h-16 text-lg text-red-600 bg-red-100 hover:bg-red-200 border-2 border-red-300 rounded-full shadow-lg flex items-center justify-center"
                           onClick={() => updateGames(1, 'A', null)}
                         >
                           Clear
                         </button>
                       </div>
-
                     ) : (
                       <div className="grid grid-cols-3 gap-3">
                         {tennisScores.map((value) => (
