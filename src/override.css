@@ -1,16 +1,101 @@
 /* 
-This CSS file contains overrides to fix potential styling conflicts.
-Add this to your project and import it AFTER all other CSS files.
+Enhanced override CSS for Padel Tournament App
+- Improves readability for older players
+- Enhances button styling with 3D effects
+- Fixes spacing issues throughout the app
 */
 
-/* Reset any problematic global styles that might be overriding Tailwind */
+/* Reset any problematic global styles */
 * {
   box-sizing: border-box;
 }
 
+/* 1. INCREASED TEXT SIZE & READABILITY */
+body, button, input, table, div, p, span {
+  font-size: 110% !important; /* Increase base font size throughout */
+}
+
+h1, h2, h3, .text-3xl, .text-2xl, .text-xl {
+  font-size: 130% !important; /* Larger headings */
+  font-weight: 700 !important; /* Bolder headings */
+}
+
+.font-bold {
+  font-weight: 700 !important; /* Extra bold for important text */
+}
+
+/* Increase contrast for text */
+.text-gray-500 {
+  color: #64748b !important; /* Darker gray for better contrast */
+}
+
+.text-gray-700 {
+  color: #334155 !important; /* Darker gray for better contrast */
+}
+
+/* 2. BUTTON IMPROVEMENTS */
+button {
+  font-size: 115% !important; /* Bigger text in buttons */
+  padding: 0.625rem 1rem !important; /* Larger touch targets */
+  touch-action: manipulation; /* Prevent double-tap zoom */
+  transition: transform 0.1s, box-shadow 0.1s !important; /* Smooth transitions */
+}
+
+/* 3D button effects */
+button:not([disabled]):active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+}
+
+/* Score buttons styling */
+.grid button {
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08) !important;
+  border-radius: 0.75rem !important; 
+  min-height: 2.75rem !important;
+  font-weight: 600 !important;
+}
+
+.grid button:hover {
+  box-shadow: 0 6px 8px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Better color contrast for selected buttons */
+.bg-blue-500, .bg-green-500 {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25) !important;
+  font-weight: 700 !important;
+}
+
+/* 3. LAYOUT SPACING */
 /* Add more padding to the bottom of the page */
 body {
-  padding-bottom: 60px !important;
+  padding-bottom: 100px !important;
+}
+
+/* Better spacing between sections */
+.p-4 {
+  padding: 1.25rem !important;
+}
+
+.p-6 {
+  padding: 1.75rem !important;
+}
+
+.mb-4 {
+  margin-bottom: 1.75rem !important;
+}
+
+.mb-6 {
+  margin-bottom: 2.25rem !important;
+}
+
+.gap-2 {
+  gap: 0.75rem !important; /* More space between grid items */
+}
+
+.py-2 {
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
 }
 
 /* Fix for Court 6 heading - ensure it's visible */
@@ -19,14 +104,41 @@ body {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+  padding: 0.75rem 1rem !important; /* Larger header */
+  font-size: 120% !important;
 }
 
-/* Add more spacing between sections */
-.mb-4 {
-  margin-bottom: 1.5rem !important;
+.bg-blue-600 {
+  background-color: #2563eb !important;
+  padding: 0.75rem 1rem !important; /* Larger header */
+  font-size: 120% !important;
+}
+
+/* Add more spacing between court sections */
+.mb-4.bg-gradient-to-r {
+  margin-bottom: 2.5rem !important;
 }
 
 /* Explicitly enforce some critical Tailwind styles that might be getting overridden */
+.bg-white {
+  background-color: white !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+.rounded-lg {
+  border-radius: 0.75rem !important; /* Larger rounded corners */
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+}
+
+.shadow-lg, .shadow-md {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.15) !important;
+}
 .bg-white {
   background-color: white !important;
 }
