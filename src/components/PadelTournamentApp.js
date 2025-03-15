@@ -1316,7 +1316,7 @@ const PadelTournamentApp = () => {
 
               {/* Court 1 */}
               <div className="mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden">
-                <div className="bg-blue-600 text-white py-2 px-4 text-center font-bold">
+                <div className="bg-purple-600 text-white py-3 px-4 text-center font-bold text-xl rounded-t-lg">
                   Court 5
                 </div>
 
@@ -1463,7 +1463,7 @@ const PadelTournamentApp = () => {
               </div>
               {/* Court 2 */}
               <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 overflow-hidden">
-                <div className="bg-green-600 text-white py-2 px-4 text-center font-bold">
+                <div className="bg-indigo-600 text-white py-3 px-4 text-center font-bold text-xl rounded-t-lg">
                   Court 6
                 </div>
 
@@ -1585,8 +1585,8 @@ const PadelTournamentApp = () => {
                           <button
                             key={value}
                             className={`w-14 h-14 rounded-full font-bold text-xl flex items-center justify-center shadow-md ${currentMatch.court2.scoreB === value
-                                ? 'bg-blue-600 text-white ring-2 ring-blue-300'
-                                : 'bg-white text-gray-800 hover:bg-blue-50 border border-gray-200'
+                              ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                              : 'bg-white text-gray-800 hover:bg-blue-50 border border-gray-200'
                               }`}
                             onClick={() => updateScore(2, 'B', value)}
                           >
