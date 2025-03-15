@@ -8,6 +8,24 @@ Add this to your project and import it AFTER all other CSS files.
   box-sizing: border-box;
 }
 
+/* Add more padding to the bottom of the page */
+body {
+  padding-bottom: 60px !important;
+}
+
+/* Fix for Court 6 heading - ensure it's visible */
+.bg-green-600 {
+  background-color: #16a34a !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Add more spacing between sections */
+.mb-4 {
+  margin-bottom: 1.5rem !important;
+}
+
 /* Explicitly enforce some critical Tailwind styles that might be getting overridden */
 .bg-white {
   background-color: white !important;
