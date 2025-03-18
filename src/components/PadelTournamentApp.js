@@ -1,7 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
-
+// Add this new component here, at the top level
+const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 transform transition-all animate-rise">
+        <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
+        <p className="mb-6 text-gray-600">
+          Are you sure you want to delete "<span className="font-semibold text-gray-800">{tournamentName}</span>"? 
+          This action cannot be undone.
+        </p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium text-gray-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 // Tournament Selector Component - new insertion on 18 03 25
 const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
   const [newTournamentName, setNewTournamentName] = useState('');
@@ -10,7 +39,7 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
     tournamentId: null,
     tournamentName: ''
   });
-
+  
   const openDeleteConfirmation = (e, tournament) => {
     e.stopPropagation();
     setDeleteConfirmation({
@@ -19,7 +48,7 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
       tournamentName: tournament.name
     });
   };
-
+  
   const closeDeleteConfirmation = () => {
     setDeleteConfirmation({
       isOpen: false,
@@ -27,16 +56,16 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
       tournamentName: ''
     });
   };
-
+  
   const confirmDelete = () => {
     onDeleteTournament(deleteConfirmation.tournamentId);
     closeDeleteConfirmation();
   };
-
+  
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
       <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
-
+      
       {/* Create new tournament */}
       <div className="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
         <h3 className="text-2xl font-bold mb-4">Create New Tournament</h3>
@@ -62,11 +91,11 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
           </button>
         </div>
       </div>
-
+      
       {/* Load existing tournament */}
       <div className="p-6 bg-gray-50 rounded-lg border border-gray-200">
         <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
-
+        
         {tournaments.length === 0 ? (
           <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
         ) : (
@@ -96,7 +125,7 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
           </div>
         )}
       </div>
-
+      
       {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={deleteConfirmation.isOpen}
