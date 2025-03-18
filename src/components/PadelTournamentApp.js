@@ -65,28 +65,10 @@ const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }
 // Tournament Selector Component - new insertion on 18 03 25
 const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
   const [newTournamentName, setNewTournamentName] = useState('');
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [tournamentToDelete, setTournamentToDelete] = useState(null);
-
-  const handleDeleteClick = (e, tournament) => {
-    e.stopPropagation();
-    setTournamentToDelete(tournament);
-    setShowConfirmDialog(true);
-  };
-
-  const handleCancelDelete = () => {
-    setShowConfirmDialog(false);
-    setTournamentToDelete(null);
-  };
-
-  const handleConfirmDelete = () => {
-    if (tournamentToDelete) {
-      onDeleteTournament(tournamentToDelete.id);
-    }
-    setShowConfirmDialog(false);
-    setTournamentToDelete(null);
-  };
-
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [currentTournament, setCurrentTournament] = useState(null);
+  
+  // Don't use any nested components or imports
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
       <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
@@ -136,7 +118,11 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
                   <div className="text-sm text-gray-500">{tournament.date}</div>
                 </div>
                 <button
-                  onClick={(e) => handleDeleteClick(e, tournament)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentTournament(tournament);
+                    setShowConfirm(true);
+                  }}
                   className="flex items-center px-3 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                   aria-label="Delete tournament"
                 >
@@ -150,6 +136,39 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      {showConfirm && currentTournament && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
+            <p className="mb-6 text-gray-600">
+              Are you sure you want to delete "{currentTournament.name}"? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteTournament(currentTournament.id);
+                  setShowConfirm(false);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
       
       {/* Delete Confirmation Dialog */}
       {showConfirmDialog && tournamentToDelete && (
