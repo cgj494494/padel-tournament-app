@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
-import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import { v4 as uuidv4 } from 'uuid';
 
 // Add the modal component with a unique name
 const TournamentDeleteModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
