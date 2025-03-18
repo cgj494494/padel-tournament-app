@@ -139,78 +139,8 @@ body {
 .shadow-lg, .shadow-md {
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15), 0 4px 6px -4px rgb(0 0 0 / 0.15) !important;
 }
-.bg-white {
-  background-color: white !important;
-}
 
-.bg-blue-600 {
-  background-color: #2563eb !important;
-}
-
-.text-white {
-  color: white !important;
-}
-
-.rounded-lg {
-  border-radius: 0.5rem !important;
-}
-
-.shadow {
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
-}
-
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-}
-
-/* If circular-buttons.css is causing issues, we can scope or disable its styles */
-/* Uncomment and modify these if needed to prevent circular-buttons.css from affecting your app */
-/*
-.nav li:before {
-  display: none !important;
-}
-
-.nav a:before {
-  display: none !important;
-}
-
-.screen-reader-text,
-[class*="icon-"],
-.icon-home:after,
-.icon-cog:after,
-.icon-cw:after,
-.icon-location:after {
-  display: none !important;
-}
-*/
-//insertion of new styles 18 03 25
-/* Add modal animation for professional appearance */
-@keyframes modal-rise {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-rise {
-  animation: modal-rise 0.3s ease-out forwards;
-}
-
-/* Improve modal background */
-.bg-opacity-50 {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Ensure modals appear on top */
-.z-50 {
-  z-index: 50 !important;
-}
-//further addition 18 03 25
-/* Add modal animation for professional appearance */
+/* Modal animations and styling - added 18/03/25 */
 @keyframes modal-rise {
   from {
     opacity: 0;
