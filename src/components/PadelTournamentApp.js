@@ -151,10 +151,10 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
         )}
       </div>
       
-      {/* Delete Confirmation Dialog - Using conditional rendering with unique variable names */}
+      {/* Delete Confirmation Dialog */}
       {showConfirmDialog && tournamentToDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 transform transition-all animate-rise">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 animate-rise">
             <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
             <p className="mb-6 text-gray-600">
               Are you sure you want to delete "<span className="font-semibold text-gray-800">{tournamentToDelete.name}</span>"? 
