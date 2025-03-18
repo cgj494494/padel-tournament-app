@@ -65,65 +65,28 @@ const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }
 // Tournament Selector Component - new insertion on 18 03 25
 const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
   const [newTournamentName, setNewTournamentName] = useState('');
-  const [deleteConfirmation, setDeleteConfirmation] = useState({
-    isOpen: false,
-    tournamentId: null,
-    tournamentName: ''
-  });
-  
-  // Modal component defined inline to avoid conflicts
-  const DeleteModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
-    if (!isOpen) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 transform transition-all animate-rise">
-          <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
-          <p className="mb-6 text-gray-600">
-            Are you sure you want to delete "<span className="font-semibold text-gray-800">{tournamentName}</span>"? 
-            This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium text-gray-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onConfirm}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  const openDeleteConfirmation = (e, tournament) => {
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [tournamentToDelete, setTournamentToDelete] = useState(null);
+
+  const handleDeleteClick = (e, tournament) => {
     e.stopPropagation();
-    setDeleteConfirmation({
-      isOpen: true,
-      tournamentId: tournament.id,
-      tournamentName: tournament.name
-    });
+    setTournamentToDelete(tournament);
+    setShowConfirmDialog(true);
   };
-  
-  const closeDeleteConfirmation = () => {
-    setDeleteConfirmation({
-      isOpen: false,
-      tournamentId: null,
-      tournamentName: ''
-    });
+
+  const handleCancelDelete = () => {
+    setShowConfirmDialog(false);
+    setTournamentToDelete(null);
   };
-  
-  const confirmDelete = () => {
-    onDeleteTournament(deleteConfirmation.tournamentId);
-    closeDeleteConfirmation();
+
+  const handleConfirmDelete = () => {
+    if (tournamentToDelete) {
+      onDeleteTournament(tournamentToDelete.id);
+    }
+    setShowConfirmDialog(false);
+    setTournamentToDelete(null);
   };
-  
+
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
       <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
@@ -143,7 +106,7 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
             onClick={() => {
               if (newTournamentName.trim()) {
                 onCreateTournament(newTournamentName);
-                setNewTournamentName(''); // Clear input after creating
+                setNewTournamentName('');
               }
             }}
             disabled={!newTournamentName.trim()}
@@ -173,7 +136,7 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
                   <div className="text-sm text-gray-500">{tournament.date}</div>
                 </div>
                 <button
-                  onClick={(e) => openDeleteConfirmation(e, tournament)}
+                  onClick={(e) => handleDeleteClick(e, tournament)}
                   className="flex items-center px-3 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                   aria-label="Delete tournament"
                 >
@@ -188,47 +151,37 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
         )}
       </div>
       
-      {/* Use the inline modal component */}
-      <DeleteModal
-        isOpen={deleteConfirmation.isOpen}
-        tournamentName={deleteConfirmation.tournamentName}
-        onCancel={closeDeleteConfirmation}
-        onConfirm={confirmDelete}
-      />
+      {/* Delete Confirmation Dialog - Using conditional rendering with unique variable names */}
+      {showConfirmDialog && tournamentToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 transform transition-all animate-rise">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
+            <p className="mb-6 text-gray-600">
+              Are you sure you want to delete "<span className="font-semibold text-gray-800">{tournamentToDelete.name}</span>"? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 //end of new insertion 1 then new insertion for delete
-const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
-  if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 m-4 transform transition-all animate-rise">
-        <h3 className="text-xl font-bold mb-4 text-gray-800">Delete Tournament?</h3>
-        <p className="mb-6 text-gray-600">
-          Are you sure you want to delete "<span className="font-semibold text-gray-800">{tournamentName}</span>"?
-          This action cannot be undone.
-        </p>
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium text-gray-800 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium text-white transition-colors"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-//end of insertion 2 18 03 25
 const PadelTournamentApp = () => {
   // Rest of existing code...
   const PadelTournamentApp = () => {
