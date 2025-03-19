@@ -1869,10 +1869,9 @@ const PadelTournamentApp = () => {
                 onCancel={() => setShowResetConfirm(false)}
                 onConfirm={resetTournamentScores}
               />
-            
+            )}
         </div>
-      )}
-    </div>
+</div>
   );
 };
 
