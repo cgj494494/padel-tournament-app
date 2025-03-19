@@ -993,8 +993,23 @@ const PadelTournamentApp = () => {
   };
 
   // Function to go back to tournament selection with confirmation
+  // Function to go back to tournament selection
   const backToTournamentSelector = () => {
-    setShowExitConfirm(true);
+    // Check if there are any unsaved changes (matches with scores)
+    const hasUnsavedChanges = matches.some(match =>
+      match.court1.gamesA !== null ||
+      match.court1.gamesB !== null ||
+      match.court2.gamesA !== null ||
+      match.court2.gamesB !== null
+    );
+
+    if (hasUnsavedChanges) {
+      // If there are unsaved changes, show confirmation modal
+      setShowExitConfirm(true);
+    } else {
+      // If no unsaved changes, directly go to tournament selector
+      setShowTournamentSelector(true);
+    }
   };
 
   const confirmBackToSelector = () => {
@@ -1848,7 +1863,7 @@ const PadelTournamentApp = () => {
                     <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
                     <span>In tie group</span>
                   </div>
-                  </div>
+                </div>
               </div>
             )}
 
