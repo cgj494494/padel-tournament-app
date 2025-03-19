@@ -458,7 +458,14 @@ const PadelTournamentApp = () => {
     updatePlayerScores();
     setDetailedCalculated(false);
   }, [matches]);
+// Add this useEffect below your other useEffect hooks
+useEffect(() => {
+  console.log("showExitConfirm changed to:", showExitConfirm);
+}, [showExitConfirm]);
 
+useEffect(() => {
+  console.log("showTournamentSelector changed to:", showTournamentSelector);
+}, [showTournamentSelector]);
   // Find player name by id
   const getPlayerName = (id) => {
     const player = players.find(p => p.id === id);
@@ -994,7 +1001,7 @@ const PadelTournamentApp = () => {
 
   // Function to go back to tournament selection with confirmation
   const backToTournamentSelector = () => {
-    console.log("Back button clicked!"); // Add this line
+    console.log("Back button clicked!");
     
     // Check if there are any unsaved changes (matches with scores)
     const hasUnsavedChanges = matches.some(match =>
@@ -1003,13 +1010,19 @@ const PadelTournamentApp = () => {
       match.court2.gamesA !== null ||
       match.court2.gamesB !== null
     );
+    
+    console.log("Has unsaved changes:", hasUnsavedChanges);
   
     if (hasUnsavedChanges) {
       // If there are unsaved changes, show confirmation modal
+      console.log("Showing confirmation modal");
       setShowExitConfirm(true);
+      console.log("showExitConfirm set to:", true);
     } else {
       // If no unsaved changes, directly go to tournament selector
+      console.log("Going directly to selector");
       setShowTournamentSelector(true);
+      console.log("showTournamentSelector set to:", true);
     }
   };
 
