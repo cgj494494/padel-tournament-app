@@ -1851,14 +1851,6 @@ const PadelTournamentApp = () => {
                 </div>
               </div>
             )}
-            {/* Reset Confirmation Modal */}
-            {showResetConfirm && (
-              <DeleteConfirmationModal
-                isOpen={showResetConfirm}
-                tournamentName={`${tournamentName} scores`}
-                onCancel={() => setShowResetConfirm(false)}
-                onConfirm={resetTournamentScores}
-              />
             )}
             {/* Exit Confirmation Modal */}
             {showExitConfirm && (
@@ -1869,6 +1861,15 @@ const PadelTournamentApp = () => {
                 onConfirm={confirmBackToSelector}
               />
             )}
+            {/* Reset Confirmation Modal */}
+            {showResetConfirm && (
+              <DeleteConfirmationModal
+                isOpen={showResetConfirm}
+                tournamentName={`${tournamentName} scores`}
+                onCancel={() => setShowResetConfirm(false)}
+                onConfirm={resetTournamentScores}
+              />
+            
         </div>
       )}
     </div>
