@@ -994,6 +994,8 @@ const PadelTournamentApp = () => {
 
   // Function to go back to tournament selection with confirmation
   const backToTournamentSelector = () => {
+    console.log("Back button clicked!"); // Add this line
+    
     // Check if there are any unsaved changes (matches with scores)
     const hasUnsavedChanges = matches.some(match =>
       match.court1.gamesA !== null ||
@@ -1001,7 +1003,7 @@ const PadelTournamentApp = () => {
       match.court2.gamesA !== null ||
       match.court2.gamesB !== null
     );
-
+  
     if (hasUnsavedChanges) {
       // If there are unsaved changes, show confirmation modal
       setShowExitConfirm(true);
