@@ -1848,10 +1848,10 @@ const PadelTournamentApp = () => {
                     <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
                     <span>In tie group</span>
                   </div>
-                </div>
+                  </div>
               </div>
             )}
-            )}
+
             {/* Exit Confirmation Modal */}
             {showExitConfirm && (
               <DeleteConfirmationModal
@@ -1861,6 +1861,7 @@ const PadelTournamentApp = () => {
                 onConfirm={confirmBackToSelector}
               />
             )}
+
             {/* Reset Confirmation Modal */}
             {showResetConfirm && (
               <DeleteConfirmationModal
@@ -1870,8 +1871,10 @@ const PadelTournamentApp = () => {
                 onConfirm={resetTournamentScores}
               />
             )}
+          </header>
         </div>
-</div>
+      )}
+    </div>
   );
 };
 
