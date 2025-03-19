@@ -993,7 +993,6 @@ const PadelTournamentApp = () => {
   };
 
   // Function to go back to tournament selection with confirmation
-  // Function to go back to tournament selection
   const backToTournamentSelector = () => {
     // Check if there are any unsaved changes (matches with scores)
     const hasUnsavedChanges = matches.some(match =>
@@ -1390,503 +1389,503 @@ const PadelTournamentApp = () => {
                 </button>
               </div>
             )}
-            {/* Score Input View */}
-            {viewMode === 'input' && (
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                {/* Round Navigation */}
-                <div className="flex justify-between items-center mb-4">
+          </header>
+          {/* Score Input View */}
+          {viewMode === 'input' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              {/* Round Navigation */}
+              <div className="flex justify-between items-center mb-4">
+                <button
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
+                  onClick={prevRound}
+                  disabled={currentRound === 1}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Prev
+                </button>
+                <h2 className="text-xl font-bold">
+                  Round {currentRound}
+                  <span className="ml-2 text-blue-600 font-normal">({currentMatch.time})</span>
+                </h2>
+                <button
+                  className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
+                  onClick={nextRound}
+                  disabled={currentRound === matches.length}
+                >
+                  Next
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Input Mode Toggle */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex">
                   <button
-                    className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
-                    onClick={prevRound}
-                    disabled={currentRound === 1}
+                    className={`px-4 py-2 rounded-md text-sm font-medium ${inputMode === 'games'
+                      ? 'bg-white shadow text-blue-800'
+                      : 'text-gray-700 hover:bg-gray-200'
+                      }`}
+                    onClick={() => setInputMode('games')}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Prev
+                    Games Won
                   </button>
-                  <h2 className="text-xl font-bold">
-                    Round {currentRound}
-                    <span className="ml-2 text-blue-600 font-normal">({currentMatch.time})</span>
-                  </h2>
                   <button
-                    className="p-2 text-blue-800 rounded-lg hover:bg-blue-50 disabled:opacity-50 transition-colors flex items-center"
-                    onClick={nextRound}
-                    disabled={currentRound === matches.length}
+                    className={`px-4 py-2 rounded-md text-sm font-medium ${inputMode === 'points'
+                      ? 'bg-white shadow text-blue-800'
+                      : 'text-gray-700 hover:bg-gray-200'
+                      }`}
+                    onClick={() => setInputMode('points')}
                   >
-                    Next
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    Current Point
                   </button>
                 </div>
+              </div>
 
-                {/* Input Mode Toggle */}
-                <div className="flex justify-center mb-4">
-                  <div className="bg-gray-100 p-1 rounded-lg inline-flex">
-                    <button
-                      className={`px-4 py-2 rounded-md text-sm font-medium ${inputMode === 'games'
-                        ? 'bg-white shadow text-blue-800'
-                        : 'text-gray-700 hover:bg-gray-200'
-                        }`}
-                      onClick={() => setInputMode('games')}
-                    >
-                      Games Won
-                    </button>
-                    <button
-                      className={`px-4 py-2 rounded-md text-sm font-medium ${inputMode === 'points'
-                        ? 'bg-white shadow text-blue-800'
-                        : 'text-gray-700 hover:bg-gray-200'
-                        }`}
-                      onClick={() => setInputMode('points')}
-                    >
-                      Current Point
-                    </button>
+              {/* Not Playing */}
+              <div className="text-center mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p>
+                  <span className="font-semibold">Not Playing:</span>{' '}
+                  <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
+                </p>
+              </div>
+
+              {/* Court 1 */}
+              <div className="mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden">
+                <div className="bg-blue-600 text-white py-2 px-4 text-center font-bold">
+                  Court 5
+                </div>
+
+                {/* Team A */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(1, 'A')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(1, 'A')}</span>
+                        {getScore(1, 'A') !== '-' &&
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(1, 'A')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
+                      {getTournamentPoints(1, 'A')} pts
+                    </div>
+                  </div>
+
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court1.gamesA === value
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateGames(1, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(1, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court1.scoreA === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateScore(1, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(1, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Not Playing */}
-                <div className="text-center mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                  <p>
-                    <span className="font-semibold">Not Playing:</span>{' '}
-                    <span className="text-amber-800 font-bold">{getPlayerName(currentMatch.notPlaying)}</span>
-                  </p>
-                </div>
+                <div className="border-t border-blue-200"></div>
 
-                {/* Court 1 */}
-                <div className="mb-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200 overflow-hidden">
-                  <div className="bg-blue-600 text-white py-2 px-4 text-center font-bold">
-                    Court 5
-                  </div>
-
-                  {/* Team A */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <div className="font-bold text-lg">
-                          {getTeamName(1, 'A')}
-                        </div>
-                        <div className="text-sm">
-                          Games: <span className="font-semibold">{getGames(1, 'A')}</span>
-                          {getScore(1, 'A') !== '-' &&
-                            <span className="ml-2">
-                              Current: <span className="font-semibold">{getScore(1, 'A')}</span>
-                            </span>
-                          }
-                        </div>
+                {/* Team B */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(1, 'B')}
                       </div>
-                      <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
-                        {getTournamentPoints(1, 'A')} pts
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(1, 'B')}</span>
+                        {getScore(1, 'B') !== '-' &&
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(1, 'B')}</span>
+                          </span>
+                        }
                       </div>
                     </div>
-
-                    {/* Score Input Buttons */}
-                    <div className="mt-2">
-                      {inputMode === 'games' ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {[0, 1, 2, 3, 4, 5, 6].map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court1.gamesA === value
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateGames(1, 'A', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateGames(1, 'A', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {tennisScores.map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court1.scoreA === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateScore(1, 'A', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateScore(1, 'A', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
+                    <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
+                      {getTournamentPoints(1, 'B')} pts
                     </div>
                   </div>
 
-                  <div className="border-t border-blue-200"></div>
-
-                  {/* Team B */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <div className="font-bold text-lg">
-                          {getTeamName(1, 'B')}
-                        </div>
-                        <div className="text-sm">
-                          Games: <span className="font-semibold">{getGames(1, 'B')}</span>
-                          {getScore(1, 'B') !== '-' &&
-                            <span className="ml-2">
-                              Current: <span className="font-semibold">{getScore(1, 'B')}</span>
-                            </span>
-                          }
-                        </div>
-                      </div>
-                      <div className="px-3 py-1 bg-blue-100 text-blue-800 font-bold rounded border border-blue-200">
-                        {getTournamentPoints(1, 'B')} pts
-                      </div>
-                    </div>
-
-                    {/* Score Input Buttons */}
-                    <div className="mt-2">
-                      {inputMode === 'games' ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {[0, 1, 2, 3, 4, 5, 6].map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court1.gamesB === value
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateGames(1, 'B', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
                           <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateGames(1, 'B', null)}
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court1.gamesB === value
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateGames(1, 'B', value)}
                           >
-                            Clear
+                            {value}
                           </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {tennisScores.map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court1.scoreB === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateScore(1, 'B', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateScore(1, 'B', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Court 2 */}
-                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 overflow-hidden">
-                  <div className="bg-green-600 text-white py-2 px-4 text-center font-bold">
-                    Court 6
-                  </div>
-
-                  {/* Team A */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <div className="font-bold text-lg">
-                          {getTeamName(2, 'A')}
-                        </div>
-                        <div className="text-sm">
-                          Games: <span className="font-semibold">{getGames(2, 'A')}</span>
-                          {getScore(2, 'A') !== '-' &&
-                            <span className="ml-2">
-                              Current: <span className="font-semibold">{getScore(2, 'A')}</span>
-                            </span>
-                          }
-                        </div>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(1, 'B', null)}
+                        >
+                          Clear
+                        </button>
                       </div>
-                      <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
-                        {getTournamentPoints(2, 'A')} pts
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court1.scoreB === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateScore(1, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(1, 'B', null)}
+                        >
+                          Clear
+                        </button>
                       </div>
-                    </div>
-
-                    {/* Score Input Buttons */}
-                    <div className="mt-2">
-                      {inputMode === 'games' ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {[0, 1, 2, 3, 4, 5, 6].map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court2.gamesA === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateGames(2, 'A', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateGames(2, 'A', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {tennisScores.map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court2.scoreA === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateScore(2, 'A', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateScore(2, 'A', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-green-200"></div>
-
-                  {/* Team B */}
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <div>
-                        <div className="font-bold text-lg">
-                          {getTeamName(2, 'B')}
-                        </div>
-                        <div className="text-sm">
-                          Games: <span className="font-semibold">{getGames(2, 'B')}</span>
-                          {getScore(2, 'B') !== '-' &&
-                            <span className="ml-2">
-                              Current: <span className="font-semibold">{getScore(2, 'B')}</span>
-                            </span>
-                          }
-                        </div>
-                      </div>
-                      <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
-                        {getTournamentPoints(2, 'B')} pts
-                      </div>
-                    </div>
-
-                    {/* Score Input Buttons */}
-                    <div className="mt-2">
-                      {inputMode === 'games' ? (
-                        <div className="grid grid-cols-4 gap-2">
-                          {[0, 1, 2, 3, 4, 5, 6].map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court2.gamesB === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateGames(2, 'B', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateGames(2, 'B', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          {tennisScores.map((value) => (
-                            <button
-                              key={value}
-                              className={`py-2 rounded font-bold ${currentMatch.court2.scoreB === value
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                              onClick={() => updateScore(2, 'B', value)}
-                            >
-                              {value}
-                            </button>
-                          ))}
-                          <button
-                            className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
-                            onClick={() => updateScore(2, 'B', null)}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* Standings View */}
-            {viewMode === 'standings' && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Tournament Standings</h2>
+              {/* Court 2 */}
+              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200 overflow-hidden">
+                <div className="bg-green-600 text-white py-2 px-4 text-center font-bold">
+                  Court 6
+                </div>
 
-                <div className="overflow-hidden rounded-lg border border-gray-200">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Pos
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Player
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Points
-                        </th>
+                {/* Team A */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(2, 'A')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(2, 'A')}</span>
+                        {getScore(2, 'A') !== '-' &&
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(2, 'A')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
+                      {getTournamentPoints(2, 'A')} pts
+                    </div>
+                  </div>
+
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court2.gamesA === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateGames(2, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(2, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court2.scoreA === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateScore(2, 'A', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(2, 'A', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-green-200"></div>
+
+                {/* Team B */}
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div>
+                      <div className="font-bold text-lg">
+                        {getTeamName(2, 'B')}
+                      </div>
+                      <div className="text-sm">
+                        Games: <span className="font-semibold">{getGames(2, 'B')}</span>
+                        {getScore(2, 'B') !== '-' &&
+                          <span className="ml-2">
+                            Current: <span className="font-semibold">{getScore(2, 'B')}</span>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                    <div className="px-3 py-1 bg-green-100 text-green-800 font-bold rounded border border-green-200">
+                      {getTournamentPoints(2, 'B')} pts
+                    </div>
+                  </div>
+
+                  {/* Score Input Buttons */}
+                  <div className="mt-2">
+                    {inputMode === 'games' ? (
+                      <div className="grid grid-cols-4 gap-2">
+                        {[0, 1, 2, 3, 4, 5, 6].map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court2.gamesB === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateGames(2, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateGames(2, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        {tennisScores.map((value) => (
+                          <button
+                            key={value}
+                            className={`py-2 rounded font-bold ${currentMatch.court2.scoreB === value
+                              ? 'bg-green-500 text-white'
+                              : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-200'
+                              }`}
+                            onClick={() => updateScore(2, 'B', value)}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                        <button
+                          className="py-2 text-sm text-red-600 bg-white hover:bg-red-50 border border-red-200 rounded"
+                          onClick={() => updateScore(2, 'B', null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standings View */}
+          {viewMode === 'standings' && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Tournament Standings</h2>
+
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pos
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player
+                      </th>
+                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Points
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
+                      <tr
+                        key={player.id}
+                        className={index === 0 ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                          {index + 1}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{player.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="text-sm font-bold text-blue-800">{player.score}</div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {[...players].sort((a, b) => b.score - a.score).map((player, index) => (
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Detailed Standings View */}
+          {viewMode === 'detailedStandings' && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Detailed Standings</h2>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-blue-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pos</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Won</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Lost</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Diff</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {detailedStandingsData.map((player, index) => {
+                      // Determine row class based on position and head-to-head result
+                      let rowClass = ``;
+                      if (index === 0) rowClass = 'bg-yellow-50';
+                      else if (player.isH2HWinner) rowClass = 'bg-green-50';
+                      else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
+                      else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+
+                      return (
                         <tr
                           key={player.id}
-                          className={index === 0 ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50')}
+                          className={rowClass}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
-                            {index + 1}
+                          <td className="px-4 py-3 text-center text-sm font-medium">{index + 1}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <span className="text-sm font-medium text-gray-900">{player.name}</span>
+                              {player.isH2HWinner && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  H2H
+                                </span>
+                              )}
+                            </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{player.name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="text-sm font-bold text-blue-800">{player.score}</div>
+                          <td className="px-4 py-3 text-center text-sm font-bold">{player.score}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesWon}</td>
+                          <td className="px-4 py-3 text-center text-sm">{player.gamesLost}</td>
+                          <td className="px-4 py-3 text-center text-sm font-medium">
+                            <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
+                              {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
+                            </span>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Legend */}
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-yellow-50 border border-yellow-200 mr-1"></div>
+                  <span>Tournament leader</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-green-50 border border-green-200 mr-1"></div>
+                  <span>H2H winner</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
+                  <span>In tie group</span>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Detailed Standings View */}
-            {viewMode === 'detailedStandings' && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-center mb-4 text-blue-800">Detailed Standings</h2>
+          {/* Exit Confirmation Modal */}
+          {showExitConfirm && (
+            <DeleteConfirmationModal
+              isOpen={showExitConfirm}
+              tournamentName={tournamentName}
+              onCancel={() => setShowExitConfirm(false)}
+              onConfirm={confirmBackToSelector}
+            />
+          )}
 
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-blue-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pos</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Won</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Games Lost</th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Diff</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {detailedStandingsData.map((player, index) => {
-                        // Determine row class based on position and head-to-head result
-                        let rowClass = ``;
-                        if (index === 0) rowClass = 'bg-yellow-50';
-                        else if (player.isH2HWinner) rowClass = 'bg-green-50';
-                        else if (player.isInTieGroup && !player.isH2HWinner) rowClass = 'bg-blue-50';
-                        else rowClass = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-
-                        return (
-                          <tr
-                            key={player.id}
-                            className={rowClass}
-                          >
-                            <td className="px-4 py-3 text-center text-sm font-medium">{index + 1}</td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <span className="text-sm font-medium text-gray-900">{player.name}</span>
-                                {player.isH2HWinner && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    H2H
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-center text-sm font-bold">{player.score}</td>
-                            <td className="px-4 py-3 text-center text-sm">{player.gamesWon}</td>
-                            <td className="px-4 py-3 text-center text-sm">{player.gamesLost}</td>
-                            <td className="px-4 py-3 text-center text-sm font-medium">
-                              <span className={player.gameDifferential > 0 ? 'text-green-600' : (player.gameDifferential < 0 ? 'text-red-600' : '')}>
-                                {player.gameDifferential > 0 ? '+' : ''}{player.gameDifferential}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Legend */}
-                <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-yellow-50 border border-yellow-200 mr-1"></div>
-                    <span>Tournament leader</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-green-50 border border-green-200 mr-1"></div>
-                    <span>H2H winner</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-blue-50 border border-blue-200 mr-1"></div>
-                    <span>In tie group</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Exit Confirmation Modal */}
-            {showExitConfirm && (
-              <DeleteConfirmationModal
-                isOpen={showExitConfirm}
-                tournamentName={tournamentName}
-                onCancel={() => setShowExitConfirm(false)}
-                onConfirm={confirmBackToSelector}
-              />
-            )}
-
-            {/* Reset Confirmation Modal */}
-            {showResetConfirm && (
-              <DeleteConfirmationModal
-                isOpen={showResetConfirm}
-                tournamentName={`${tournamentName} scores`}
-                onCancel={() => setShowResetConfirm(false)}
-                onConfirm={resetTournamentScores}
-              />
-            )}
-          </header>
+          {/* Reset Confirmation Modal */}
+          {showResetConfirm && (
+            <DeleteConfirmationModal
+              isOpen={showResetConfirm}
+              tournamentName={`${tournamentName} scores`}
+              onCancel={() => setShowResetConfirm(false)}
+              onConfirm={resetTournamentScores}
+            />
+          )}
         </div>
       )}
     </div>
