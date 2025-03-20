@@ -34,7 +34,14 @@ const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }
   );
 };
 // Tournament Selector Component
-const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament, onDeleteTournament }) => {
+const TournamentSelector = ({
+  tournaments,
+  onCreateTournament,
+  onLoadTournament,
+  onDeleteTournament,
+  onManagePlayers, // New prop
+  playerCount      // New prop
+}) => {
   const [newTournamentName, setNewTournamentName] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [currentTournament, setCurrentTournament] = useState(null);
@@ -105,6 +112,23 @@ const TournamentSelector = ({ tournaments, onCreateTournament, onLoadTournament,
             ))}
           </div>
         )}
+      </div>
+      {/* Manage Players Button - ADD THIS SECTION */}
+      <div className="mt-6 p-6 bg-purple-50 rounded-lg border border-purple-200">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-2xl font-bold">Player Management</h3>
+            <p className="text-gray-600">
+              {playerCount} players available for tournaments
+            </p>
+          </div>
+          <button
+            onClick={onManagePlayers}
+            className="px-6 py-2 text-lg font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          >
+            Manage Players
+          </button>
+        </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -349,7 +373,9 @@ const PadelTournamentApp = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   // For the exit confirmation
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-
+  // Add this with your other state declarations
+  const [showPlayerManagement, setShowPlayerManagement] = useState(false);
+  const [managedPlayers, setManagedPlayers] = useState([]);
   // For haptic feedback on mobile devices
   const triggerHapticFeedback = () => {
     if (window.navigator && window.navigator.vibrate) {
@@ -459,14 +485,14 @@ const PadelTournamentApp = () => {
     updatePlayerScores();
     setDetailedCalculated(false);
   }, [matches]);
-// Add this useEffect below your other useEffect hooks
-useEffect(() => {
-  console.log("showExitConfirm changed to:", showExitConfirm);
-}, [showExitConfirm]);
+  // Add this useEffect below your other useEffect hooks
+  useEffect(() => {
+    console.log("showExitConfirm changed to:", showExitConfirm);
+  }, [showExitConfirm]);
 
-useEffect(() => {
-  console.log("showTournamentSelector changed to:", showTournamentSelector);
-}, [showTournamentSelector]);
+  useEffect(() => {
+    console.log("showTournamentSelector changed to:", showTournamentSelector);
+  }, [showTournamentSelector]);
   // Find player name by id
   const getPlayerName = (id) => {
     const player = players.find(p => p.id === id);
@@ -1003,7 +1029,7 @@ useEffect(() => {
   // Function to go back to tournament selection with confirmation
   const backToTournamentSelector = () => {
     console.log("Back button clicked!");
-    
+
     // Check if there are any unsaved changes (matches with scores)
     const hasUnsavedChanges = matches.some(match =>
       match.court1.gamesA !== null ||
@@ -1011,9 +1037,9 @@ useEffect(() => {
       match.court2.gamesA !== null ||
       match.court2.gamesB !== null
     );
-    
+
     console.log("Has unsaved changes:", hasUnsavedChanges);
-  
+
     if (hasUnsavedChanges) {
       // If there are unsaved changes, show confirmation modal
       console.log("Showing confirmation modal");
@@ -1030,6 +1056,32 @@ useEffect(() => {
   const confirmBackToSelector = () => {
     setShowExitConfirm(false);
     setShowTournamentSelector(true);
+  };
+  // Load players from localStorage
+  useEffect(() => {
+    const loadedPlayers = PlayerManagementUtils.loadPlayers();
+    setManagedPlayers(loadedPlayers);
+  }, []);
+
+  // Player management functions
+  const handleAddPlayer = (player) => {
+    const updatedPlayers = [...managedPlayers, player];
+    setManagedPlayers(updatedPlayers);
+    PlayerManagementUtils.savePlayers(updatedPlayers);
+  };
+
+  const handleUpdatePlayer = (updatedPlayer) => {
+    const updatedPlayers = managedPlayers.map(p =>
+      p.id === updatedPlayer.id ? updatedPlayer : p
+    );
+    setManagedPlayers(updatedPlayers);
+    PlayerManagementUtils.savePlayers(updatedPlayers);
+  };
+
+  const handleDeletePlayer = (playerId) => {
+    const updatedPlayers = managedPlayers.filter(p => p.id !== playerId);
+    setManagedPlayers(updatedPlayers);
+    PlayerManagementUtils.savePlayers(updatedPlayers);
   };
   // Update games
   const updateGames = (court, team, games) => {
@@ -1327,13 +1379,27 @@ useEffect(() => {
     <div className="min-h-screen bg-gray-50 p-4">
       {/* Tournament Selector Mode */}
       {showTournamentSelector ? (
-        <TournamentSelector
-          tournaments={savedTournaments}
-          onCreateTournament={createNewTournament}
-          onLoadTournament={loadTournament}
-          onDeleteTournament={deleteTournament}
-        />
-      ) : (
+  <>
+    <TournamentSelector
+      tournaments={savedTournaments}
+      onCreateTournament={createNewTournament}
+      onLoadTournament={loadTournament}
+      onDeleteTournament={deleteTournament}
+      onManagePlayers={() => setShowPlayerManagement(true)}
+      playerCount={managedPlayers.length}
+    />
+    
+    {/* Player Management Modal */}
+    <PlayerManagementModal
+      isOpen={showPlayerManagement}
+      onClose={() => setShowPlayerManagement(false)}
+      players={managedPlayers}
+      onAddPlayer={handleAddPlayer}
+      onUpdatePlayer={handleUpdatePlayer}
+      onDeletePlayer={handleDeletePlayer}
+    />
+  </>
+) : (
         <div className="max-w-4xl mx-auto">
           {/* Tournament Navigation Bar */}
           {renderTournamentNavbar()}
