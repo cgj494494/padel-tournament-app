@@ -63,12 +63,7 @@ const TournamentSelector = ({
             className="flex-1 px-4 py-2 text-lg border rounded-lg"
           />
           <button
-            onClick={() => {
-              if (newTournamentName.trim()) {
-                onCreateTournament(newTournamentName);
-                setNewTournamentName('');
-              }
-            }}
+            onClick={handleStartCreation}  // Use the new two-step flow
             disabled={!newTournamentName.trim()}
             className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
           >
