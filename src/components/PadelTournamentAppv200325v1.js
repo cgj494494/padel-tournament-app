@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerManagementModal, PlayerManagementUtils } from './PlayerManagementComponent';
-import PlayerSelectionView from './PlayerSelectionView';
 
 // Delete Confirmation Modal Component
 const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
@@ -794,25 +793,216 @@ const PadelTournamentApp = () => {
   // Current match data
   const currentMatch = matches[currentRound - 1];
 
-  // Function to create a new tournament
-  const createNewTournament = (name, selectedPlayers) => {
+  // Function to create a new tournament new 1903
+  const createNewTournament = (name) => {
     const newId = uuidv4();
     setTournamentId(newId);
     setTournamentName(name);
+    // Reset to default values
+    setPlayers([
+      { id: 1, name: 'Amo', score: 0 },
+      { id: 2, name: 'James', score: 0 },
+      { id: 3, name: 'Paul', score: 0 },
+      { id: 4, name: 'Ian', score: 0 },
+      { id: 5, name: 'David', score: 0 },
+      { id: 6, name: 'Michael', score: 0 },
+      { id: 7, name: 'Chris', score: 0 },
+      { id: 8, name: 'Mariano', score: 0 },
+      { id: 9, name: 'Alistair', score: 0 }
+    ]);
 
-    // Convert selected players to the format used by the tournament
-    const formattedPlayers = selectedPlayers.map((player, index) => ({
-      id: player.id,
-      name: `${player.firstName} ${player.surname}`,
-      score: 0
-    }));
-
-    setPlayers(formattedPlayers);
-
-    // Generate matches based on selected players
-    const generatedMatches = generateTournamentSchedule(formattedPlayers);
-    setMatches(generatedMatches);
-
+    // Reset all matches with the full match data
+    setMatches([
+      {
+        round: 1,
+        time: "11:15",
+        court1: {
+          teamA: [1, 6],
+          teamB: [2, 7],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [3, 8],
+          teamB: [4, 9],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 5
+      },
+      {
+        round: 2,
+        time: "11:28",
+        court1: {
+          teamA: [9, 2],
+          teamB: [5, 4],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [7, 6],
+          teamB: [8, 1],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 3
+      },
+      {
+        round: 3,
+        time: "11:41",
+        court1: {
+          teamA: [1, 8],
+          teamB: [7, 9],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [5, 3],
+          teamB: [4, 2],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 6
+      },
+      {
+        round: 4,
+        time: "11:54",
+        court1: {
+          teamA: [2, 3],
+          teamB: [4, 6],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [5, 1],
+          teamB: [9, 7],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 8
+      },
+      {
+        round: 5,
+        time: "12:07",
+        court1: {
+          teamA: [5, 9],
+          teamB: [8, 7],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [3, 2],
+          teamB: [6, 4],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 1
+      },
+      {
+        round: 6,
+        time: "12:20",
+        court1: {
+          teamA: [1, 5],
+          teamB: [9, 3],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [2, 8],
+          teamB: [6, 7],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 4
+      },
+      {
+        round: 7,
+        time: "12:33",
+        court1: {
+          teamA: [9, 6],
+          teamB: [7, 5],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [3, 1],
+          teamB: [8, 4],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 2
+      },
+      {
+        round: 8,
+        time: "12:45",
+        court1: {
+          teamA: [3, 9],
+          teamB: [4, 5],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [6, 8],
+          teamB: [1, 2],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 7
+      },
+      {
+        round: 9,
+        time: "12:58",
+        court1: {
+          teamA: [8, 4],
+          teamB: [7, 2],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        court2: {
+          teamA: [6, 5],
+          teamB: [1, 3],
+          gamesA: null,
+          gamesB: null,
+          scoreA: null,
+          scoreB: null
+        },
+        notPlaying: 9
+      }
+    ]);
     setCurrentRound(1);
     setViewMode('input');
     setShowTournamentSelector(false);
@@ -822,25 +1012,7 @@ const PadelTournamentApp = () => {
   const loadTournament = (tournament) => {
     setTournamentId(tournament.id);
     setTournamentName(tournament.name);
-
-    // Handle both old format (default players) and new format (dynamic players)
-    if (tournament.players) {
-      setPlayers(tournament.players);
-    } else {
-      // Use default players if tournament was created before this update
-      setPlayers([
-        { id: 1, name: 'Amo', score: 0 },
-        { id: 2, name: 'James', score: 0 },
-        { id: 3, name: 'Paul', score: 0 },
-        { id: 4, name: 'Ian', score: 0 },
-        { id: 5, name: 'David', score: 0 },
-        { id: 6, name: 'Michael', score: 0 },
-        { id: 7, name: 'Chris', score: 0 },
-        { id: 8, name: 'Mariano', score: 0 },
-        { id: 9, name: 'Alistair', score: 0 }
-      ]);
-    }
-
+    setPlayers(tournament.players);
     setMatches(tournament.matches);
     setCurrentRound(tournament.currentRound || 1);
     setViewMode('input');
@@ -1177,134 +1349,7 @@ const PadelTournamentApp = () => {
       alert("There was an error exporting to Excel. Make sure the XLSX library is properly loaded.");
     }
   };
-  // 3. Add a new function to generate tournament schedule based on players
-  const generateTournamentSchedule = (players) => {
-    // For 9 players, we can use the existing schedule but with dynamic players
-    if (players.length === 9) {
-      return [
-        {
-          round: 1,
-          time: "11:15",
-          court1: {
-            teamA: [players[0].id, players[5].id], // Player 1 & 6
-            teamB: [players[1].id, players[6].id], // Player 2 & 7
-            gamesA: null,
-            gamesB: null,
-            scoreA: null,
-            scoreB: null
-          },
-          court2: {
-            teamA: [players[2].id, players[7].id], // Player 3 & 8
-            teamB: [players[3].id, players[8].id], // Player 4 & 9
-            gamesA: null,
-            gamesB: null,
-            scoreA: null,
-            scoreB: null
-          },
-          notPlaying: players[4].id // Player 5
-        },
-        // ... additional rounds with similar pattern of substituting player IDs ...
-        // This is a simplified example; you'd need to implement your full scheduling logic
-        {
-          round: 2,
-          time: "11:28",
-          court1: {
-            teamA: [players[8].id, players[1].id], // Players 9 & 2
-            teamB: [players[4].id, players[3].id], // Players 5 & 4
-            gamesA: null,
-            gamesB: null,
-            scoreA: null,
-            scoreB: null
-          },
-          court2: {
-            teamA: [players[6].id, players[5].id], // Players 7 & 6
-            teamB: [players[7].id, players[0].id], // Players 8 & 1
-            gamesA: null,
-            gamesB: null,
-            scoreA: null,
-            scoreB: null
-          },
-          notPlaying: players[2].id // Player 3
-        }
-        // ... complete all 9 rounds similarly ...
-      ];
-    } else {
-      // For other player counts (5-16), implement a flexible schedule generator
-      // This would be a more complex algorithm that ensures:
-      // - Each player plays with every other player (as much as possible)
-      // - Each player sits out roughly equal number of times
-      // - Balance of courts and positions
 
-      // Placeholder for the flexible schedule algorithm
-      return generateFlexibleSchedule(players);
-    }
-  };
-
-  // 4. Add a function to generate flexible schedules for different player counts
-  const generateFlexibleSchedule = (players) => {
-    const playerIds = players.map(p => p.id);
-    const totalPlayers = players.length;
-    const matches = [];
-
-    // Always have 2 players per team (doubles format)
-    const playersPerTeam = 2;
-
-    // Calculate how many players can play simultaneously
-    const playersPerRound = Math.floor(totalPlayers / playersPerTeam) * playersPerTeam;
-
-    // Calculate how many rounds we need to ensure everyone plays with everyone
-    // This is a simplification - proper algorithm would be more complex
-    const totalRounds = totalPlayers - 1;
-
-    for (let round = 1; round <= totalRounds; round++) {
-      // Create a pairing for this round
-      // This is where you'd implement your actual pairing algorithm
-
-      // For illustration, let's just rotate players
-      // Note: A proper implementation would use a more sophisticated algorithm
-      const playingThisRound = [...playerIds];
-
-      // Shuffle the players for this round
-      for (let i = playingThisRound.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [playingThisRound[i], playingThisRound[j]] = [playingThisRound[j], playingThisRound[i]];
-      }
-
-      const playersOnCourt = playingThisRound.slice(0, playersPerRound);
-      const notPlaying = playingThisRound.slice(playersPerRound);
-
-      // Create match for this round
-      const matchRound = {
-        round: round,
-        time: `${11 + Math.floor((round - 1) / 4)}:${(round - 1) % 4 * 15}`,
-        court1: {
-          teamA: [playersOnCourt[0], playersOnCourt[1]],
-          teamB: [playersOnCourt[2], playersOnCourt[3]],
-          gamesA: null,
-          gamesB: null,
-          scoreA: null,
-          scoreB: null
-        },
-        notPlaying: notPlaying.length > 0 ? notPlaying[0] : null
-      };
-
-      // Add court2 if we have enough players
-      if (playersOnCourt.length >= 8) {
-        matchRound.court2 = {
-          teamA: [playersOnCourt[4], playersOnCourt[5]],
-          teamB: [playersOnCourt[6], playersOnCourt[7]],
-          gamesA: null,
-          gamesB: null,
-          scoreA: null,
-          scoreB: null
-        };
-      }
-
-      matches.push(matchRound);
-    }
-
-    return matches;
-  };
   // Tournament navbar
   const renderTournamentNavbar = () => {
     return (
@@ -1334,27 +1379,27 @@ const PadelTournamentApp = () => {
     <div className="min-h-screen bg-gray-50 p-4">
       {/* Tournament Selector Mode */}
       {showTournamentSelector ? (
-        <>
-          <TournamentSelector
-            tournaments={savedTournaments}
-            onCreateTournament={createNewTournament}
-            onLoadTournament={loadTournament}
-            onDeleteTournament={deleteTournament}
-            onManagePlayers={() => setShowPlayerManagement(true)}
-            playerCount={managedPlayers.length}
-          />
-
-          {/* Player Management Modal */}
-          <PlayerManagementModal
-            isOpen={showPlayerManagement}
-            onClose={() => setShowPlayerManagement(false)}
-            players={managedPlayers}
-            onAddPlayer={handleAddPlayer}
-            onUpdatePlayer={handleUpdatePlayer}
-            onDeletePlayer={handleDeletePlayer}
-          />
-        </>
-      ) : (
+  <>
+    <TournamentSelector
+      tournaments={savedTournaments}
+      onCreateTournament={createNewTournament}
+      onLoadTournament={loadTournament}
+      onDeleteTournament={deleteTournament}
+      onManagePlayers={() => setShowPlayerManagement(true)}
+      playerCount={managedPlayers.length}
+    />
+    
+    {/* Player Management Modal */}
+    <PlayerManagementModal
+      isOpen={showPlayerManagement}
+      onClose={() => setShowPlayerManagement(false)}
+      players={managedPlayers}
+      onAddPlayer={handleAddPlayer}
+      onUpdatePlayer={handleUpdatePlayer}
+      onDeletePlayer={handleDeletePlayer}
+    />
+  </>
+) : (
         <div className="max-w-4xl mx-auto">
           {/* Tournament Navigation Bar */}
           {renderTournamentNavbar()}
