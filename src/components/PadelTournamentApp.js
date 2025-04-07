@@ -63,7 +63,12 @@ const TournamentSelector = ({
             className="flex-1 px-4 py-2 text-lg border rounded-lg"
           />
           <button
-            onClick={handleStartCreation}  // Use the new two-step flow
+            onClick={() => {
+              if (newTournamentName.trim()) {
+                onCreateTournament(newTournamentName);
+                setNewTournamentName('');
+              }
+            }}
             disabled={!newTournamentName.trim()}
             className="px-6 py-2 text-lg font-bold bg-blue-600 text-white rounded-lg disabled:bg-gray-400"
           >
@@ -790,23 +795,49 @@ const PadelTournamentApp = () => {
   const currentMatch = matches[currentRound - 1];
 
   // Function to create a new tournament
-  const createNewTournament = (name, selectedPlayers) => {
+  const createNewTournament = (name, selectedPlayers = null) => {
     const newId = uuidv4();
     setTournamentId(newId);
     setTournamentName(name);
 
-    // Convert selected players to the format used by the tournament
-    const formattedPlayers = selectedPlayers.map((player, index) => ({
-      id: player.id,
-      name: `${player.firstName} ${player.surname}`,
-      score: 0
-    }));
+    if (!selectedPlayers) {
+      // Use default players if none provided (for backward compatibility)
+      setPlayers([
+        { id: 1, name: 'Amo', score: 0 },
+        { id: 2, name: 'James', score: 0 },
+        { id: 3, name: 'Paul', score: 0 },
+        { id: 4, name: 'Ian', score: 0 },
+        { id: 5, name: 'David', score: 0 },
+        { id: 6, name: 'Michael', score: 0 },
+        { id: 7, name: 'Chris', score: 0 },
+        { id: 8, name: 'Mariano', score: 0 },
+        { id: 9, name: 'Alistair', score: 0 }
+      ]);
 
-    setPlayers(formattedPlayers);
+      // Use default matches
+      setMatches([
+        // Your existing hardcoded matches
+        {
+          round: 1,
+          time: "11:15",
+          // ... rest of your match data
+        },
+        // ... other matches
+      ]);
+    } else {
+      // Convert selected players to the format used by the tournament
+      const formattedPlayers = selectedPlayers.map((player) => ({
+        id: player.id,
+        name: `${player.firstName} ${player.surname}`,
+        score: 0
+      }));
 
-    // Generate matches based on selected players
-    const generatedMatches = generateTournamentSchedule(formattedPlayers);
-    setMatches(generatedMatches);
+      setPlayers(formattedPlayers);
+
+      // Generate matches based on selected players
+      const generatedMatches = generateTournamentSchedule(formattedPlayers);
+      setMatches(generatedMatches);
+    }
 
     setCurrentRound(1);
     setViewMode('input');
