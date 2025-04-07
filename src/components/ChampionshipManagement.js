@@ -18,6 +18,31 @@ const ChampionshipManagement = () => {
   const [filter, setFilter] = useState('all'); // 'all', 'admin', 'player'
   const { userId } = useRole();
 
+  useEffect(() => {
+    // Initialize StorageManager and log results
+    const initStorage = () => {
+      try {
+        // Check storage initialization
+        const result = StorageManager.initialize();
+        console.log('Storage Initialization:', result);
+
+        // Check storage info
+        const storageInfo = StorageManager.getStorageInfo();
+        console.log('Storage Info:', storageInfo);
+
+        // Load championships
+        const loadedChampionships = StorageManager.loadChampionships();
+        console.log('Loaded Championships:', loadedChampionships);
+
+        setChampionships(loadedChampionships);
+      } catch (error) {
+        console.error('Storage Initialization Error:', error);
+      }
+    };
+
+    initStorage();
+  }, []);
+
   // Load championships on component mount
   useEffect(() => {
     loadChampionships();
@@ -37,15 +62,15 @@ const ChampionshipManagement = () => {
   const determineUserRole = (championship) => {
     // Check if user is an administrator
     const isAdmin = championship.administrators?.some(admin => admin.userId === userId);
-    
+
     // Check if user is an owner (can't be removed)
     const isOwner = championship.administrators?.some(
       admin => admin.userId === userId && admin.role === 'owner'
     );
-    
+
     // Check if user is a player
     const isPlayer = championship.players?.includes(userId);
-    
+
     if (isOwner) return 'owner';
     if (isAdmin) return 'admin';
     if (isPlayer) return 'player';
@@ -57,18 +82,18 @@ const ChampionshipManagement = () => {
    */
   const getFilteredChampionships = () => {
     if (filter === 'all') return championships;
-    
+
     return championships.filter(championship => {
       const role = determineUserRole(championship);
-      
+
       if (filter === 'admin') {
         return role === 'admin' || role === 'owner';
       }
-      
+
       if (filter === 'player') {
         return role === 'player';
       }
-      
+
       return false;
     });
   };
@@ -81,7 +106,7 @@ const ChampionshipManagement = () => {
     const updatedChampionships = [...championships, newChampionship];
     setChampionships(updatedChampionships);
     StorageManager.saveChampionships(updatedChampionships);
-    
+
     // Reset view to list
     setView('list');
   };
@@ -93,7 +118,7 @@ const ChampionshipManagement = () => {
     // Remove from state
     const updatedChampionships = championships.filter(c => c.id !== championshipId);
     setChampionships(updatedChampionships);
-    
+
     // Remove from storage (including related data)
     StorageManager.deleteChampionship(championshipId);
   };
@@ -110,10 +135,10 @@ const ChampionshipManagement = () => {
    */
   const renderDetailView = () => {
     if (!currentChampionship) return <div>No championship selected</div>;
-    
-    return <ChampionshipDetail 
-      championship={currentChampionship} 
-      onBack={() => setView('list')} 
+
+    return <ChampionshipDetail
+      championship={currentChampionship}
+      onBack={() => setView('list')}
       onDelete={handleDeleteChampionship}
     />;
   };
@@ -123,37 +148,37 @@ const ChampionshipManagement = () => {
    */
   const renderChampionshipList = () => {
     const filteredChampionships = getFilteredChampionships();
-    
+
     return (
       <div>
         {/* Filter Controls */}
         <div className="mb-4 flex space-x-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg ${filter === 'all' 
-              ? 'bg-blue-600 text-white' 
+            className={`px-4 py-2 rounded-lg ${filter === 'all'
+              ? 'bg-blue-600 text-white'
               : 'bg-gray-200 hover:bg-gray-300'}`}
           >
             All
           </button>
           <button
             onClick={() => setFilter('admin')}
-            className={`px-4 py-2 rounded-lg ${filter === 'admin' 
-              ? 'bg-blue-600 text-white' 
+            className={`px-4 py-2 rounded-lg ${filter === 'admin'
+              ? 'bg-blue-600 text-white'
               : 'bg-gray-200 hover:bg-gray-300'}`}
           >
             Admin
           </button>
           <button
             onClick={() => setFilter('player')}
-            className={`px-4 py-2 rounded-lg ${filter === 'player' 
-              ? 'bg-blue-600 text-white' 
+            className={`px-4 py-2 rounded-lg ${filter === 'player'
+              ? 'bg-blue-600 text-white'
               : 'bg-gray-200 hover:bg-gray-300'}`}
           >
             Player
           </button>
         </div>
-        
+
         {/* Create New Button */}
         <div className="mb-6">
           <button
@@ -166,7 +191,7 @@ const ChampionshipManagement = () => {
             Create New Championship
           </button>
         </div>
-        
+
         {/* Championship Cards */}
         <div className="space-y-4">
           {filteredChampionships.length === 0 ? (
@@ -196,7 +221,7 @@ const ChampionshipManagement = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
-      
+
       {view === 'list' && renderChampionshipList()}
       {view === 'create' && renderCreateForm()}
       {view === 'detail' && renderDetailView()}
@@ -222,7 +247,7 @@ const ChampionshipCard = ({ championship, userRole, onClick, onDelete }) => {
         return null;
     }
   };
-  
+
   // Calculate role display
   const getRoleDisplay = () => {
     switch (userRole) {
@@ -236,7 +261,7 @@ const ChampionshipCard = ({ championship, userRole, onClick, onDelete }) => {
         return null;
     }
   };
-  
+
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
       <div onClick={onClick} className="cursor-pointer p-6">
@@ -250,14 +275,14 @@ const ChampionshipCard = ({ championship, userRole, onClick, onDelete }) => {
               {championship.players?.length || 0} players
             </p>
           </div>
-          
+
           <div className="flex flex-col space-y-2 items-end">
             {getStatusDisplay()}
             {getRoleDisplay()}
           </div>
         </div>
       </div>
-      
+
       {/* Admin-only actions */}
       {(userRole === 'admin' || userRole === 'owner') && (
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-end">
@@ -285,10 +310,10 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
   const [description, setDescription] = useState('');
   const [frequency, setFrequency] = useState('weekly');
   const { userId } = useRole();
-  
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Create new championship object
     const newChampionship = {
       id: uuidv4(),
@@ -316,14 +341,21 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+    console.log('Creating New Championship:', newChampionship);
+
+    // Save championship and log the result
+    const savedChampionships = StorageManager.loadChampionships();
+    savedChampionships.push(newChampionship);
+    const saveResult = StorageManager.saveItem('padelChampionships', savedChampionships);
+
+    console.log('Championship Save Result:', saveResult);
     onSave(newChampionship);
   };
-  
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-2xl font-bold mb-6 text-blue-800">Create New Championship</h2>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label className="block text-gray-700 mb-2" htmlFor="name">
@@ -339,7 +371,7 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
             required
           />
         </div>
-        
+
         <div className="mb-4">
           <label className="block text-gray-700 mb-2" htmlFor="description">
             Description (Optional)
@@ -353,7 +385,7 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
             rows="3"
           />
         </div>
-        
+
         <div className="mb-6">
           <label className="block text-gray-700 mb-2" htmlFor="frequency">
             Match Frequency
@@ -369,7 +401,7 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
             <option value="monthly">Monthly</option>
           </select>
         </div>
-        
+
         <div className="flex justify-end space-x-3">
           <button
             type="button"
@@ -400,10 +432,10 @@ const ChampionshipCreationForm = ({ onSave, onCancel }) => {
 const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'sessions', 'standings', 'players'
   const { userId } = useRole();
-  
+
   // Check if user is an administrator
   const isAdmin = championship.administrators?.some(admin => admin.userId === userId);
-  
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {/* Header */}
@@ -418,70 +450,65 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
           </svg>
           Back to Championships
         </button>
-        
+
         <div className="flex justify-between items-start">
           <h2 className="text-2xl font-bold text-blue-800">{championship.name}</h2>
-          
+
           {/* Status Badge */}
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-            championship.status === 'active' ? 'bg-green-100 text-green-800' :
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${championship.status === 'active' ? 'bg-green-100 text-green-800' :
             championship.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-blue-100 text-blue-800'
-          }`}>
+              'bg-blue-100 text-blue-800'
+            }`}>
             {championship.status.charAt(0).toUpperCase() + championship.status.slice(1)}
           </span>
         </div>
-        
+
         {/* Description */}
         {championship.description && (
           <p className="text-gray-600 mt-2">{championship.description}</p>
         )}
       </div>
-      
+
       {/* Tabs */}
       <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
         <div className="flex space-x-4">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3 py-2 rounded-lg font-medium ${
-              activeTab === 'overview' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'overview' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('sessions')}
-            className={`px-3 py-2 rounded-lg font-medium ${
-              activeTab === 'sessions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'sessions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Sessions
           </button>
           <button
             onClick={() => setActiveTab('standings')}
-            className={`px-3 py-2 rounded-lg font-medium ${
-              activeTab === 'standings' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'standings' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Standings
           </button>
           <button
             onClick={() => setActiveTab('players')}
-            className={`px-3 py-2 rounded-lg font-medium ${
-              activeTab === 'players' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-            }`}
+            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'players' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+              }`}
           >
             Players
           </button>
         </div>
       </div>
-      
+
       {/* Tab Content */}
       <div className="p-6">
         {activeTab === 'overview' && (
           <div>
             <h3 className="text-lg font-bold mb-4">Championship Information</h3>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <p className="text-gray-500 text-sm">Started</p>
@@ -500,7 +527,7 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
                 <p className="font-medium">{championship.players?.length || 0}</p>
               </div>
             </div>
-            
+
             {/* Configuration details */}
             <h3 className="text-lg font-bold mb-4">Configuration</h3>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -523,7 +550,7 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
                 </div>
               </div>
             </div>
-            
+
             {/* Admin actions */}
             {isAdmin && (
               <div className="mt-8 border-t border-gray-200 pt-6">
@@ -533,7 +560,7 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
                   >
                     Edit Championship
                   </button>
-                  
+
                   <button
                     onClick={() => onDelete(championship.id)}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
@@ -545,12 +572,12 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
             )}
           </div>
         )}
-        
+
         {activeTab === 'sessions' && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold">Sessions</h3>
-              
+
               {isAdmin && (
                 <button
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
@@ -562,7 +589,7 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
                 </button>
               )}
             </div>
-            
+
             <div className="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-gray-500">No sessions yet. Create your first session to get started.</p>
               {isAdmin && (
@@ -575,22 +602,22 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
             </div>
           </div>
         )}
-        
+
         {activeTab === 'standings' && (
           <div>
             <h3 className="text-lg font-bold mb-6">Championship Standings</h3>
-            
+
             <div className="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-gray-500">No matches have been played yet. Standings will appear here after matches are recorded.</p>
             </div>
           </div>
         )}
-        
+
         {activeTab === 'players' && (
           <div>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-bold">Players</h3>
-              
+
               {isAdmin && (
                 <button
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
@@ -602,7 +629,7 @@ const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
                 </button>
               )}
             </div>
-            
+
             {championship.players && championship.players.length > 0 ? (
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <table className="min-w-full divide-y divide-gray-200">
