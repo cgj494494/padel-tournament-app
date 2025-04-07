@@ -999,7 +999,8 @@ const PadelTournamentApp = () => {
     setCurrentRound(prev => Math.min(matches.length, prev + 1));
   };
 
-  // Get team names
+  // Get team names with inserted section
+  if (!currentMatch) return '';
   const getTeamName = (court, team) => {
     if (!currentMatch) return '';
 
@@ -1266,69 +1267,58 @@ const PadelTournamentApp = () => {
     }
   };
 
-  // 4. Add a function to generate flexible schedules for different player counts
-  const generateFlexibleSchedule = (players) => {
+// Fix for generateFlexibleSchedule function
+const generateFlexibleSchedule = (players) => {
     const playerIds = players.map(p => p.id);
     const totalPlayers = players.length;
     const matches = [];
-
+  
     // Always have 2 players per team (doubles format)
     const playersPerTeam = 2;
-
+  
     // Calculate how many players can play simultaneously
     const playersPerRound = Math.floor(totalPlayers / playersPerTeam) * playersPerTeam;
-
-    // Calculate how many rounds we need to ensure everyone plays with everyone
-    // This is a simplification - proper algorithm would be more complex
+  
+    // Calculate how many rounds we need
     const totalRounds = totalPlayers - 1;
-
+  
     for (let round = 1; round <= totalRounds; round++) {
-      // Create a pairing for this round
-      // This is where you'd implement your actual pairing algorithm
-
-      // For illustration, let's just rotate players
-      // Note: A proper implementation would use a more sophisticated algorithm
-      const playingThisRound = [...playerIds];
-
       // Shuffle the players for this round
+      const playingThisRound = [...playerIds];
       for (let i = playingThisRound.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [playingThisRound[i], playingThisRound[j]] = [playingThisRound[j], playingThisRound[i]];
       }
-
+  
       const playersOnCourt = playingThisRound.slice(0, playersPerRound);
       const notPlaying = playingThisRound.slice(playersPerRound);
-
-      // Create match for this round
+  
+      // Create match structure with required nested properties
       const matchRound = {
         round: round,
-        time: `${11 + Math.floor((round - 1) / 4)}:${(round - 1) % 4 * 15}`,
+        time: `${11 + Math.floor((round - 1) / 4)}:${String((round - 1) % 4 * 15).padStart(2, '0')}`,
         court1: {
-          teamA: [playersOnCourt[0], playersOnCourt[1]],
-          teamB: [playersOnCourt[2], playersOnCourt[3]],
+          teamA: playersOnCourt.length >= 2 ? [playersOnCourt[0], playersOnCourt[1]] : [0, 0],
+          teamB: playersOnCourt.length >= 4 ? [playersOnCourt[2], playersOnCourt[3]] : [0, 0],
           gamesA: null,
           gamesB: null,
           scoreA: null,
           scoreB: null
         },
-        notPlaying: notPlaying.length > 0 ? notPlaying[0] : null
-      };
-
-      // Add court2 if we have enough players
-      if (playersOnCourt.length >= 8) {
-        matchRound.court2 = {
-          teamA: [playersOnCourt[4], playersOnCourt[5]],
-          teamB: [playersOnCourt[6], playersOnCourt[7]],
+        court2: {
+          teamA: playersOnCourt.length >= 6 ? [playersOnCourt[4], playersOnCourt[5]] : [0, 0],
+          teamB: playersOnCourt.length >= 8 ? [playersOnCourt[6], playersOnCourt[7]] : [0, 0],
           gamesA: null,
           gamesB: null,
           scoreA: null,
           scoreB: null
-        };
-      }
-
+        },
+        notPlaying: notPlaying.length > 0 ? notPlaying[0] : playerIds[0]
+      };
+  
       matches.push(matchRound);
     }
-
+  
     return matches;
   };
   // Tournament navbar
@@ -1454,7 +1444,7 @@ const PadelTournamentApp = () => {
             )}
           </header>
           {/* Score Input View */}
-          {viewMode === 'input' && (
+          {viewMode === 'input' && currentMatch && (
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               {/* Round Navigation */}
               <div className="flex justify-between items-center mb-4">
