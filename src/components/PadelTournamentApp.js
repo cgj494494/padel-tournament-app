@@ -119,71 +119,69 @@ const TournamentSelector = ({
                     <h3 className="text-2xl font-bold mb-4">Load Existing Tournament</h3>
 
                     {tournaments.length === 0 ? (
-                        <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
-                    ) : (
-                        <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {tournaments.map((tournament) => (
-                                <div
-                                    key={tournament.id}
-                                    onClick={() => onLoadTournament(tournament)}
-                                    className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
-                                >
-                                    <div>
-                                        <div className="font-bold text-xl">{tournament.name}</div>
-                                        <div className="text-sm text-gray-500">{tournament.date}</div>
-                                    </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setCurrentTournament(tournament);
-                                            setShowConfirm(true);
-                                        }}
-                                        className="flex items-center px-3 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                                        aria-label="Delete tournament"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        <span className="font-medium">Delete</span>
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+    <p className="text-gray-500 italic text-center py-4">No saved tournaments</p>
+) : (
+    <div className="space-y-3 max-h-96 overflow-y-auto">
+        {tournaments.map((tournament) => (
+            <div
+                key={tournament.id}
+                onClick={() => onLoadTournament(tournament)}
+                className="p-4 bg-white rounded-lg border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-blue-50"
+            >
+                <div>
+                    <div className="font-bold text-xl">{tournament.name}</div>
+                    <div className="text-sm text-gray-500">{tournament.date}</div>
                 </div>
-            {/* Manage Players Button - ADD THIS SECTION */}
-            <div className="mt-6 p-6 bg-purple-50 rounded-lg border border-purple-200">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h3 className="text-2xl font-bold">Player Management</h3>
-                        <p className="text-gray-600">
-                            {playerCount} players available for tournaments
-                        </p>
-                    </div>
-                    <button
-                        onClick={onManagePlayers}
-                        className="px-6 py-2 text-lg font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                    >
-                        Manage Players
-                    </button>
-                </div>
-            </div>
-
-            {/* Delete Confirmation Dialog */}
-            {showConfirm && currentTournament && (
-                <DeleteConfirmationModal
-                    isOpen={showConfirm}
-                    tournamentName={currentTournament.name}
-                    onCancel={() => setShowConfirm(false)}
-                    onConfirm={() => {
-                        onDeleteTournament(currentTournament.id);
-                        setShowConfirm(false);
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentTournament(tournament);
+                        setShowConfirm(true);
                     }}
-                />
-            )}
+                    className="flex items-center px-3 py-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                    aria-label="Delete tournament"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span className="font-medium">Delete</span>
+                </button>
+            </div>
+        ))}
+    </div>
+)}
+</div>
+
+{/* Manage Players Button */}
+<div className="mt-6 p-6 bg-purple-50 rounded-lg border border-purple-200">
+    <div className="flex justify-between items-center">
+        <div>
+            <h3 className="text-2xl font-bold">Player Management</h3>
+            <p className="text-gray-600">
+                {playerCount} players available for tournaments
+            </p>
         </div>
-    );
-};
+        <button
+            onClick={onManagePlayers}
+            className="px-6 py-2 text-lg font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+        >
+            Manage Players
+        </button>
+    </div>
+</div>
+
+{/* Delete Confirmation Dialog */}
+{showConfirm && currentTournament && (
+    <DeleteConfirmationModal
+        isOpen={showConfirm}
+        tournamentName={currentTournament.name}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={() => {
+            onDeleteTournament(currentTournament.id);
+            setShowConfirm(false);
+        }}
+    />
+)}
 // Main Tournament App Component
 const PadelTournamentApp = () => {
     // Player data
