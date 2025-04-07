@@ -1479,6 +1479,7 @@ const PadelTournamentApp = () => {
                             {/* Add debugging */}
                             {console.log("Current round:", currentRound, "Total matches:", matches.length)}
                             {console.log("Current match:", currentMatch)}
+
                             {/* Round Navigation */}
                             <div className="flex justify-between items-center mb-4">
                                 <button
