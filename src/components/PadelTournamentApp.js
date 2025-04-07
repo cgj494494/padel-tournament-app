@@ -884,6 +884,26 @@ const PadelTournamentApp = () => {
         setViewMode('input');
         setShowTournamentSelector(false);
     };
+    // Add this function with your other function definitions
+    const loadTournament = (tournament) => {
+        setTournamentId(tournament.id);
+        setTournamentName(tournament.name);
+        setPlayers(tournament.players || players);
+        setMatches(tournament.matches || matches);
+        setCurrentRound(tournament.currentRound || 1);
+        setShowTournamentSelector(false);
+    };
+    // Add this function with your other function definitions
+    const deleteTournament = (tournamentId) => {
+        const updatedTournaments = savedTournaments.filter(t => t.id !== tournamentId);
+        setSavedTournaments(updatedTournaments);
+
+        try {
+            localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
+        } catch (error) {
+            console.error("Error saving updated tournaments:", error);
+        }
+    };
     // Function to go back to tournament selection with confirmation
     const backToTournamentSelector = () => {
         console.log("Back button clicked!");
