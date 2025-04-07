@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerManagementModal, PlayerManagementUtils } from './PlayerManagementComponent';
 import PlayerSelectionView from './PlayerSelectionView';
+import { StorageManager } from './StorageManager';
 
 // Delete Confirmation Modal Component
 const DeleteConfirmationModal = ({ isOpen, tournamentName, onCancel, onConfirm }) => {
@@ -67,7 +68,7 @@ const TournamentSelector = ({
         setCreationStep('naming');
         setPendingTournamentName('');
     };
-    
+
     return (
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto mt-10">
             <h2 className="text-3xl font-bold text-center mb-8 text-blue-800">Padel Tournament Manager</h2>
@@ -404,21 +405,16 @@ const PadelTournamentApp = () => {
             window.navigator.vibrate(20); // Short vibration
         }
     };
-
+    // Initialize StorageManager
+    useEffect(() => {
+        StorageManager.initialize();
+    }, []);
     // Tennis scoring options
     const tennisScores = ["0", "15", "30", "40", "AD"];
-    // Load saved tournaments from localStorage on initial render
+    // Load saved tournaments from localStorage on initial render REVISED Version 1613070425
     useEffect(() => {
-        try {
-            const savedData = localStorage.getItem('padelTournaments');
-            if (savedData) {
-                setSavedTournaments(JSON.parse(savedData));
-            }
-        } catch (error) {
-            console.error("Error loading saved tournaments:", error);
-            // Provide user feedback about the error
-            alert("There was an error loading saved tournaments. Local storage may be corrupted.");
-        }
+        const savedTournaments = StorageManager.loadItem('padelTournaments', []);
+        setSavedTournaments(savedTournaments);
     }, []);
     // Add this function with your other functions
     const resetTournamentScores = () => {
@@ -447,38 +443,35 @@ const PadelTournamentApp = () => {
         setCurrentRound(1);
         setShowResetConfirm(false);
     };
-    // Save current tournament state to localStorage whenever it changes
+    // Save current tournament state to localStorage whenever it changes REVISED -7 -4 25
     useEffect(() => {
-        if (!tournamentId) return;
+        if (!tournamentId || showTournamentSelector) return;
 
-        // Only save if we're not in tournament selector mode
-        if (!showTournamentSelector) {
-            try {
-                const currentTournament = {
-                    id: tournamentId,
-                    name: tournamentName,
-                    date: new Date().toLocaleString(),
-                    players,
-                    matches,
-                    currentRound
-                };
+        const currentTournament = {
+            id: tournamentId,
+            name: tournamentName,
+            date: new Date().toLocaleString(),
+            players,
+            matches,
+            currentRound
+        };
 
-                const updatedTournaments = [...savedTournaments.filter(t => t.id !== tournamentId), currentTournament];
-                localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
-                setSavedTournaments(updatedTournaments);
-            } catch (error) {
-                console.error("Error saving tournament:", error);
-                // Show an error message without disrupting the user experience
-                const errorDiv = document.createElement('div');
-                errorDiv.textContent = "Failed to save. Storage might be full.";
-                errorDiv.style.cssText = "position:fixed; top:10px; right:10px; background:red; color:white; padding:10px; border-radius:5px; z-index:9999";
-                document.body.appendChild(errorDiv);
-                setTimeout(() => {
-                    if (document.body.contains(errorDiv)) {
-                        document.body.removeChild(errorDiv);
-                    }
-                }, 3000);
-            }
+        const updatedTournaments = [...savedTournaments.filter(t => t.id !== tournamentId), currentTournament];
+        const success = StorageManager.saveItem('padelTournaments', updatedTournaments);
+
+        if (success) {
+            setSavedTournaments(updatedTournaments);
+        } else {
+            // Show user-friendly error (StorageManager already logs the error)
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = "Failed to save. Storage might be full.";
+            errorDiv.style.cssText = "position:fixed; top:10px; right:10px; background:red; color:white; padding:10px; border-radius:5px; z-index:9999";
+            document.body.appendChild(errorDiv);
+            setTimeout(() => {
+                if (document.body.contains(errorDiv)) {
+                    document.body.removeChild(errorDiv);
+                }
+            }, 3000);
         }
     }, [players, matches, currentRound, tournamentId, tournamentName, savedTournaments, showTournamentSelector]);
     // Auto-calculate on load to ensure data is ready
@@ -915,16 +908,11 @@ const PadelTournamentApp = () => {
         setCurrentRound(tournament.currentRound || 1);
         setShowTournamentSelector(false);
     };
-    // Add this function with your other function definitions
+    // Add this function with your other function definitions REVISED 070425
     const deleteTournament = (tournamentId) => {
         const updatedTournaments = savedTournaments.filter(t => t.id !== tournamentId);
         setSavedTournaments(updatedTournaments);
-
-        try {
-            localStorage.setItem('padelTournaments', JSON.stringify(updatedTournaments));
-        } catch (error) {
-            console.error("Error saving updated tournaments:", error);
-        }
+        StorageManager.saveItem('padelTournaments', updatedTournaments);
     };
     // Function to go back to tournament selection with confirmation
     const backToTournamentSelector = () => {
