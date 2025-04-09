@@ -180,50 +180,44 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         </div>
 
         {/* Create New Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setView('create')}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg font-bold flex items-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Create New Championship
-          </button>
-        </div>
-
-        {/* Championship Cards */}
-        <ChampionshipCard
-          key={championship.id}
-          championship={championship}
-          userRole={determineUserRole(championship)}
-          onClick={() => {
-            setCurrentChampionship(championship);
-            setView('detail');
-            // Add this to save the last used championship
-            if (saveLastUsed) {
-              saveLastUsed(championship.id, championship.name, 'championship');
-            }
-          }}
-          onDelete={() => handleDeleteChampionship(championship.id)}
-        />
-        ))
+        <div className="space-y-4">
+          {filteredChampionships.length === 0 ? (
+            <div className="p-8 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
+              No championships found. Create your first championship to get started.
+            </div>
+          ) : (
+            filteredChampionships.map(championship => (
+              <ChampionshipCard
+                key={championship.id}
+                championship={championship}
+                userRole={determineUserRole(championship)}
+                onClick={() => {
+                  setCurrentChampionship(championship);
+                  setView('detail');
+                  // Add this to save the last used championship
+                  if (saveLastUsed) {
+                    saveLastUsed(championship.id, championship.name, 'championship');
+                  }
+                }}
+                onDelete={() => handleDeleteChampionship(championship.id)}
+              />
+            ))
           )}
+        </div>
       </div>
-      </div >
     );
   };
 
-// Main render logic
-return (
-  <div className="max-w-4xl mx-auto p-6">
-    <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
+  // Main render logic
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
 
-    {view === 'list' && renderChampionshipList()}
-    {view === 'create' && renderCreateForm()}
-    {view === 'detail' && renderDetailView()}
-  </div>
-);
+      {view === 'list' && renderChampionshipList()}
+      {view === 'create' && renderCreateForm()}
+      {view === 'detail' && renderDetailView()}
+    </div>
+  );
 };
 
 /**
