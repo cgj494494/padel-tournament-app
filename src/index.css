@@ -21,3 +21,63 @@ code {
 button {
   touch-action: manipulation;
 }
+/* Home Page Specific Styles */
+
+/* Card hover effects */
+.card-hover-effect {
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Selected card effect */
+.card-selected {
+  position: relative;
+}
+
+.card-selected::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 4px;
+  background-color: #1d4ed8; /* bg-blue-700 */
+  border-radius: 2px;
+}
+
+/* Icon animations */
+@keyframes pulse-icon {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-icon {
+  animation: pulse-icon 2s infinite;
+}
+
+/* Typography improvements */
+.home-page h2, .home-page h3 {
+  letter-spacing: -0.025em;
+}
+
+/* Button/card press effect */
+.press-effect {
+  transition: transform 0.1s;
+}
+
+.press-effect:active {
+  transform: translateY(2px);
+}
