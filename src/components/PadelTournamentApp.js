@@ -170,7 +170,7 @@ const TournamentSelector = ({
     );
 };
 // Main Tournament App Component
-const PadelTournamentApp = () => {
+const PadelTournamentApp = ({ saveLastUsed }) => {
     // Player data
     const [players, setPlayers] = useState([
         { id: 1, name: 'Amo', score: 0 },
@@ -907,6 +907,10 @@ const PadelTournamentApp = () => {
         setMatches(tournament.matches || matches);
         setCurrentRound(tournament.currentRound || 1);
         setShowTournamentSelector(false);
+        // Save this tournament as the last used item
+        if (saveLastUsed) {
+            saveLastUsed(tournament.id, tournament.name, 'tournament');
+        }
     };
     // Add this function with your other function definitions REVISED 070425
     const deleteTournament = (tournamentId) => {

@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
  * - Create new championships
  * - Navigate to championship details
  */
-const ChampionshipManagement = () => {
+const ChampionshipManagement = ({ saveLastUsed }) => {
   const [championships, setChampionships] = useState([]);
   const [view, setView] = useState('list'); // 'list', 'create', 'detail'
   const [currentChampionship, setCurrentChampionship] = useState(null);
@@ -193,40 +193,37 @@ const ChampionshipManagement = () => {
         </div>
 
         {/* Championship Cards */}
-        <div className="space-y-4">
-          {filteredChampionships.length === 0 ? (
-            <div className="p-8 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
-              No championships found. Create your first championship to get started.
-            </div>
-          ) : (
-            filteredChampionships.map(championship => (
-              <ChampionshipCard
-                key={championship.id}
-                championship={championship}
-                userRole={determineUserRole(championship)}
-                onClick={() => {
-                  setCurrentChampionship(championship);
-                  setView('detail');
-                }}
-                onDelete={() => handleDeleteChampionship(championship.id)}
-              />
-            ))
+        <ChampionshipCard
+          key={championship.id}
+          championship={championship}
+          userRole={determineUserRole(championship)}
+          onClick={() => {
+            setCurrentChampionship(championship);
+            setView('detail');
+            // Add this to save the last used championship
+            if (saveLastUsed) {
+              saveLastUsed(championship.id, championship.name, 'championship');
+            }
+          }}
+          onDelete={() => handleDeleteChampionship(championship.id)}
+        />
+        ))
           )}
-        </div>
       </div>
+      </div >
     );
   };
 
-  // Main render logic
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
+// Main render logic
+return (
+  <div className="max-w-4xl mx-auto p-6">
+    <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
 
-      {view === 'list' && renderChampionshipList()}
-      {view === 'create' && renderCreateForm()}
-      {view === 'detail' && renderDetailView()}
-    </div>
-  );
+    {view === 'list' && renderChampionshipList()}
+    {view === 'create' && renderCreateForm()}
+    {view === 'detail' && renderDetailView()}
+  </div>
+);
 };
 
 /**
