@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const ChampionshipManagement = ({ saveLastUsed }) => {
   const [view, setView] = useState('list');
@@ -125,14 +126,31 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     saveChampionships(updated);
     setCurrentChampionship(newChampionship);
     setView('detail');
-  };;
+    
+    // Reset form
+    setName('');
+    setSelectedPlayers([]);
+  };
 
   if (view === 'list') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
         <FontToggle />
         
-        <div className="pt-20 pb-32 px-6">
+        {/* Back to Home Button */}
+        <div className="pt-6 px-6">
+          <Link 
+            to="/"
+            className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 shadow-lg inline-flex`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Home</span>
+          </Link>
+        </div>
+        
+        <div className="pt-14 pb-32 px-6">
           <div className="max-w-4xl mx-auto">
             
             <div className="text-center mb-12">
@@ -273,6 +291,12 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         <p className={`${getClasses('small')} text-gray-400 mt-3`}>
                           Add players in Player Management first
                         </p>
+                        <Link 
+                          to="/players"
+                          className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all inline-flex items-center space-x-3 mt-6`}
+                        >
+                          <span>Go to Player Management</span>
+                        </Link>
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -404,6 +428,113 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
               </div>
 
               <div className="p-8">
+                {activeTab === 'standings' && (
+                  <div>
+                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-8`}>
+                      Championship Standings
+                    </h3>
+                    
+                    {(!currentChampionship.standings || currentChampionship.standings.length === 0) ? (
+                      <div className="text-center py-16">
+                        <div className="text-8xl mb-6">🏆</div>
+                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                          No Matches Played Yet
+                        </h3>
+                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                          Record your first match to see standings
+                        </p>
+                        <button
+                          onClick={() => setView('session')}
+                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg`}
+                        >
+                          Record First Match
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse border border-gray-300">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="border border-gray-300 px-4 py-3 text-left font-bold">Pos</th>
+                              <th className="border border-gray-300 px-4 py-3 text-left font-bold">Player</th>
+                              <th className="border border-gray-300 px-4 py-3 text-center font-bold">Points</th>
+                              <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
+                              <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {currentChampionship.standings
+                              .sort((a, b) => b.points - a.points)
+                              .map((standing, index) => {
+                                const player = players.find(p => p.id === standing.playerId);
+                                return (
+                                  <tr key={standing.playerId} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
+                                    <td className="border border-gray-300 px-4 py-3 text-center font-bold">
+                                      {index + 1}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-3">
+                                      <span className={`${getClasses('body')} font-bold`}>
+                                        {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                                      </span>
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                      <span className={`${getClasses('body')} font-bold text-blue-600`}>
+                                        {standing.points}
+                                      </span>
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                      {standing.matchesPlayed}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                      {standing.matchesWon}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'matches' && (
+                  <div>
+                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-8`}>
+                      Match History
+                    </h3>
+                    
+                    {(!currentChampionship.matches || currentChampionship.matches.length === 0) ? (
+                      <div className="text-center py-16">
+                        <div className="text-8xl mb-6">🎾</div>
+                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                          No Matches Recorded
+                        </h3>
+                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                          Start recording matches to build your championship history
+                        </p>
+                        <button
+                          onClick={() => setView('session')}
+                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg`}
+                        >
+                          Record Match
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {currentChampionship.matches.map((match, index) => (
+                          <div key={index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
+                            <p className={`${getClasses('body')} font-bold text-gray-800`}>
+                              Match {index + 1} - {new Date(match.date).toLocaleDateString()}
+                            </p>
+                            {/* Match details would go here */}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {activeTab === 'players' && (
                   <div>
                     <div className="flex justify-between items-center mb-8">
@@ -424,6 +555,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {currentChampionship.players?.map((playerId) => {
                         const player = players.find(p => p.id === playerId);
+                        const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
                         
                         return (
                           <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
@@ -431,6 +563,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                               {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
                             </h4>
                             <p className={`${getClasses('small')} text-gray-600 mb-4`}>{player?.userId}</p>
+                            {standing && (
+                              <div className="space-y-2">
+                                <p className={`${getClasses('small')} text-gray-600`}>
+                                  <span className="font-bold text-blue-600">{standing.points}</span> points
+                                </p>
+                                <p className={`${getClasses('small')} text-gray-600`}>
+                                  {standing.matchesWon}/{standing.matchesPlayed} matches won
+                                </p>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -456,7 +598,56 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
       </div>
     );
   }
-     
+
+  if (view === 'session') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+        <FontToggle />
+        
+        <div className="pt-20 pb-32 px-6">
+          <div className="max-w-4xl mx-auto">
+            
+            <div className="flex items-center mb-10">
+              <button
+                onClick={() => setView('detail')}
+                className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                <span>Back</span>
+              </button>
+              <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                Record Match - {currentChampionship.name}
+              </h1>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
+              <div className="text-8xl mb-6">🚧</div>
+              <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                Match Recording Coming Soon
+              </h3>
+              <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                The match recording interface is being developed. This will allow you to:
+              </p>
+              <ul className={`${getClasses('body')} text-gray-600 text-left max-w-2xl mx-auto space-y-3 mb-8`}>
+                <li>• Select players for each match</li>
+                <li>• Record set scores</li>
+                <li>• Calculate championship points automatically</li>
+                <li>• Update standings in real-time</li>
+              </ul>
+              <button
+                onClick={() => setView('detail')}
+                className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
+              >
+                Back to Championship
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Default view - should always return something
   return (
@@ -472,3 +663,4 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 };
 
 export default ChampionshipManagement;
+                

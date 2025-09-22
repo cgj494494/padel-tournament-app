@@ -17,7 +17,7 @@ export const saveLastUsedItem = (itemId, itemName, itemType) => {
   localStorage.setItem('padelManagerLastUsed', JSON.stringify(lastUsed));
 };
 
-// Player Management View Component
+// Fixed PlayerManagementView Component in App.js
 const PlayerManagementView = ({ saveLastUsed }) => {
   const [players, setPlayers] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -35,37 +35,27 @@ const PlayerManagementView = ({ saveLastUsed }) => {
     setPlayers(loadedPlayers);
   };
 
-  const handleSavePlayer = (playerData) => {
-    let updatedPlayers;
-    
-    if (editingPlayer) {
-      // Update existing player
-      updatedPlayers = players.map(p => 
-        p.id === editingPlayer.id ? { ...editingPlayer, ...playerData } : p
-      );
-    } else {
-      // Add new player
-      const newPlayer = {
-        id: Date.now().toString(),
-        ...playerData,
-        totalTournaments: 0,
-        totalPoints: 0,
-        gamesWon: 0,
-        gamesLost: 0,
-        gameDifferential: 0
-      };
-      updatedPlayers = [...players, newPlayer];
-    }
-
+  const handleAddPlayer = (playerData) => {
+    const newPlayer = {
+      id: Date.now().toString(),
+      ...playerData,
+      totalTournaments: 0,
+      totalPoints: 0,
+      gamesWon: 0,
+      gamesLost: 0,
+      gameDifferential: 0
+    };
+    const updatedPlayers = [...players, newPlayer];
     PlayerManagementUtils.savePlayers(updatedPlayers);
     setPlayers(updatedPlayers);
-    setShowModal(false);
-    setEditingPlayer(null);
   };
 
-  const handleEditPlayer = (player) => {
-    setEditingPlayer(player);
-    setShowModal(true);
+  const handleUpdatePlayer = (updatedPlayer) => {
+    const updatedPlayers = players.map(p => 
+      p.id === updatedPlayer.id ? updatedPlayer : p
+    );
+    PlayerManagementUtils.savePlayers(updatedPlayers);
+    setPlayers(updatedPlayers);
   };
 
   const handleDeletePlayer = (playerId) => {
@@ -181,7 +171,10 @@ const PlayerManagementView = ({ saveLastUsed }) => {
                     <td className="border border-gray-300 px-4 py-2">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleEditPlayer(player)}
+                          onClick={() => {
+                            setEditingPlayer(player);
+                            setShowModal(true);
+                          }}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
                           Edit
@@ -216,17 +209,18 @@ const PlayerManagementView = ({ saveLastUsed }) => {
             )}
           </div>
 
-          {/* Player Management Modal */}
-          {showModal && (
-            <PlayerManagementModal
-              onSave={handleSavePlayer}
-              onClose={() => {
-                setShowModal(false);
-                setEditingPlayer(null);
-              }}
-              initialData={editingPlayer}
-            />
-          )}
+          {/* Player Management Modal - FIXED PROPS */}
+          <PlayerManagementModal
+            isOpen={showModal}
+            onClose={() => {
+              setShowModal(false);
+              setEditingPlayer(null);
+            }}
+            players={players}
+            onAddPlayer={handleAddPlayer}
+            onUpdatePlayer={handleUpdatePlayer}
+            onDeletePlayer={handleDeletePlayer}
+          />
         </div>
       </div>
     </div>

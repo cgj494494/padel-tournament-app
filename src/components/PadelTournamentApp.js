@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { v4 as uuidv4 } from 'uuid';
 import { PlayerManagementModal, PlayerManagementUtils } from './PlayerManagementComponent';
@@ -1386,19 +1387,21 @@ const PadelTournamentApp = ({ saveLastUsed }) => {
         return matches;
     };
     // Tournament navbar
+    // Replace the renderTournamentNavbar function in PadelTournamentApp.js with this:
+
     const renderTournamentNavbar = () => {
         return (
             <div className="bg-blue-800 text-white p-4 flex justify-between items-center mb-6 rounded-lg shadow-md">
                 <div className="flex items-center">
-                    <button
-                        onClick={backToTournamentSelector}
+                    <Link
+                        to="/"
                         className="mr-4 p-2 hover:bg-blue-700 rounded transition-colors"
-                        aria-label="Back to tournament selection"
+                        aria-label="Back to home"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                    </button>
+                    </Link>
                     <h3 className="text-2xl font-bold truncate">
                         {tournamentName || 'Tournament'}
                     </h3>
