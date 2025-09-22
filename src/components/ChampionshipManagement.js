@@ -8,6 +8,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
   const [players, setPlayers] = useState([]);
   const [fontSize, setFontSize] = useState('large');
   const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
+  
+  // Form states - must be at top level
+  const [name, setName] = useState('');
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [activeTab, setActiveTab] = useState('standings');
 
   // Load font preference
   useEffect(() => {
@@ -90,6 +95,37 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
       </div>
     </div>
   );
+
+  const handleCreate = () => {
+    if (!name.trim() || selectedPlayers.length < 4) {
+      alert('Please enter a name and select at least 4 players');
+      return;
+    }
+
+    const newChampionship = {
+      id: Date.now(),
+      name: name.trim(),
+      startDate: new Date().toISOString(),
+      players: selectedPlayers,
+      sessions: [],
+      matches: [],
+      standings: selectedPlayers.map(playerId => ({
+        playerId,
+        points: 0,
+        matchesPlayed: 0,
+        matchesWon: 0,
+        setsWon: 0,
+        setsLost: 0,
+        gamesWon: 0,
+        gamesLost: 0
+      }))
+    };
+
+    const updated = [...championships, newChampionship];
+    saveChampionships(updated);
+    setCurrentChampionship(newChampionship);
+    setView('detail');
+  };
 
   if (view === 'list') {
     return (
@@ -187,40 +223,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
   }
 
   if (view === 'create') {
-    const [name, setName] = useState('');
-    const [selectedPlayers, setSelectedPlayers] = useState([]);
-
-    const handleCreate = () => {
-      if (!name.trim() || selectedPlayers.length < 4) {
-        alert('Please enter a name and select at least 4 players');
-        return;
-      }
-
-      const newChampionship = {
-        id: Date.now(),
-        name: name.trim(),
-        startDate: new Date().toISOString(),
-        players: selectedPlayers,
-        sessions: [],
-        matches: [],
-        standings: selectedPlayers.map(playerId => ({
-          playerId,
-          points: 0,
-          matchesPlayed: 0,
-          matchesWon: 0,
-          setsWon: 0,
-          setsLost: 0,
-          gamesWon: 0,
-          gamesLost: 0
-        }))
-      };
-
-      const updated = [...championships, newChampionship];
-      saveChampionships(updated);
-      setCurrentChampionship(newChampionship);
-      setView('detail');
-    };
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
         <FontToggle />
@@ -339,8 +341,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
   }
 
   if (view === 'detail') {
-    const [activeTab, setActiveTab] = useState('standings');
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
         <FontToggle />
@@ -455,8 +455,112 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         </div>
       </div>
     );
+  }-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+                <div>
+                  <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                    {currentChampionship.name}
+                  </h1>
+                  <p className={`${getClasses('body')} text-gray-600 font-medium`}>
+                    Started {new Date(currentChampionship.startDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setView('session')}
+                className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-2xl flex items-center space-x-4 transform hover:scale-105 transition-all`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Record Match</span>
+              </button>
+            </div>
+
+            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+              
+              <div className="flex bg-gray-50/80 border-b-2 border-gray-200">
+                {[
+                  { id: 'standings', label: 'Standings', icon: '🏆' },
+                  { id: 'matches', label: 'Matches', icon: '🎾' },
+                  { id: 'players', label: 'Players', icon: '👥' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 ${getClasses('button')} font-bold flex items-center justify-center space-x-3 transition-all border-b-4 ${
+                      activeTab === tab.id 
+                        ? 'border-blue-500 text-blue-600 bg-white shadow-lg' 
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className="text-3xl">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-8">
+                {activeTab === 'players' && (
+                  <div>
+                    <div className="flex justify-between items-center mb-8">
+                      <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                        Championship Players ({currentChampionship.players?.length || 0})
+                      </h3>
+                      <button
+                        onClick={() => setShowAddPlayersModal(true)}
+                        className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <span>Add Players</span>
+                      </button>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {currentChampionship.players?.map((playerId) => {
+                        const player = players.find(p => p.id === playerId);
+                        
+                        return (
+                          <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
+                            <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>
+                              {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                            </h4>
+                            <p className={`${getClasses('small')} text-gray-600 mb-4`}>{player?.userId}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {(!currentChampionship.players || currentChampionship.players.length === 0) && (
+                      <div className="text-center py-16">
+                        <div className="text-8xl mb-6">👥</div>
+                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                          No Players Added
+                        </h3>
+                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                          Add some players to get started with this championship
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  // Default view - should always return something
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
       <FontToggle />
