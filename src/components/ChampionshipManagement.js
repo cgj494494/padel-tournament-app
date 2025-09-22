@@ -125,7 +125,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     saveChampionships(updated);
     setCurrentChampionship(newChampionship);
     setView('detail');
-  };
+  };;
 
   if (view === 'list') {
     return (
