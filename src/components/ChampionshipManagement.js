@@ -70,7 +70,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
   // Font Toggle Component - always visible
   const FontToggle = () => (
-    <div className="fixed top-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-3">
+    <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-3">
       <div className="flex items-center space-x-3">
         <span className={`${fontSize === 'small' ? 'text-gray-400' : 'text-gray-600'} font-medium`}>A</span>
         <button
