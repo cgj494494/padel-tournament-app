@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
 const ChampionshipManagement = ({ saveLastUsed }) => {
-  const [view, setView] = useState('list'); // 'list', 'create', 'detail', 'session', 'match'
+  const [view, setView] = useState('list');
   const [championships, setChampionships] = useState([]);
   const [currentChampionship, setCurrentChampionship] = useState(null);
   const [currentSession, setCurrentSession] = useState(null);
   const [players, setPlayers] = useState([]);
 
-  // Load data on mount
   useEffect(() => {
     loadChampionships();
     loadPlayers();
@@ -32,7 +31,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     }
   };
 
-  // Championship List View
   const ChampionshipList = () => (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-8">
@@ -71,7 +69,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
               onClick={() => {
                 setCurrentChampionship(championship);
                 setView('detail');
-                // Save as last used
                 if (saveLastUsed) {
                   saveLastUsed(championship.id, championship.name, 'championship');
                 }
@@ -102,7 +99,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     </div>
   );
 
-  // Championship Creation Form
   const ChampionshipCreate = () => {
     const [name, setName] = useState('');
     const [selectedPlayers, setSelectedPlayers] = useState([]);
@@ -220,9 +216,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     );
   };
 
-  // Championship Detail View
   const ChampionshipDetail = () => {
-    const [activeTab, setActiveTab] = useState('sessions');
+    const [activeTab, setActiveTab] = useState('standings');
 
     const startNewSession = () => {
       const newSession = {
@@ -240,212 +235,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
-            <button
-              onClick={() => setView('session')}
-              className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">Record Match Result</h1>
-              <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setView('detail')}
-            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl font-semibold"
-          >
-            Back to Championship
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {/* Team Formation */}
-            <div>
-              <h3 className="text-lg font-bold mb-4">Form Teams</h3>
-              
-              {/* Available Players */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-3">Available Players (click to assign to teams)</h4>
-                <div className="grid grid-cols-1 gap-2">
-                  {currentSession.attendees?.map((playerId) => {
-                    const player = players.find(p => p.id === playerId);
-                    const inTeamA = teamA.includes(playerId);
-                    const inTeamB = teamB.includes(playerId);
-                    const isAssigned = inTeamA || inTeamB;
-                    
-                    return (
-                      <div
-                        key={playerId}
-                        className={`p-3 rounded-lg border text-center cursor-pointer transition-all ${
-                          inTeamA ? 'bg-blue-100 border-blue-500' :
-                          inTeamB ? 'bg-green-100 border-green-500' :
-                          'bg-gray-50 border-gray-200 hover:border-gray-400'
-                        }`}
-                        onClick={() => {
-                          if (isAssigned) {
-                            // Remove from current team
-                            setTeamA(teamA.filter(id => id !== playerId));
-                            setTeamB(teamB.filter(id => id !== playerId));
-                          } else if (teamA.length < 2) {
-                            // Add to Team A if space available
-                            setTeamA([...teamA, playerId]);
-                          } else if (teamB.length < 2) {
-                            // Add to Team B if space available
-                            setTeamB([...teamB, playerId]);
-                          } else {
-                            alert('Both teams are full! Click a player to remove them first.');
-                          }
-                        }}
-                      >
-                        <div className="font-medium">
-                          {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
-                        </div>
-                        {inTeamA && <div className="text-xs text-blue-600 font-bold">Team A</div>}
-                        {inTeamB && <div className="text-xs text-green-600 font-bold">Team B</div>}
-                        {!isAssigned && <div className="text-xs text-gray-500">Click to assign</div>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Team Display */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-bold text-blue-800 mb-2">Team A ({teamA.length}/2)</h4>
-                  {teamA.map(playerId => {
-                    const player = players.find(p => p.id === playerId);
-                    return (
-                      <div key={playerId} className="text-sm">
-                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h4 className="font-bold text-green-800 mb-2">Team B ({teamB.length}/2)</h4>
-                  {teamB.map(playerId => {
-                    const player = players.find(p => p.id === playerId);
-                    return (
-                      <div key={playerId} className="text-sm">
-                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Score Entry */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team A Games</label>
-                  <input
-                    type="number"
-                    value={scoreA}
-                    onChange={(e) => setScoreA(e.target.value)}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
-                    placeholder="0"
-                    min="0"
-                    max="20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Team B Games</label>
-                  <input
-                    type="number"
-                    value={scoreB}
-                    onChange={(e) => setScoreB(e.target.value)}
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
-                    placeholder="0"
-                    min="0"
-                    max="20"
-                  />
-                </div>
-              </div>
-
-              {/* Points Preview */}
-              {scoreA && scoreB && (
-                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h4 className="font-bold text-yellow-800 mb-2">Points Preview</h4>
-                  <div className="text-sm">
-                    {(() => {
-                      const gamesA = parseInt(scoreA);
-                      const gamesB = parseInt(scoreB);
-                      const [pointsA, pointsB] = calculatePoints(gamesA, gamesB);
-                      return `Team A will get ${pointsA} points, Team B will get ${pointsB} points`;
-                    })()}
-                  </div>
-                </div>
-              )}
-
-              <button
-                onClick={recordMatch}
-                disabled={teamA.length !== 2 || teamB.length !== 2 || !scoreA || !scoreB}
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold text-lg"
-              >
-                Record Match
-              </button>
-            </div>
-
-            {/* Scoring Guide */}
-            <div>
-              <h3 className="text-lg font-bold mb-4">Scoring Guide</h3>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <h4 className="font-bold text-green-800">Big Win (2+ games ahead)</h4>
-                  <p className="text-sm text-green-700">Winner: 3 points • Loser: 0 points</p>
-                  <p className="text-xs text-green-600">Examples: 6-4, 6-3, 6-2, etc.</p>
-                </div>
-                
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-bold text-blue-800">Close Win (1 game ahead)</h4>
-                  <p className="text-sm text-blue-700">Winner: 2 points • Loser: 0 points</p>
-                  <p className="text-xs text-blue-600">Examples: 6-5, 7-6, etc.</p>
-                </div>
-                
-                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <h4 className="font-bold text-purple-800">Draw (same games)</h4>
-                  <p className="text-sm text-purple-700">Both teams: 1 point each</p>
-                  <p className="text-xs text-purple-600">Examples: 6-6, 5-5, etc.</p>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <h4 className="font-bold text-gray-800 mb-2">Quick Tips</h4>
-                <ul className="text-sm text-gray-700 space-y-1">
-                  <li>• Click players to assign them to teams</li>
-                  <li>• Each team needs exactly 2 players</li>
-                  <li>• Enter the final game score for the set</li>
-                  <li>• Points are awarded automatically</li>
-                  <li>• You can record multiple matches in a row</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Main Render Logic
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {view === 'list' && <ChampionshipList />}
-      {view === 'create' && <ChampionshipCreate />}
-      {view === 'detail' && <ChampionshipDetail />}
-      {view === 'session' && <SessionView />}
-      {view === 'match' && <MatchView />}
-    </div>
-  );
-};
-
-export default ChampionshipManagement;-center">
             <button
               onClick={() => setView('list')}
               className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
@@ -470,7 +259,6 @@ export default ChampionshipManagement;-center">
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <div className="flex border-b border-gray-200">
             {[
@@ -511,9 +299,7 @@ export default ChampionshipManagement;-center">
                     <tbody>
                       {currentChampionship.standings
                         ?.sort((a, b) => {
-                          // Primary sort: points
                           if (b.points !== a.points) return b.points - a.points;
-                          // Secondary sort: game differential
                           return (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
                         })
                         .map((standing, index) => {
@@ -624,7 +410,6 @@ export default ChampionshipManagement;-center">
     );
   };
 
-  // Session Management (Player Selection)
   const SessionView = () => {
     const [selectedPlayers, setSelectedPlayers] = useState([]);
 
@@ -659,7 +444,7 @@ export default ChampionshipManagement;-center">
         </div>
 
         <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Who's Playing?</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Who is Playing?</h3>
           <p className="text-gray-600 mb-6">Select players for this match</p>
 
           <div className="grid md:grid-cols-2 gap-4 mb-8">
@@ -716,7 +501,6 @@ export default ChampionshipManagement;-center">
     );
   };
 
-  // Match Entry View
   const MatchView = () => {
     const [teamA, setTeamA] = useState([]);
     const [teamB, setTeamB] = useState([]);
@@ -725,11 +509,11 @@ export default ChampionshipManagement;-center">
 
     const calculatePoints = (gamesA, gamesB) => {
       const diff = gamesA - gamesB;
-      if (diff >= 2) return [3, 0]; // Big win: 3 points vs 0 points
-      if (diff === 1) return [2, 0]; // Close win: 2 points vs 0 points
-      if (diff === 0) return [1, 1]; // Draw: 1 point each
-      if (diff === -1) return [0, 2]; // Close loss: 0 points vs 2 points
-      return [0, 3]; // Big loss: 0 points vs 3 points
+      if (diff >= 2) return [3, 0];
+      if (diff === 1) return [2, 0];
+      if (diff === 0) return [1, 1];
+      if (diff === -1) return [0, 2];
+      return [0, 3];
     };
 
     const recordMatch = () => {
@@ -758,7 +542,6 @@ export default ChampionshipManagement;-center">
         timestamp: new Date().toISOString()
       };
 
-      // Update championship with new match and updated standings
       const updatedChampionships = championships.map(c => {
         if (c.id === currentChampionship.id) {
           const updatedMatches = [...(c.matches || []), match];
@@ -799,9 +582,8 @@ export default ChampionshipManagement;-center">
       saveChampionships(updatedChampionships);
       setCurrentChampionship(updatedChampionships.find(c => c.id === currentChampionship.id));
 
-      alert(`Match recorded! ${teamA.map(id => players.find(p => p.id === id)?.firstName).join(' & ')} ${gamesA} - ${gamesB} ${teamB.map(id => players.find(p => p.id === id)?.firstName).join(' & ')}`);
+      alert(`Match recorded successfully!`);
       
-      // Reset form for next match
       setTeamA([]);
       setTeamB([]);
       setScoreA('');
@@ -811,4 +593,200 @@ export default ChampionshipManagement;-center">
     return (
       <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items
+          <div className="flex items-center">
+            <button
+              onClick={() => setView('session')}
+              className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Record Match Result</h1>
+              <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setView('detail')}
+            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl font-semibold"
+          >
+            Back to Championship
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-bold mb-4">Form Teams</h3>
+              
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-3">Available Players (click to assign to teams)</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {currentSession.attendees?.map((playerId) => {
+                    const player = players.find(p => p.id === playerId);
+                    const inTeamA = teamA.includes(playerId);
+                    const inTeamB = teamB.includes(playerId);
+                    const isAssigned = inTeamA || inTeamB;
+                    
+                    return (
+                      <div
+                        key={playerId}
+                        className={`p-3 rounded-lg border text-center cursor-pointer transition-all ${
+                          inTeamA ? 'bg-blue-100 border-blue-500' :
+                          inTeamB ? 'bg-green-100 border-green-500' :
+                          'bg-gray-50 border-gray-200 hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          if (isAssigned) {
+                            setTeamA(teamA.filter(id => id !== playerId));
+                            setTeamB(teamB.filter(id => id !== playerId));
+                          } else if (teamA.length < 2) {
+                            setTeamA([...teamA, playerId]);
+                          } else if (teamB.length < 2) {
+                            setTeamB([...teamB, playerId]);
+                          } else {
+                            alert('Both teams are full! Click a player to remove them first.');
+                          }
+                        }}
+                      >
+                        <div className="font-medium">
+                          {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                        </div>
+                        {inTeamA && <div className="text-xs text-blue-600 font-bold">Team A</div>}
+                        {inTeamB && <div className="text-xs text-green-600 font-bold">Team B</div>}
+                        {!isAssigned && <div className="text-xs text-gray-500">Click to assign</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-bold text-blue-800 mb-2">Team A ({teamA.length}/2)</h4>
+                  {teamA.map(playerId => {
+                    const player = players.find(p => p.id === playerId);
+                    return (
+                      <div key={playerId} className="text-sm">
+                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h4 className="font-bold text-green-800 mb-2">Team B ({teamB.length}/2)</h4>
+                  {teamB.map(playerId => {
+                    const player = players.find(p => p.id === playerId);
+                    return (
+                      <div key={playerId} className="text-sm">
+                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Team A Games</label>
+                  <input
+                    type="number"
+                    value={scoreA}
+                    onChange={(e) => setScoreA(e.target.value)}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
+                    placeholder="0"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Team B Games</label>
+                  <input
+                    type="number"
+                    value={scoreB}
+                    onChange={(e) => setScoreB(e.target.value)}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
+                    placeholder="0"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+              </div>
+
+              {scoreA && scoreB && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h4 className="font-bold text-yellow-800 mb-2">Points Preview</h4>
+                  <div className="text-sm">
+                    {(() => {
+                      const gamesA = parseInt(scoreA);
+                      const gamesB = parseInt(scoreB);
+                      const [pointsA, pointsB] = calculatePoints(gamesA, gamesB);
+                      return `Team A will get ${pointsA} points, Team B will get ${pointsB} points`;
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={recordMatch}
+                disabled={teamA.length !== 2 || teamB.length !== 2 || !scoreA || !scoreB}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold text-lg"
+              >
+                Record Match
+              </button>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold mb-4">Scoring Guide</h3>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-bold text-green-800">Big Win (2+ games ahead)</h4>
+                  <p className="text-sm text-green-700">Winner: 3 points • Loser: 0 points</p>
+                  <p className="text-xs text-green-600">Examples: 6-4, 6-3, 6-2, etc.</p>
+                </div>
+                
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-bold text-blue-800">Close Win (1 game ahead)</h4>
+                  <p className="text-sm text-blue-700">Winner: 2 points • Loser: 0 points</p>
+                  <p className="text-xs text-blue-600">Examples: 6-5, 7-6, etc.</p>
+                </div>
+                
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h4 className="font-bold text-purple-800">Draw (same games)</h4>
+                  <p className="text-sm text-purple-700">Both teams: 1 point each</p>
+                  <p className="text-xs text-purple-600">Examples: 6-6, 5-5, etc.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h4 className="font-bold text-gray-800 mb-2">Quick Tips</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Click players to assign them to teams</li>
+                  <li>• Each team needs exactly 2 players</li>
+                  <li>• Enter the final game score for the set</li>
+                  <li>• Points are awarded automatically</li>
+                  <li>• You can record multiple matches in a row</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {view === 'list' && <ChampionshipList />}
+      {view === 'create' && <ChampionshipCreate />}
+      {view === 'detail' && <ChampionshipDetail />}
+      {view === 'session' && <SessionView />}
+      {view === 'match' && <MatchView />}
+    </div>
+  );
+};
+
+export default ChampionshipManagement;
