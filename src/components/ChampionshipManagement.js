@@ -1,679 +1,814 @@
 import React, { useState, useEffect } from 'react';
-import { StorageManager } from './StorageManager';
-import { useRole, RoleBasedWrapper, AdminOnly } from './RoleBasedWrapper';
-import { v4 as uuidv4 } from 'uuid';
 
-/**
- * ChampionshipManagement Component
- * 
- * Entry point for the Championship System, allowing users to:
- * - View a list of championships
- * - Create new championships
- * - Navigate to championship details
- */
 const ChampionshipManagement = ({ saveLastUsed }) => {
+  const [view, setView] = useState('list'); // 'list', 'create', 'detail', 'session', 'match'
   const [championships, setChampionships] = useState([]);
-  const [view, setView] = useState('list'); // 'list', 'create', 'detail'
   const [currentChampionship, setCurrentChampionship] = useState(null);
-  const [filter, setFilter] = useState('all'); // 'all', 'admin', 'player'
-  const { userId } = useRole();
+  const [currentSession, setCurrentSession] = useState(null);
+  const [players, setPlayers] = useState([]);
 
-  useEffect(() => {
-    // Initialize StorageManager and log results
-    const initStorage = () => {
-      try {
-        // Check storage initialization
-        const result = StorageManager.initialize();
-        console.log('Storage Initialization:', result);
-
-        // Check storage info
-        const storageInfo = StorageManager.getStorageInfo();
-        console.log('Storage Info:', storageInfo);
-
-        // Load championships
-        const loadedChampionships = StorageManager.loadChampionships();
-        console.log('Loaded Championships:', loadedChampionships);
-
-        setChampionships(loadedChampionships);
-      } catch (error) {
-        console.error('Storage Initialization Error:', error);
-      }
-    };
-
-    initStorage();
-  }, []);
-
-  // Load championships on component mount
+  // Load data on mount
   useEffect(() => {
     loadChampionships();
+    loadPlayers();
   }, []);
 
-  /**
-   * Load championships from storage
-   */
   const loadChampionships = () => {
-    const loadedChampionships = StorageManager.loadChampionships();
-    setChampionships(loadedChampionships);
+    const saved = localStorage.getItem('padelChampionships');
+    if (saved) {
+      setChampionships(JSON.parse(saved));
+    }
   };
 
-  /**
-   * Determine user's role for a championship
-   */
-  const determineUserRole = (championship) => {
-    // Check if user is an administrator
-    const isAdmin = championship.administrators?.some(admin => admin.userId === userId);
-
-    // Check if user is an owner (can't be removed)
-    const isOwner = championship.administrators?.some(
-      admin => admin.userId === userId && admin.role === 'owner'
-    );
-
-    // Check if user is a player
-    const isPlayer = championship.players?.includes(userId);
-
-    if (isOwner) return 'owner';
-    if (isAdmin) return 'admin';
-    if (isPlayer) return 'player';
-    return null;
+  const saveChampionships = (data) => {
+    localStorage.setItem('padelChampionships', JSON.stringify(data));
+    setChampionships(data);
   };
 
-  /**
-   * Filter championships based on user's role
-   */
-  const getFilteredChampionships = () => {
-    if (filter === 'all') return championships;
-
-    return championships.filter(championship => {
-      const role = determineUserRole(championship);
-
-      if (filter === 'admin') {
-        return role === 'admin' || role === 'owner';
-      }
-
-      if (filter === 'player') {
-        return role === 'player';
-      }
-
-      return false;
-    });
+  const loadPlayers = () => {
+    const saved = localStorage.getItem('padelTournamentPlayers');
+    if (saved) {
+      setPlayers(JSON.parse(saved));
+    }
   };
 
-  /**
-   * Handle creating a new championship
-   */
-  const handleCreateChampionship = (newChampionship) => {
-    // Add the new championship to state and storage
-    const updatedChampionships = [...championships, newChampionship];
-    setChampionships(updatedChampionships);
-    StorageManager.saveChampionships(updatedChampionships);
-
-    // Reset view to list
-    setView('list');
-  };
-
-  /**
-   * Handle deleting a championship
-   */
-  const handleDeleteChampionship = (championshipId) => {
-    // Remove from state
-    const updatedChampionships = championships.filter(c => c.id !== championshipId);
-    setChampionships(updatedChampionships);
-
-    // Remove from storage (including related data)
-    StorageManager.deleteChampionship(championshipId);
-  };
-
-  /**
-   * Render championship creation form
-   */
-  const renderCreateForm = () => {
-    return <ChampionshipCreationForm onSave={handleCreateChampionship} onCancel={() => setView('list')} />;
-  };
-
-  /**
-   * Render championship detail view
-   */
-  const renderDetailView = () => {
-    if (!currentChampionship) return <div>No championship selected</div>;
-
-    return <ChampionshipDetail
-      championship={currentChampionship}
-      onBack={() => setView('list')}
-      onDelete={handleDeleteChampionship}
-    />;
-  };
-
-  /**
-   * Render championship list
-   */
-  const renderChampionshipList = () => {
-    const filteredChampionships = getFilteredChampionships();
-
-    return (
-      <div>
-        {/* Filter Controls */}
-        <div className="mb-4 flex space-x-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg ${filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 hover:bg-gray-300'}`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter('admin')}
-            className={`px-4 py-2 rounded-lg ${filter === 'admin'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 hover:bg-gray-300'}`}
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => setFilter('player')}
-            className={`px-4 py-2 rounded-lg ${filter === 'player'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 hover:bg-gray-300'}`}
-          >
-            Player
-          </button>
-        </div>
-
-        {/* Create New Button */}
-        <div className="space-y-4">
-          {filteredChampionships.length === 0 ? (
-            <div className="p-8 bg-gray-50 rounded-lg border border-gray-200 text-center text-gray-500">
-              No championships found. Create your first championship to get started.
-            </div>
-          ) : (
-            filteredChampionships.map(championship => (
-              <ChampionshipCard
-                key={championship.id}
-                championship={championship}
-                userRole={determineUserRole(championship)}
-                onClick={() => {
-                  setCurrentChampionship(championship);
-                  setView('detail');
-                  // Add this to save the last used championship
-                  if (saveLastUsed) {
-                    saveLastUsed(championship.id, championship.name, 'championship');
-                  }
-                }}
-                onDelete={() => handleDeleteChampionship(championship.id)}
-              />
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  // Main render logic
-  return (
+  // Championship List View
+  const ChampionshipList = () => (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-blue-800 mb-6">Padel Championship System</h1>
-
-      {view === 'list' && renderChampionshipList()}
-      {view === 'create' && renderCreateForm()}
-      {view === 'detail' && renderDetailView()}
-    </div>
-  );
-};
-
-/**
- * Championship Card Component
- * Displays a championship in the list
- */
-const ChampionshipCard = ({ championship, userRole, onClick, onDelete }) => {
-  // Calculate status display
-  const getStatusDisplay = () => {
-    switch (championship.status) {
-      case 'active':
-        return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Active</span>;
-      case 'paused':
-        return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Paused</span>;
-      case 'completed':
-        return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">Completed</span>;
-      default:
-        return null;
-    }
-  };
-
-  // Calculate role display
-  const getRoleDisplay = () => {
-    switch (userRole) {
-      case 'owner':
-        return <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">Owner</span>;
-      case 'admin':
-        return <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">Admin</span>;
-      case 'player':
-        return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">Player</span>;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-      <div onClick={onClick} className="cursor-pointer p-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-xl font-bold text-gray-900">{championship.name}</h3>
-            <p className="text-sm text-gray-500">
-              Started: {new Date(championship.startDate).toLocaleDateString()}
-            </p>
-            <p className="text-sm text-gray-500">
-              {championship.players?.length || 0} players
-            </p>
-          </div>
-
-          <div className="flex flex-col space-y-2 items-end">
-            {getStatusDisplay()}
-            {getRoleDisplay()}
-          </div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Championships</h1>
+          <p className="text-gray-600 mt-2">Long-running padel competitions</p>
         </div>
+        <button
+          onClick={() => setView('create')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New Championship</span>
+        </button>
       </div>
 
-      {/* Admin-only actions */}
-      {(userRole === 'admin' || userRole === 'owner') && (
-        <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-end">
+      {championships.length === 0 ? (
+        <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
+          <div className="text-6xl mb-4">🏆</div>
+          <h3 className="text-xl font-bold text-gray-800 mb-2">No Championships Yet</h3>
+          <p className="text-gray-600 mb-6">Create your first championship to start tracking long-term competitions</p>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            onClick={() => setView('create')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold"
           >
-            Delete Championship
+            Create First Championship
           </button>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {championships.map((championship) => (
+            <div
+              key={championship.id}
+              onClick={() => {
+                setCurrentChampionship(championship);
+                setView('detail');
+                // Save as last used
+                if (saveLastUsed) {
+                  saveLastUsed(championship.id, championship.name, 'championship');
+                }
+              }}
+              className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-200 cursor-pointer"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">{championship.name}</h3>
+                  <p className="text-gray-600">Started {new Date(championship.startDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-blue-600 mt-1">
+                    {championship.players?.length || 0} players • {championship.sessions?.length || 0} sessions
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    Active
+                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
-};
 
-/**
- * Championship Creation Form
- * Form for creating a new championship
- */
-const ChampionshipCreationForm = ({ onSave, onCancel }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [frequency, setFrequency] = useState('weekly');
-  const { userId } = useRole();
+  // Championship Creation Form
+  const ChampionshipCreate = () => {
+    const [name, setName] = useState('');
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+    const handleCreate = () => {
+      if (!name.trim() || selectedPlayers.length < 4) {
+        alert('Please enter a name and select at least 4 players');
+        return;
+      }
 
-    // Create new championship object
-    const newChampionship = {
-      id: uuidv4(),
-      name,
-      description,
-      startDate: new Date().toISOString(),
-      frequency,
-      status: 'active',
-      administrators: [
-        {
-          userId,
-          role: 'owner',
-          addedAt: new Date().toISOString(),
-          addedBy: userId
-        }
-      ],
-      players: [userId], // Creator is automatically a player
-      configuration: {
-        scoringSystem: 'standard',
-        baselineSetConsideration: 5,
-        maxValidityCalculation: 30,
-        allowTieBreaks: true,
-        maxRegularGameScore: 9
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      const newChampionship = {
+        id: Date.now(),
+        name: name.trim(),
+        startDate: new Date().toISOString(),
+        players: selectedPlayers,
+        sessions: [],
+        matches: [],
+        standings: selectedPlayers.map(playerId => ({
+          playerId,
+          points: 0,
+          matchesPlayed: 0,
+          matchesWon: 0,
+          setsWon: 0,
+          setsLost: 0,
+          gamesWon: 0,
+          gamesLost: 0
+        }))
+      };
+
+      const updated = [...championships, newChampionship];
+      saveChampionships(updated);
+      setCurrentChampionship(newChampionship);
+      setView('detail');
     };
-    console.log('Creating New Championship:', newChampionship);
 
-    // Save championship and log the result
-    const savedChampionships = StorageManager.loadChampionships();
-    savedChampionships.push(newChampionship);
-    const saveResult = StorageManager.saveItem('padelChampionships', savedChampionships);
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setView('list')}
+            className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <h1 className="text-2xl font-bold text-gray-800">Create Championship</h1>
+        </div>
 
-    console.log('Championship Save Result:', saveResult);
-    onSave(newChampionship);
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Championship Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Summer Championship 2025"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Players (minimum 4)</label>
+              <div className="border border-gray-300 rounded-xl p-4 max-h-60 overflow-y-auto">
+                {players.filter(p => p.isActive).length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No active players found.</p>
+                    <p className="text-sm mt-2">Go to Tournament → Player Management to add players first.</p>
+                  </div>
+                ) : (
+                  players.filter(p => p.isActive).map((player) => (
+                    <label key={player.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded-lg">
+                      <input
+                        type="checkbox"
+                        checked={selectedPlayers.includes(player.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedPlayers([...selectedPlayers, player.id]);
+                          } else {
+                            setSelectedPlayers(selectedPlayers.filter(id => id !== player.id));
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <span className="font-medium">{player.firstName} {player.surname}</span>
+                      <span className="text-sm text-gray-500">({player.userId})</span>
+                    </label>
+                  ))
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Selected: {selectedPlayers.length} players
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setView('list')}
+                className="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={!name.trim() || selectedPlayers.length < 4}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-xl font-semibold"
+              >
+                Create Championship
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
+  // Championship Detail View
+  const ChampionshipDetail = () => {
+    const [activeTab, setActiveTab] = useState('sessions');
+
+    const startNewSession = () => {
+      const newSession = {
+        id: Date.now(),
+        championshipId: currentChampionship.id,
+        date: new Date().toISOString().split('T')[0],
+        attendees: [],
+        matches: []
+      };
+      setCurrentSession(newSession);
+      setView('session');
+    };
+
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <button
+              onClick={() => setView('session')}
+              className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Record Match Result</h1>
+              <p className="text-gray-600">{new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setView('detail')}
+            className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-xl font-semibold"
+          >
+            Back to Championship
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Team Formation */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Form Teams</h3>
+              
+              {/* Available Players */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-3">Available Players (click to assign to teams)</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {currentSession.attendees?.map((playerId) => {
+                    const player = players.find(p => p.id === playerId);
+                    const inTeamA = teamA.includes(playerId);
+                    const inTeamB = teamB.includes(playerId);
+                    const isAssigned = inTeamA || inTeamB;
+                    
+                    return (
+                      <div
+                        key={playerId}
+                        className={`p-3 rounded-lg border text-center cursor-pointer transition-all ${
+                          inTeamA ? 'bg-blue-100 border-blue-500' :
+                          inTeamB ? 'bg-green-100 border-green-500' :
+                          'bg-gray-50 border-gray-200 hover:border-gray-400'
+                        }`}
+                        onClick={() => {
+                          if (isAssigned) {
+                            // Remove from current team
+                            setTeamA(teamA.filter(id => id !== playerId));
+                            setTeamB(teamB.filter(id => id !== playerId));
+                          } else if (teamA.length < 2) {
+                            // Add to Team A if space available
+                            setTeamA([...teamA, playerId]);
+                          } else if (teamB.length < 2) {
+                            // Add to Team B if space available
+                            setTeamB([...teamB, playerId]);
+                          } else {
+                            alert('Both teams are full! Click a player to remove them first.');
+                          }
+                        }}
+                      >
+                        <div className="font-medium">
+                          {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                        </div>
+                        {inTeamA && <div className="text-xs text-blue-600 font-bold">Team A</div>}
+                        {inTeamB && <div className="text-xs text-green-600 font-bold">Team B</div>}
+                        {!isAssigned && <div className="text-xs text-gray-500">Click to assign</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Team Display */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="font-bold text-blue-800 mb-2">Team A ({teamA.length}/2)</h4>
+                  {teamA.map(playerId => {
+                    const player = players.find(p => p.id === playerId);
+                    return (
+                      <div key={playerId} className="text-sm">
+                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h4 className="font-bold text-green-800 mb-2">Team B ({teamB.length}/2)</h4>
+                  {teamB.map(playerId => {
+                    const player = players.find(p => p.id === playerId);
+                    return (
+                      <div key={playerId} className="text-sm">
+                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Score Entry */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Team A Games</label>
+                  <input
+                    type="number"
+                    value={scoreA}
+                    onChange={(e) => setScoreA(e.target.value)}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
+                    placeholder="0"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Team B Games</label>
+                  <input
+                    type="number"
+                    value={scoreB}
+                    onChange={(e) => setScoreB(e.target.value)}
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg text-center text-2xl font-bold"
+                    placeholder="0"
+                    min="0"
+                    max="20"
+                  />
+                </div>
+              </div>
+
+              {/* Points Preview */}
+              {scoreA && scoreB && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h4 className="font-bold text-yellow-800 mb-2">Points Preview</h4>
+                  <div className="text-sm">
+                    {(() => {
+                      const gamesA = parseInt(scoreA);
+                      const gamesB = parseInt(scoreB);
+                      const [pointsA, pointsB] = calculatePoints(gamesA, gamesB);
+                      return `Team A will get ${pointsA} points, Team B will get ${pointsB} points`;
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={recordMatch}
+                disabled={teamA.length !== 2 || teamB.length !== 2 || !scoreA || !scoreB}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-3 rounded-xl font-semibold text-lg"
+              >
+                Record Match
+              </button>
+            </div>
+
+            {/* Scoring Guide */}
+            <div>
+              <h3 className="text-lg font-bold mb-4">Scoring Guide</h3>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h4 className="font-bold text-green-800">Big Win (2+ games ahead)</h4>
+                  <p className="text-sm text-green-700">Winner: 3 points • Loser: 0 points</p>
+                  <p className="text-xs text-green-600">Examples: 6-4, 6-3, 6-2, etc.</p>
+                </div>
+                
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-bold text-blue-800">Close Win (1 game ahead)</h4>
+                  <p className="text-sm text-blue-700">Winner: 2 points • Loser: 0 points</p>
+                  <p className="text-xs text-blue-600">Examples: 6-5, 7-6, etc.</p>
+                </div>
+                
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h4 className="font-bold text-purple-800">Draw (same games)</h4>
+                  <p className="text-sm text-purple-700">Both teams: 1 point each</p>
+                  <p className="text-xs text-purple-600">Examples: 6-6, 5-5, etc.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h4 className="font-bold text-gray-800 mb-2">Quick Tips</h4>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Click players to assign them to teams</li>
+                  <li>• Each team needs exactly 2 players</li>
+                  <li>• Enter the final game score for the set</li>
+                  <li>• Points are awarded automatically</li>
+                  <li>• You can record multiple matches in a row</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Main Render Logic
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold mb-6 text-blue-800">Create New Championship</h2>
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="name">
-            Championship Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="Enter championship name"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="description">
-            Description (Optional)
-          </label>
-          <textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-            placeholder="Enter description"
-            rows="3"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-2" htmlFor="frequency">
-            Match Frequency
-          </label>
-          <select
-            id="frequency"
-            value={frequency}
-            onChange={(e) => setFrequency(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-          >
-            <option value="weekly">Weekly</option>
-            <option value="bi-weekly">Bi-Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            disabled={!name.trim()}
-          >
-            Create Championship
-          </button>
-        </div>
-      </form>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {view === 'list' && <ChampionshipList />}
+      {view === 'create' && <ChampionshipCreate />}
+      {view === 'detail' && <ChampionshipDetail />}
+      {view === 'session' && <SessionView />}
+      {view === 'match' && <MatchView />}
     </div>
   );
 };
 
-/**
- * ChampionshipDetail Component
- * 
- * Displays detailed information about a championship
- * This is a simplified version that will be expanded in future development
- */
-const ChampionshipDetail = ({ championship, onBack, onDelete }) => {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'sessions', 'standings', 'players'
-  const { userId } = useRole();
-
-  // Check if user is an administrator
-  const isAdmin = championship.administrators?.some(admin => admin.userId === userId);
-
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        {/* Back Button */}
-        <button
-          onClick={onBack}
-          className="mb-4 flex items-center text-blue-600 hover:text-blue-800"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-          Back to Championships
-        </button>
-
-        <div className="flex justify-between items-start">
-          <h2 className="text-2xl font-bold text-blue-800">{championship.name}</h2>
-
-          {/* Status Badge */}
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${championship.status === 'active' ? 'bg-green-100 text-green-800' :
-            championship.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-blue-100 text-blue-800'
-            }`}>
-            {championship.status.charAt(0).toUpperCase() + championship.status.slice(1)}
-          </span>
+export default ChampionshipManagement;-center">
+            <button
+              onClick={() => setView('list')}
+              className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">{currentChampionship.name}</h1>
+              <p className="text-gray-600">Started {new Date(currentChampionship.startDate).toLocaleDateString()}</p>
+            </div>
+          </div>
+          <button
+            onClick={startNewSession}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Record Match</span>
+          </button>
         </div>
 
-        {/* Description */}
-        {championship.description && (
-          <p className="text-gray-600 mt-2">{championship.description}</p>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'overview' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('sessions')}
-            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'sessions' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Sessions
-          </button>
-          <button
-            onClick={() => setActiveTab('standings')}
-            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'standings' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Standings
-          </button>
-          <button
-            onClick={() => setActiveTab('players')}
-            className={`px-3 py-2 rounded-lg font-medium ${activeTab === 'players' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-100'
-              }`}
-          >
-            Players
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="p-6">
-        {activeTab === 'overview' && (
-          <div>
-            <h3 className="text-lg font-bold mb-4">Championship Information</h3>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div>
-                <p className="text-gray-500 text-sm">Started</p>
-                <p className="font-medium">{new Date(championship.startDate).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Match Frequency</p>
-                <p className="font-medium">{championship.frequency.charAt(0).toUpperCase() + championship.frequency.slice(1)}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Status</p>
-                <p className="font-medium">{championship.status.charAt(0).toUpperCase() + championship.status.slice(1)}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-sm">Player Count</p>
-                <p className="font-medium">{championship.players?.length || 0}</p>
-              </div>
-            </div>
-
-            {/* Configuration details */}
-            <h3 className="text-lg font-bold mb-4">Configuration</h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-500 text-sm">Scoring System</p>
-                  <p className="font-medium">{championship.configuration?.scoringSystem?.charAt(0).toUpperCase() + championship.configuration?.scoringSystem?.slice(1) || 'Standard'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Baseline Sets</p>
-                  <p className="font-medium">{championship.configuration?.baselineSetConsideration || 5}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Tie Breaks</p>
-                  <p className="font-medium">{championship.configuration?.allowTieBreaks ? 'Allowed' : 'Not Allowed'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500 text-sm">Max Game Score</p>
-                  <p className="font-medium">{championship.configuration?.maxRegularGameScore || 9}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Admin actions */}
-            {isAdmin && (
-              <div className="mt-8 border-t border-gray-200 pt-6">
-                <div className="flex justify-between">
-                  <button
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300"
-                  >
-                    Edit Championship
-                  </button>
-
-                  <button
-                    onClick={() => onDelete(championship.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Delete Championship
-                  </button>
-                </div>
-              </div>
-            )}
+        {/* Tabs */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="flex border-b border-gray-200">
+            {[
+              { id: 'standings', label: 'Standings', icon: '🏆' },
+              { id: 'sessions', label: 'Recent Matches', icon: '📅' },
+              { id: 'players', label: 'Players', icon: '👥' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-6 py-4 font-semibold flex items-center space-x-2 ${
+                  activeTab === tab.id 
+                    ? 'border-b-2 border-blue-500 text-blue-600 bg-blue-50' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
-        )}
 
-        {activeTab === 'sessions' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">Sessions</h3>
-
-              {isAdmin && (
-                <button
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Create Session
-                </button>
-              )}
-            </div>
-
-            <div className="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-gray-500">No sessions yet. Create your first session to get started.</p>
-              {isAdmin && (
-                <button
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Create First Session
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'standings' && (
-          <div>
-            <h3 className="text-lg font-bold mb-6">Championship Standings</h3>
-
-            <div className="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-gray-500">No matches have been played yet. Standings will appear here after matches are recorded.</p>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'players' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">Players</h3>
-
-              {isAdmin && (
-                <button
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                  </svg>
-                  Add Players
-                </button>
-              )}
-            </div>
-
-            {championship.players && championship.players.length > 0 ? (
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Player
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Role
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {championship.players.map((playerId) => (
-                      <tr key={playerId}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">{playerId}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {championship.administrators?.some(admin => admin.userId === playerId && admin.role === 'owner') ? (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">Owner</span>
-                          ) : championship.administrators?.some(admin => admin.userId === playerId) ? (
-                            <span className="px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs">Admin</span>
-                          ) : (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs">Player</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {isAdmin && (
-                            <button className="text-indigo-600 hover:text-indigo-900">
-                              Manage
-                            </button>
-                          )}
-                        </td>
+          <div className="p-6">
+            {activeTab === 'standings' && (
+              <div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-bold">Pos</th>
+                        <th className="text-left py-3 px-4 font-bold">Player</th>
+                        <th className="text-center py-3 px-4 font-bold">Points</th>
+                        <th className="text-center py-3 px-4 font-bold">Matches</th>
+                        <th className="text-center py-3 px-4 font-bold">Games +/-</th>
+                        <th className="text-center py-3 px-4 font-bold">Win %</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {currentChampionship.standings
+                        ?.sort((a, b) => {
+                          // Primary sort: points
+                          if (b.points !== a.points) return b.points - a.points;
+                          // Secondary sort: game differential
+                          return (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
+                        })
+                        .map((standing, index) => {
+                          const player = players.find(p => p.id === standing.playerId);
+                          const winRate = standing.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
+                          const gameDiff = standing.gamesWon - standing.gamesLost;
+                          
+                          return (
+                            <tr key={standing.playerId} className={`border-b border-gray-100 ${index < 3 ? 'bg-yellow-50' : ''}`}>
+                              <td className="py-3 px-4 font-bold text-lg">
+                                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="font-bold">
+                                  {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                                </div>
+                                <div className="text-sm text-gray-600">{player?.userId}</div>
+                              </td>
+                              <td className="py-3 px-4 text-center font-bold text-blue-600 text-xl">{standing.points}</td>
+                              <td className="py-3 px-4 text-center">{standing.matchesPlayed}</td>
+                              <td className="py-3 px-4 text-center">
+                                <span className={gameDiff >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                  {gameDiff >= 0 ? '+' : ''}{gameDiff}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">{winRate}%</td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            ) : (
-              <div className="text-center p-8 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-gray-500">No players have been added yet.</p>
+            )}
+
+            {activeTab === 'sessions' && (
+              <div>
+                {!currentChampionship.matches || currentChampionship.matches.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🎾</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Matches Yet</h3>
+                    <p className="text-gray-600 mb-6">Record your first match to get started</p>
+                    <button
+                      onClick={startNewSession}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold"
+                    >
+                      Record First Match
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {currentChampionship.matches?.slice(-10).reverse().map((match) => (
+                      <div key={match.id} className="p-4 border border-gray-200 rounded-xl">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-bold">
+                              {match.teamA?.map(id => {
+                                const player = players.find(p => p.id === id);
+                                return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+                              }).join(' & ')}
+                              {' vs '}
+                              {match.teamB?.map(id => {
+                                const player = players.find(p => p.id === id);
+                                return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+                              }).join(' & ')}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {new Date(match.timestamp).toLocaleDateString()} at {new Date(match.timestamp).toLocaleTimeString()}
+                            </div>
+                          </div>
+                          <div className="text-xl font-bold">
+                            {match.scoreA} - {match.scoreB}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'players' && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentChampionship.players?.map((playerId) => {
+                  const player = players.find(p => p.id === playerId);
+                  const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
+                  const winRate = standing?.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
+                  
+                  return (
+                    <div key={playerId} className="p-4 border border-gray-200 rounded-xl">
+                      <h4 className="font-bold text-lg">
+                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                      </h4>
+                      <p className="text-sm text-gray-600 mb-3">{player?.userId}</p>
+                      <div className="text-sm space-y-1">
+                        <p>Points: <span className="font-bold text-blue-600">{standing?.points || 0}</span></p>
+                        <p>Matches: {standing?.matchesPlayed || 0} ({winRate}% win rate)</p>
+                        <p>Games: {standing?.gamesWon || 0} - {standing?.gamesLost || 0}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
-export default ChampionshipManagement;
+  // Session Management (Player Selection)
+  const SessionView = () => {
+    const [selectedPlayers, setSelectedPlayers] = useState([]);
+
+    const continueToMatches = () => {
+      if (selectedPlayers.length < 4) {
+        alert('Please select at least 4 players for the session');
+        return;
+      }
+      
+      setCurrentSession({
+        ...currentSession,
+        attendees: selectedPlayers
+      });
+      setView('match');
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setView('detail')}
+            className="mr-4 p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Record Match</h1>
+            <p className="text-gray-600">{currentChampionship.name} • {new Date().toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Who's Playing?</h3>
+          <p className="text-gray-600 mb-6">Select players for this match</p>
+
+          <div className="grid md:grid-cols-2 gap-4 mb-8">
+            {currentChampionship.players?.map((playerId) => {
+              const player = players.find(p => p.id === playerId);
+              const isSelected = selectedPlayers.includes(playerId);
+              
+              return (
+                <label
+                  key={playerId}
+                  className={`flex items-center space-x-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                    isSelected 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-blue-300'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedPlayers([...selectedPlayers, playerId]);
+                      } else {
+                        setSelectedPlayers(selectedPlayers.filter(id => id !== playerId));
+                      }
+                    }}
+                    className="w-5 h-5 text-blue-600"
+                  />
+                  <div>
+                    <div className="font-bold text-lg">
+                      {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                    </div>
+                    <div className="text-sm text-gray-600">{player?.userId}</div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600">
+              Selected: <span className="font-bold">{selectedPlayers.length}</span> players (need 4 for doubles)
+            </p>
+            <button
+              onClick={continueToMatches}
+              disabled={selectedPlayers.length < 4}
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-xl font-semibold"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Match Entry View
+  const MatchView = () => {
+    const [teamA, setTeamA] = useState([]);
+    const [teamB, setTeamB] = useState([]);
+    const [scoreA, setScoreA] = useState('');
+    const [scoreB, setScoreB] = useState('');
+
+    const calculatePoints = (gamesA, gamesB) => {
+      const diff = gamesA - gamesB;
+      if (diff >= 2) return [3, 0]; // Big win: 3 points vs 0 points
+      if (diff === 1) return [2, 0]; // Close win: 2 points vs 0 points
+      if (diff === 0) return [1, 1]; // Draw: 1 point each
+      if (diff === -1) return [0, 2]; // Close loss: 0 points vs 2 points
+      return [0, 3]; // Big loss: 0 points vs 3 points
+    };
+
+    const recordMatch = () => {
+      if (teamA.length !== 2 || teamB.length !== 2) {
+        alert('Please select 2 players for each team');
+        return;
+      }
+      
+      if (!scoreA || !scoreB) {
+        alert('Please enter scores for both teams');
+        return;
+      }
+
+      const gamesA = parseInt(scoreA);
+      const gamesB = parseInt(scoreB);
+      const [pointsA, pointsB] = calculatePoints(gamesA, gamesB);
+
+      const match = {
+        id: Date.now(),
+        teamA,
+        teamB,
+        scoreA: gamesA,
+        scoreB: gamesB,
+        pointsA,
+        pointsB,
+        timestamp: new Date().toISOString()
+      };
+
+      // Update championship with new match and updated standings
+      const updatedChampionships = championships.map(c => {
+        if (c.id === currentChampionship.id) {
+          const updatedMatches = [...(c.matches || []), match];
+          
+          const updatedStandings = c.standings.map(standing => {
+            if (teamA.includes(standing.playerId)) {
+              return {
+                ...standing,
+                points: standing.points + pointsA,
+                matchesPlayed: standing.matchesPlayed + 1,
+                matchesWon: pointsA > pointsB ? standing.matchesWon + 1 : standing.matchesWon,
+                gamesWon: standing.gamesWon + gamesA,
+                gamesLost: standing.gamesLost + gamesB
+              };
+            }
+            if (teamB.includes(standing.playerId)) {
+              return {
+                ...standing,
+                points: standing.points + pointsB,
+                matchesPlayed: standing.matchesPlayed + 1,
+                matchesWon: pointsB > pointsA ? standing.matchesWon + 1 : standing.matchesWon,
+                gamesWon: standing.gamesWon + gamesB,
+                gamesLost: standing.gamesLost + gamesA
+              };
+            }
+            return standing;
+          });
+          
+          return {
+            ...c,
+            matches: updatedMatches,
+            standings: updatedStandings.sort((a, b) => b.points - a.points)
+          };
+        }
+        return c;
+      });
+
+      saveChampionships(updatedChampionships);
+      setCurrentChampionship(updatedChampionships.find(c => c.id === currentChampionship.id));
+
+      alert(`Match recorded! ${teamA.map(id => players.find(p => p.id === id)?.firstName).join(' & ')} ${gamesA} - ${gamesB} ${teamB.map(id => players.find(p => p.id === id)?.firstName).join(' & ')}`);
+      
+      // Reset form for next match
+      setTeamA([]);
+      setTeamB([]);
+      setScoreA('');
+      setScoreB('');
+    };
+
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items
