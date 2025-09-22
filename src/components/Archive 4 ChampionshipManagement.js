@@ -7,7 +7,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
   const [currentSession, setCurrentSession] = useState(null);
   const [players, setPlayers] = useState([]);
   const [fontSize, setFontSize] = useState('large'); // Default to large for mobile
-  const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
 
   // Load font preference
   useEffect(() => {
@@ -69,7 +68,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     return styles[fontSize][element];
   };
 
-  // Font Toggle Component - now at bottom
+  // Font Toggle Component - always visible
   const FontToggle = () => (
     <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-3">
       <div className="flex items-center space-x-3">
@@ -93,279 +92,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
       </div>
     </div>
   );
-
-  // Add Players Modal Component
-  const AddPlayersModal = () => {
-    const [selectedPlayers, setSelectedPlayers] = useState([]);
-    const [newPlayerForm, setNewPlayerForm] = useState({
-      firstName: '',
-      surname: '',
-      userId: '',
-      isActive: true
-    });
-    const [showNewPlayerForm, setShowNewPlayerForm] = useState(false);
-
-    // Get players not already in championship
-    const availablePlayers = players.filter(p => 
-      p.isActive && !currentChampionship.players.includes(p.id)
-    );
-
-    const handleAddSelectedPlayers = () => {
-      if (selectedPlayers.length === 0) {
-        alert('Please select at least one player');
-        return;
-      }
-
-      const updatedChampionships = championships.map(c => {
-        if (c.id === currentChampionship.id) {
-          const newPlayers = [...c.players, ...selectedPlayers];
-          const newStandings = [
-            ...c.standings,
-            ...selectedPlayers.map(playerId => ({
-              playerId,
-              points: 0,
-              matchesPlayed: 0,
-              matchesWon: 0,
-              setsWon: 0,
-              setsLost: 0,
-              gamesWon: 0,
-              gamesLost: 0
-            }))
-          ];
-          
-          return {
-            ...c,
-            players: newPlayers,
-            standings: newStandings
-          };
-        }
-        return c;
-      });
-
-      saveChampionships(updatedChampionships);
-      setCurrentChampionship(updatedChampionships.find(c => c.id === currentChampionship.id));
-      setShowAddPlayersModal(false);
-      setSelectedPlayers([]);
-    };
-
-    const handleCreateNewPlayer = () => {
-      if (!newPlayerForm.firstName.trim() || !newPlayerForm.surname.trim() || !newPlayerForm.userId.trim()) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
-      // Check if userId already exists
-      if (players.find(p => p.userId === newPlayerForm.userId)) {
-        alert('User ID already exists. Please choose a different one.');
-        return;
-      }
-
-      const newPlayer = {
-        id: Date.now().toString(),
-        firstName: newPlayerForm.firstName.trim(),
-        surname: newPlayerForm.surname.trim(),
-        userId: newPlayerForm.userId.trim(),
-        isActive: newPlayerForm.isActive
-      };
-
-      const updatedPlayers = [...players, newPlayer];
-      localStorage.setItem('padelTournamentPlayers', JSON.stringify(updatedPlayers));
-      setPlayers(updatedPlayers);
-
-      // Automatically add the new player to selected players
-      setSelectedPlayers([...selectedPlayers, newPlayer.id]);
-      
-      // Reset form
-      setNewPlayerForm({
-        firstName: '',
-        surname: '',
-        userId: '',
-        isActive: true
-      });
-      setShowNewPlayerForm(false);
-      
-      alert('New player created and added to selection!');
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>Add Players to Championship</h3>
-              <button
-                onClick={() => {
-                  setShowAddPlayersModal(false);
-                  setSelectedPlayers([]);
-                  setShowNewPlayerForm(false);
-                }}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Available Players */}
-            {availablePlayers.length > 0 && (
-              <div className="mb-8">
-                <h4 className={`${getClasses('body')} font-bold text-gray-700 mb-4`}>
-                  Available Players ({availablePlayers.length})
-                </h4>
-                <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                  {availablePlayers.map((player) => (
-                    <label
-                      key={player.id}
-                      className={`flex items-center space-x-4 p-4 hover:bg-blue-50 rounded-lg cursor-pointer transition-all border-2 ${
-                        selectedPlayers.includes(player.id) ? 'bg-blue-50 border-blue-300' : 'border-transparent hover:border-blue-200'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedPlayers.includes(player.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedPlayers([...selectedPlayers, player.id]);
-                          } else {
-                            setSelectedPlayers(selectedPlayers.filter(id => id !== player.id));
-                          }
-                        }}
-                        className="w-5 h-5 text-blue-600 rounded"
-                      />
-                      <div>
-                        <span className={`${getClasses('body')} font-bold text-gray-800`}>
-                          {player.firstName} {player.surname}
-                        </span>
-                        <span className={`${getClasses('small')} text-gray-500 ml-3`}>
-                          ({player.userId})
-                        </span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <div className="text-center mt-4">
-                  <p className={`${getClasses('body')} text-gray-600`}>
-                    Selected: <span className="font-bold text-blue-600">{selectedPlayers.length}</span> players
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* No Available Players Message */}
-            {availablePlayers.length === 0 && !showNewPlayerForm && (
-              <div className="text-center py-8 mb-8">
-                <div className="text-6xl mb-4">👥</div>
-                <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>No Available Players</h4>
-                <p className={`${getClasses('small')} text-gray-600`}>
-                  All active players are already in this championship
-                </p>
-              </div>
-            )}
-
-            {/* Create New Player Button */}
-            {!showNewPlayerForm && (
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowNewPlayerForm(true)}
-                  className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-2`}
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Create New Player</span>
-                </button>
-              </div>
-            )}
-
-            {/* New Player Form */}
-            {showNewPlayerForm && (
-              <div className="mb-8 p-6 border-2 border-green-200 rounded-xl bg-green-50">
-                <h4 className={`${getClasses('body')} font-bold text-green-800 mb-4`}>Create New Player</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className={`block ${getClasses('small')} font-medium text-gray-700 mb-2`}>First Name</label>
-                    <input
-                      type="text"
-                      value={newPlayerForm.firstName}
-                      onChange={(e) => setNewPlayerForm({...newPlayerForm, firstName: e.target.value})}
-                      className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200`}
-                      placeholder="Enter first name"
-                    />
-                  </div>
-                  <div>
-                    <label className={`block ${getClasses('small')} font-medium text-gray-700 mb-2`}>Surname</label>
-                    <input
-                      type="text"
-                      value={newPlayerForm.surname}
-                      onChange={(e) => setNewPlayerForm({...newPlayerForm, surname: e.target.value})}
-                      className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200`}
-                      placeholder="Enter surname"
-                    />
-                  </div>
-                  <div>
-                    <label className={`block ${getClasses('small')} font-medium text-gray-700 mb-2`}>User ID</label>
-                    <input
-                      type="text"
-                      value={newPlayerForm.userId}
-                      onChange={(e) => setNewPlayerForm({...newPlayerForm, userId: e.target.value})}
-                      className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200`}
-                      placeholder="Enter unique user ID"
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-4">
-                    <button
-                      onClick={() => {
-                        setShowNewPlayerForm(false);
-                        setNewPlayerForm({
-                          firstName: '',
-                          surname: '',
-                          userId: '',
-                          isActive: true
-                        });
-                      }}
-                      className={`${getClasses('button')} bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold rounded-lg`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleCreateNewPlayer}
-                      className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg`}
-                    >
-                      Create Player
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => {
-                  setShowAddPlayersModal(false);
-                  setSelectedPlayers([]);
-                  setShowNewPlayerForm(false);
-                }}
-                className={`${getClasses('button')} bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold rounded-xl shadow-lg`}
-              >
-                Cancel
-              </button>
-              {(selectedPlayers.length > 0 || availablePlayers.length > 0) && (
-                <button
-                  onClick={handleAddSelectedPlayers}
-                  disabled={selectedPlayers.length === 0}
-                  className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all`}
-                >
-                  Add {selectedPlayers.length} Player{selectedPlayers.length !== 1 ? 's' : ''}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const ChampionshipList = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
@@ -551,7 +277,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         <div className="text-6xl mb-4">👥</div>
                         <p className={`${getClasses('body')} text-gray-500 font-medium`}>No active players found</p>
                         <p className={`${getClasses('small')} text-gray-400 mt-3`}>
-                          Add players in Player Management first
+                          Add players in Tournament → Player Management first
                         </p>
                       </div>
                     ) : (
@@ -615,6 +341,243 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             >
               Create Championship
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ChampionshipDetail = () => {
+    const [activeTab, setActiveTab] = useState('standings');
+
+    const startNewSession = () => {
+      const newSession = {
+        id: Date.now(),
+        championshipId: currentChampionship.id,
+        date: new Date().toISOString().split('T')[0],
+        attendees: [],
+        matches: []
+      };
+      setCurrentSession(newSession);
+      setView('session');
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+        <FontToggle />
+        
+        <div className="pt-20 pb-32 px-6">
+          <div className="max-w-6xl mx-auto">
+            
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-6">
+              <div className="flex items-center">
+                <button
+                  onClick={() => setView('list')}
+                  className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+                <div>
+                  <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                    {currentChampionship.name}
+                  </h1>
+                  <p className={`${getClasses('body')} text-gray-600 font-medium`}>
+                    Started {new Date(currentChampionship.startDate).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                onClick={startNewSession}
+                className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-2xl flex items-center space-x-4 transform hover:scale-105 transition-all`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Record Match</span>
+              </button>
+            </div>
+
+            {/* Main Content */}
+            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+              
+              {/* Tabs */}
+              <div className="flex bg-gray-50/80 border-b-2 border-gray-200">
+                {[
+                  { id: 'standings', label: 'Standings', icon: '🏆' },
+                  { id: 'matches', label: 'Matches', icon: '🎾' },
+                  { id: 'players', label: 'Players', icon: '👥' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 ${getClasses('button')} font-bold flex items-center justify-center space-x-3 transition-all border-b-4 ${
+                      activeTab === tab.id 
+                        ? 'border-blue-500 text-blue-600 bg-white shadow-lg' 
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className="text-3xl">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-8">
+                {activeTab === 'standings' && (
+                  <div>
+                    {currentChampionship.standings?.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="text-8xl mb-6">🏆</div>
+                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                          No Results Yet
+                        </h3>
+                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                          Record some matches to see the standings
+                        </p>
+                        <button
+                          onClick={startNewSession}
+                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all`}
+                        >
+                          Record First Match
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="border-b-3 border-gray-200">
+                              <th className={`text-left py-6 px-4 ${getClasses('body')} font-bold`}>Pos</th>
+                              <th className={`text-left py-6 px-4 ${getClasses('body')} font-bold`}>Player</th>
+                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Points</th>
+                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Matches</th>
+                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Win %</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {currentChampionship.standings
+                              ?.sort((a, b) => {
+                                if (b.points !== a.points) return b.points - a.points;
+                                return (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
+                              })
+                              .map((standing, index) => {
+                                const player = players.find(p => p.id === standing.playerId);
+                                const winRate = standing.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
+                                
+                                return (
+                                  <tr key={standing.playerId} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors ${index < 3 ? 'bg-yellow-50/80' : ''}`}>
+                                    <td className={`py-6 px-4 ${getClasses('body')} font-bold`}>
+                                      <span className="text-4xl">
+                                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                                      </span>
+                                    </td>
+                                    <td className="py-6 px-4">
+                                      <div className={`${getClasses('body')} font-bold text-gray-800`}>
+                                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                                      </div>
+                                      <div className={`${getClasses('small')} text-gray-600 mt-1`}>
+                                        {player?.userId}
+                                      </div>
+                                    </td>
+                                    <td className={`py-6 px-4 text-center ${getClasses('heading')} font-bold text-blue-600`}>
+                                      {standing.points}
+                                    </td>
+                                    <td className={`py-6 px-4 text-center ${getClasses('body')} font-medium`}>
+                                      {standing.matchesPlayed}
+                                    </td>
+                                    <td className={`py-6 px-4 text-center ${getClasses('body')} font-bold text-green-600`}>
+                                      {winRate}%
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'matches' && (
+                  <div>
+                    {!currentChampionship.matches || currentChampionship.matches.length === 0 ? (
+                      <div className="text-center py-16">
+                        <div className="text-8xl mb-6">🎾</div>
+                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                          No Matches Yet
+                        </h3>
+                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                          Record your first match to get started
+                        </p>
+                        <button
+                          onClick={startNewSession}
+                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all`}
+                        >
+                          Record Match
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {currentChampionship.matches?.slice(-10).reverse().map((match) => (
+                          <div key={match.id} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>
+                                  {match.teamA?.map(id => {
+                                    const player = players.find(p => p.id === id);
+                                    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+                                  }).join(' & ')}
+                                  <span className="mx-4 text-gray-400">vs</span>
+                                  {match.teamB?.map(id => {
+                                    const player = players.find(p => p.id === id);
+                                    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+                                  }).join(' & ')}
+                                </div>
+                                <div className={`${getClasses('small')} text-gray-600`}>
+                                  {new Date(match.timestamp).toLocaleDateString()} • {new Date(match.timestamp).toLocaleTimeString()}
+                                </div>
+                              </div>
+                              <div className={`${getClasses('heading')} font-bold text-blue-600 ml-6`}>
+                                {match.scoreA} - {match.scoreB}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'players' && (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {currentChampionship.players?.map((playerId) => {
+                      const player = players.find(p => p.id === playerId);
+                      const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
+                      const winRate = standing?.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
+                      
+                      return (
+                        <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
+                          <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>
+                            {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
+                          </h4>
+                          <p className={`${getClasses('small')} text-gray-600 mb-4`}>{player?.userId}</p>
+                          <div className={`${getClasses('small')} space-y-2`}>
+                            <p className="font-medium">Points: <span className="font-bold text-blue-600">{standing?.points || 0}</span></p>
+                            <p>Matches: {standing?.matchesPlayed || 0} ({winRate}% wins)</p>
+                            <p>Games: {standing?.gamesWon || 0} - {standing?.gamesLost || 0}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1048,279 +1011,3 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 };
 
 export default ChampionshipManagement;
-    const [activeTab, setActiveTab] = useState('standings');
-
-    const startNewSession = () => {
-      const newSession = {
-        id: Date.now(),
-        championshipId: currentChampionship.id,
-        date: new Date().toISOString().split('T')[0],
-        attendees: [],
-        matches: []
-      };
-      setCurrentSession(newSession);
-      setView('session');
-    };
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-        <FontToggle />
-        
-        <div className="pt-20 pb-32 px-6">
-          <div className="max-w-6xl mx-auto">
-            
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-6">
-              <div className="flex items-center">
-                <button
-                  onClick={() => setView('list')}
-                  className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  <span>Back</span>
-                </button>
-                <div>
-                  <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                    {currentChampionship.name}
-                  </h1>
-                  <p className={`${getClasses('body')} text-gray-600 font-medium`}>
-                    Started {new Date(currentChampionship.startDate).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              
-              <button
-                onClick={startNewSession}
-                className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-2xl flex items-center space-x-4 transform hover:scale-105 transition-all`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Record Match</span>
-              </button>
-            </div>
-
-            {/* Main Content */}
-            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
-              
-              {/* Tabs */}
-              <div className="flex bg-gray-50/80 border-b-2 border-gray-200">
-                {[
-                  { id: 'standings', label: 'Standings', icon: '🏆' },
-                  { id: 'matches', label: 'Matches', icon: '🎾' },
-                  { id: 'players', label: 'Players', icon: '👥' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 ${getClasses('button')} font-bold flex items-center justify-center space-x-3 transition-all border-b-4 ${
-                      activeTab === tab.id 
-                        ? 'border-blue-500 text-blue-600 bg-white shadow-lg' 
-                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className="text-3xl">{tab.icon}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="p-8">
-                {activeTab === 'standings' && (
-                  <div>
-                    {currentChampionship.standings?.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="text-8xl mb-6">🏆</div>
-                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                          No Results Yet
-                        </h3>
-                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                          Record some matches to see the standings
-                        </p>
-                        <button
-                          onClick={startNewSession}
-                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all`}
-                        >
-                          Record First Match
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b-3 border-gray-200">
-                              <th className={`text-left py-6 px-4 ${getClasses('body')} font-bold`}>Pos</th>
-                              <th className={`text-left py-6 px-4 ${getClasses('body')} font-bold`}>Player</th>
-                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Points</th>
-                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Matches</th>
-                              <th className={`text-center py-6 px-4 ${getClasses('body')} font-bold`}>Win %</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {currentChampionship.standings
-                              ?.sort((a, b) => {
-                                if (b.points !== a.points) return b.points - a.points;
-                                return (b.gamesWon - b.gamesLost) - (a.gamesWon - a.gamesLost);
-                              })
-                              .map((standing, index) => {
-                                const player = players.find(p => p.id === standing.playerId);
-                                const winRate = standing.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
-                                
-                                return (
-                                  <tr key={standing.playerId} className={`border-b border-gray-100 hover:bg-blue-50/50 transition-colors ${index < 3 ? 'bg-yellow-50/80' : ''}`}>
-                                    <td className={`py-6 px-4 ${getClasses('body')} font-bold`}>
-                                      <span className="text-4xl">
-                                        {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
-                                      </span>
-                                    </td>
-                                    <td className="py-6 px-4">
-                                      <div className={`${getClasses('body')} font-bold text-gray-800`}>
-                                        {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
-                                      </div>
-                                      <div className={`${getClasses('small')} text-gray-600 mt-1`}>
-                                        {player?.userId}
-                                      </div>
-                                    </td>
-                                    <td className={`py-6 px-4 text-center ${getClasses('heading')} font-bold text-blue-600`}>
-                                      {standing.points}
-                                    </td>
-                                    <td className={`py-6 px-4 text-center ${getClasses('body')} font-medium`}>
-                                      {standing.matchesPlayed}
-                                    </td>
-                                    <td className={`py-6 px-4 text-center ${getClasses('body')} font-bold text-green-600`}>
-                                      {winRate}%
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'matches' && (
-                  <div>
-                    {!currentChampionship.matches || currentChampionship.matches.length === 0 ? (
-                      <div className="text-center py-16">
-                        <div className="text-8xl mb-6">🎾</div>
-                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                          No Matches Yet
-                        </h3>
-                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                          Record your first match to get started
-                        </p>
-                        <button
-                          onClick={startNewSession}
-                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all`}
-                        >
-                          Record Match
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {currentChampionship.matches?.slice(-10).reverse().map((match) => (
-                          <div key={match.id} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>
-                                  {match.teamA?.map(id => {
-                                    const player = players.find(p => p.id === id);
-                                    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
-                                  }).join(' & ')}
-                                  <span className="mx-4 text-gray-400">vs</span>
-                                  {match.teamB?.map(id => {
-                                    const player = players.find(p => p.id === id);
-                                    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
-                                  }).join(' & ')}
-                                </div>
-                                <div className={`${getClasses('small')} text-gray-600`}>
-                                  {new Date(match.timestamp).toLocaleDateString()} • {new Date(match.timestamp).toLocaleTimeString()}
-                                </div>
-                              </div>
-                              <div className={`${getClasses('heading')} font-bold text-blue-600 ml-6`}>
-                                {match.scoreA} - {match.scoreB}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'players' && (
-                  <div>
-                    {/* Add Players Button */}
-                    <div className="flex justify-between items-center mb-8">
-                      <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                        Championship Players ({currentChampionship.players?.length || 0})
-                      </h3>
-                      <button
-                        onClick={() => setShowAddPlayersModal(true)}
-                        className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        <span>Add Players</span>
-                      </button>
-                    </div>
-
-                    {/* Players Grid */}
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {currentChampionship.players?.map((playerId) => {
-                        const player = players.find(p => p.id === playerId);
-                        const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
-                        const winRate = standing?.matchesPlayed > 0 ? Math.round((standing.matchesWon / standing.matchesPlayed) * 100) : 0;
-                        
-                        return (
-                          <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60">
-                            <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2`}>
-                              {player ? `${player.firstName} ${player.surname}` : 'Unknown'}
-                            </h4>
-                            <p className={`${getClasses('small')} text-gray-600 mb-4`}>{player?.userId}</p>
-                            <div className={`${getClasses('small')} space-y-2`}>
-                              <p className="font-medium">Points: <span className="font-bold text-blue-600">{standing?.points || 0}</span></p>
-                              <p>Matches: {standing?.matchesPlayed || 0} ({winRate}% wins)</p>
-                              <p>Games: {standing?.gamesWon || 0} - {standing?.gamesLost || 0}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* No players message */}
-                    {(!currentChampionship.players || currentChampionship.players.length === 0) && (
-                      <div className="text-center py-16">
-                        <div className="text-8xl mb-6">👥</div>
-                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                          No Players Added
-                        </h3>
-                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                          Add some players to get started with this championship
-                        </p>
-                        <button
-                          onClick={() => setShowAddPlayersModal(true)}
-                          className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all`}
-                        >
-                          Add First Players
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Add Players Modal */}
-        {showAddPlayersModal && <AddPlayersModal />}
-      </div>
-    );
-  };
