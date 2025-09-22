@@ -670,13 +670,13 @@
 
   // Main render
   return (
-    <>
+    <div>
       {view === 'list' && <ChampionshipList />}
       {view === 'create' && <ChampionshipCreate />}
       {view === 'detail' && <ChampionshipDetail />}
       {view === 'session' && <SessionView />}
       {view === 'match' && <MatchView />}
-    </>
+    </div>
   );
 };
 
