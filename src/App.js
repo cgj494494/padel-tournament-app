@@ -6,6 +6,17 @@ import ChampionshipManagement from './components/ChampionshipManagement';
 import { PlayerManagementModal, PlayerManagementUtils } from './components/PlayerManagementComponent';
 import './index.css';
 
+// Function to save the last used item
+export const saveLastUsedItem = (itemId, itemName, itemType) => {
+  const lastUsed = {
+    id: itemId,
+    name: itemName,
+    type: itemType, // 'championship', 'tournament', or 'players'
+    timestamp: Date.now()
+  };
+  localStorage.setItem('padelManagerLastUsed', JSON.stringify(lastUsed));
+};
+
 // Player Management View Component
 const PlayerManagementView = ({ saveLastUsed }) => {
   const [players, setPlayers] = useState([]);
@@ -191,53 +202,38 @@ const PlayerManagementView = ({ saveLastUsed }) => {
             {players.length === 0 && (
               <div className="text-center py-8">
                 <div className="text-gray-400 text-6xl mb-4">👥</div>
-                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Playersimport React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, Link } from 'react-router-dom';
-import { RoleProvider } from './components/RoleBasedWrapper';
-import PadelTournamentApp from './components/PadelTournamentApp';
-import ChampionshipManagement from './components/ChampionshipManagement';
-import { PlayerManagementModal } from './components/PlayerManagementComponent';
-import './index.css';
-
-// Function to save the last used item
-export const saveLastUsedItem = (itemId, itemName, itemType) => {
-  const lastUsed = {
-    id: itemId,
-    name: itemName,
-    type: itemType, // 'championship', 'tournament', or 'players'
-    timestamp: Date.now()
-  };
-  localStorage.setItem('padelManagerLastUsed', JSON.stringify(lastUsed));
-};
-
-function App() {
-  const [activeSection, setActiveSection] = useState('championships');
-
-  return (
-    <RoleProvider>
-      <div className="App min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-blue-800 text-white p-4 shadow-md">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold text-center">Padel Manager</h1>
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">No Players</h3>
+                <p className="text-gray-500 mb-4">
+                  Add players to get started
+                </p>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                  Add First Player
+                </button>
+              </div>
+            )}
           </div>
-        </header>
-        
-        <div className="container mx-auto p-4">
-          <Routes>
-            <Route path="/" element={<HomePage activeSection={activeSection} setActiveSection={setActiveSection} />} />
-            <Route path="/tournaments" element={<PadelTournamentApp saveLastUsed={saveLastUsedItem} />} />
-            <Route path="/championships" element={<ChampionshipManagement saveLastUsed={saveLastUsedItem} />} />
-            <Route path="/players" element={<PlayerManagementView saveLastUsed={saveLastUsedItem} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+
+          {/* Player Management Modal */}
+          {showModal && (
+            <PlayerManagementModal
+              onSave={handleSavePlayer}
+              onClose={() => {
+                setShowModal(false);
+                setEditingPlayer(null);
+              }}
+              initialData={editingPlayer}
+            />
+          )}
         </div>
       </div>
-    </RoleProvider>
+    </div>
   );
-}
+};
 
-// New HomePage component
+// HomePage Component
 const HomePage = ({ activeSection, setActiveSection }) => {
   const [lastUsed, setLastUsed] = useState(null);
 
@@ -434,5 +430,33 @@ const HomePage = ({ activeSection, setActiveSection }) => {
     </div>
   );
 };
+
+// Main App Component
+function App() {
+  const [activeSection, setActiveSection] = useState('championships');
+
+  return (
+    <RoleProvider>
+      <div className="App min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-blue-800 text-white p-4 shadow-md">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-2xl font-bold text-center">Padel Manager</h1>
+          </div>
+        </header>
+        
+        <div className="container mx-auto p-4">
+          <Routes>
+            <Route path="/" element={<HomePage activeSection={activeSection} setActiveSection={setActiveSection} />} />
+            <Route path="/tournaments" element={<PadelTournamentApp saveLastUsed={saveLastUsedItem} />} />
+            <Route path="/championships" element={<ChampionshipManagement saveLastUsed={saveLastUsedItem} />} />
+            <Route path="/players" element={<PlayerManagementView saveLastUsed={saveLastUsedItem} />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
+      </div>
+    </RoleProvider>
+  );
+}
 
 export default App;
