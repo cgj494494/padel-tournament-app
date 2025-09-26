@@ -811,7 +811,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 ${getClasses('button')} font-bold flex items-center justify-center space-x-3 transition-all border-b-4 ${activeTab === tab.id
+                    className={`flex-1 ${getClasses('small')} font-bold flex items-center justify-center space-x-2 transition-all border-b-4 ${activeTab === tab.id
                         ? 'border-blue-500 text-blue-600 bg-white shadow-lg'
                         : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
