@@ -774,27 +774,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                   </svg>
                   <span>Back</span>
                 </button>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                        {currentChampionship.name}
-                      </h1>
-                      <p className={`${getClasses('body')} text-gray-600 font-medium`}>
-                        Started {new Date(currentChampionship.startDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowChampionshipSettings(true)}
-                      className="p-3 hover:bg-gray-100 rounded-full transition-colors"
-                      title="Championship Settings"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </button>
-                  </div>
+                <div>
+                  <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                    {currentChampionship.name}
+                  </h1>
+                  <p className={`${getClasses('body')} text-gray-600 font-medium`}>
+                    Started {new Date(currentChampionship.startDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
 
@@ -826,8 +812,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex-1 ${getClasses('small')} font-bold flex items-center justify-center space-x-2 transition-all border-b-4 ${activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600 bg-white shadow-lg'
-                      : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        ? 'border-blue-500 text-blue-600 bg-white shadow-lg'
+                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }`}
                   >
                     <span className="text-3xl">{tab.icon}</span>
@@ -1305,8 +1291,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         <label
                           key={playerId}
                           className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${attendingPlayers.includes(playerId)
-                            ? 'bg-blue-50 border-blue-300'
-                            : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                              ? 'bg-blue-50 border-blue-300'
+                              : 'bg-gray-50 border-gray-200 hover:border-blue-200'
                             }`}
                         >
                           <input
@@ -1445,8 +1431,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                   onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
                                   disabled={teamA.length >= 2}
                                   className={`flex-1 py-2 px-3 text-sm font-bold rounded-lg ${teamA.length >= 2
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                     }`}
                                 >
                                   Team A
@@ -1455,8 +1441,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                   onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
                                   disabled={teamB.length >= 2}
                                   className={`flex-1 py-2 px-3 text-sm font-bold rounded-lg ${teamB.length >= 2
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                      : 'bg-green-100 text-green-700 hover:bg-green-200'
                                     }`}
                                 >
                                   Team B
