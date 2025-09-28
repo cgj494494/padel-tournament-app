@@ -17,9 +17,10 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
   const [activeTab, setActiveTab] = useState('standings');
 
   // Modal states
-  const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
-  const [showAddNewPlayerModal, setShowAddNewPlayerModal] = useState(false);
-  const [showScoringModal, setShowScoringModal] = useState(false);
+const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
+const [showAddNewPlayerModal, setShowAddNewPlayerModal] = useState(false);
+const [showScoringModal, setShowScoringModal] = useState(false);
+const [showChampionshipSettings, setShowChampionshipSettings] = useState(false);
 
   // Session/Match recording states
   const [sessionStep, setSessionStep] = useState('setup'); // 'setup', 'recording', 'complete'
