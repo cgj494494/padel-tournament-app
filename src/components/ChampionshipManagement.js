@@ -553,13 +553,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     };
     const ChampionshipSettingsModal = () => {
         // Initialize the value when modal opens - MUST be before any returns
-        // Initialize the value when modal opens - MUST be before any returns
+        const modalJustOpened = React.useRef(false);
+
         React.useEffect(() => {
-            if (showChampionshipSettings && currentChampionship) {
+            if (showChampionshipSettings && !modalJustOpened.current) {
                 setSettingsMinMatches(currentChampionship?.settings?.minMatchesForProRata || 3);
+                modalJustOpened.current = true;
+            } else if (!showChampionshipSettings) {
+                modalJustOpened.current = false;
             }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [showChampionshipSettings, currentChampionship?.id]);
+        }, [showChampionshipSettings]);
 
         if (!showChampionshipSettings) return null;
 
