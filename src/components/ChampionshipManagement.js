@@ -21,6 +21,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [showAddNewPlayerModal, setShowAddNewPlayerModal] = useState(false);
     const [showScoringModal, setShowScoringModal] = useState(false);
     const [showChampionshipSettings, setShowChampionshipSettings] = useState(false);
+    const [settingsMinMatches, setSettingsMinMatches] = useState(3);
 
     // Session/Match recording states
     const [sessionStep, setSessionStep] = useState('setup'); // 'setup', 'recording', 'complete'
@@ -550,86 +551,93 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         );
     };
     const ChampionshipSettingsModal = () => {
-        if (!showChampionshipSettings) return null;
+  if (!showChampionshipSettings) return null;
 
-        const [minMatches, setMinMatches] = useState(
-            currentChampionship?.settings?.minMatchesForProRata || 3
-        );
-
-        const handleSave = () => {
-            const updatedChampionship = {
-                ...currentChampionship,
-                settings: {
-                    ...currentChampionship.settings,
-                    minMatchesForProRata: minMatches
-                }
-            };
-
-            const updatedChampionships = championships.map(c =>
-                c.id === currentChampionship.id ? updatedChampionship : c
-            );
-
-            saveChampionships(updatedChampionships);
-            setCurrentChampionship(updatedChampionship);
-            setShowChampionshipSettings(false);
-        };
-
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-200">
-                    <div className="p-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                Championship Settings
-                            </h3>
-                            <button
-                                onClick={() => setShowChampionshipSettings(false)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className={`block ${getClasses('body')} font-bold text-gray-700 mb-3`}>
-                                    Minimum Matches for Pro Rata
-                                </label>
-                                <p className={`${getClasses('small')} text-gray-600 mb-4`}>
-                                    Players must play at least this many matches to appear in Pro Rata standings
-                                </p>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value={minMatches}
-                                    onChange={(e) => setMinMatches(parseInt(e.target.value) || 1)}
-                                    className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex space-x-4 mt-8">
-                            <button
-                                onClick={() => setShowChampionshipSettings(false)}
-                                className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+  const handleSave = () => {
+    const updatedChampionship = {
+      ...currentChampionship,
+      settings: {
+        ...currentChampionship.settings,
+        minMatchesForProRata: settingsMinMatches
+      }
     };
+
+    const updatedChampionships = championships.map(c =>
+      c.id === currentChampionship.id ? updatedChampionship : c
+    );
+
+    saveChampionships(updatedChampionships);
+    setCurrentChampionship(updatedChampionship);
+    setShowChampionshipSettings(false);
+  };
+
+  const handleOpen = () => {
+    setSettingsMinMatches(currentChampionship?.settings?.minMatchesForProRata || 3);
+  };
+
+  // Initialize the value when modal opens
+  React.useEffect(() => {
+    if (showChampionshipSettings) {
+      handleOpen();
+    }
+  }, [showChampionshipSettings]);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-200">
+        <div className="p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+              Championship Settings
+            </h3>
+            <button
+              onClick={() => setShowChampionshipSettings(false)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className={`block ${getClasses('body')} font-bold text-gray-700 mb-3`}>
+                Minimum Matches for Pro Rata
+              </label>
+              <p className={`${getClasses('small')} text-gray-600 mb-4`}>
+                Players must play at least this many matches to appear in Pro Rata standings
+              </p>
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={settingsMinMatches}
+                onChange={(e) => setSettingsMinMatches(parseInt(e.target.value) || 1)}
+                className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
+              />
+            </div>
+          </div>
+
+          <div className="flex space-x-4 mt-8">
+            <button
+              onClick={() => setShowChampionshipSettings(false)}
+              className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
     // MAIN RENDER VIEWS
     if (view === 'list') {
         return (
