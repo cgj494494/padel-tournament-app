@@ -553,11 +553,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     };
     const ChampionshipSettingsModal = () => {
         // Initialize the value when modal opens - MUST be before any returns
+        // Initialize the value when modal opens - MUST be before any returns
         React.useEffect(() => {
             if (showChampionshipSettings && currentChampionship) {
                 setSettingsMinMatches(currentChampionship?.settings?.minMatchesForProRata || 3);
             }
-        }, [showChampionshipSettings]);
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [showChampionshipSettings, currentChampionship?.id]);
 
         if (!showChampionshipSettings) return null;
 
