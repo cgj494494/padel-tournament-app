@@ -611,10 +611,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     min="1"
                                     max="10"
                                     value={localMinMatches}
+                                    onFocus={(e) => e.target.select()}
                                     onChange={(e) => {
-                                        const val = parseInt(e.target.value);
-                                        if (!isNaN(val)) {
-                                            setLocalMinMatches(val);
+                                        const val = e.target.value;
+                                        if (val === '' || val === '-') {
+                                            setLocalMinMatches(1); // Default to 1 if cleared
+                                        } else {
+                                            const num = parseInt(val);
+                                            if (!isNaN(num) && num >= 1 && num <= 10) {
+                                                setLocalMinMatches(num);
+                                            }
                                         }
                                     }}
                                     className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
