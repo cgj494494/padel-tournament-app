@@ -869,6 +869,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
                 <FontToggle />
                 <DebugInfo />
+                <ChampionshipSettingsModal />
 
                 <div className="pt-20 pb-32 px-6">
                     <div className="max-w-6xl mx-auto">
