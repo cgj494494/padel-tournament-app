@@ -1001,6 +1001,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                             <th className="border border-gray-300 px-4 py-3 text-left font-bold">Pos</th>
                                                             <th className="border border-gray-300 px-4 py-3 text-left font-bold">Player</th>
                                                             <th className="border border-gray-300 px-4 py-3 text-center font-bold">Points</th>
+                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
                                                             <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
                                                             <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
                                                             <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
