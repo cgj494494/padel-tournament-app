@@ -1709,7 +1709,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
                                                 Score
                                             </h4>
-                                            <div className="grid grid-cols-[2fr_auto_2fr] gap-1 items-center w-full max-w-full mx-auto px-1">>
+                                            <div className="grid grid-cols-[2fr_auto_2fr] gap-1 items-center w-full max-w-full mx-auto px-1">
                                                 <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
                                                 <input
                                                     type="number"
