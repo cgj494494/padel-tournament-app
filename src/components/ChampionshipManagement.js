@@ -32,7 +32,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [teamB, setTeamB] = useState([]);
     const [setScores, setSetScores] = useState({ teamA: '', teamB: '' });
     const [editingMatchDate, setEditingMatchDate] = useState(null);
-    const [editingMatchDate, setEditingMatchDate] = useState(null);
     const [standingsSortMode, setStandingsSortMode] = useState('total'); // 'total' or 'prorata'
 
     // Load preferences and data on mount
@@ -960,8 +959,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 <button
                                                     onClick={() => setStandingsSortMode('total')}
                                                     className={`${getClasses('small')} font-bold px-6 py-3 rounded-xl transition-all ${standingsSortMode === 'total'
-                                                            ? 'bg-white text-blue-600 shadow-lg'
-                                                            : 'text-gray-600 hover:text-gray-900'
+                                                        ? 'bg-white text-blue-600 shadow-lg'
+                                                        : 'text-gray-600 hover:text-gray-900'
                                                         }`}
                                                 >
                                                     Total Points
@@ -969,8 +968,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 <button
                                                     onClick={() => setStandingsSortMode('prorata')}
                                                     className={`${getClasses('small')} font-bold px-6 py-3 rounded-xl transition-all ${standingsSortMode === 'prorata'
-                                                            ? 'bg-white text-blue-600 shadow-lg'
-                                                            : 'text-gray-600 hover:text-gray-900'
+                                                        ? 'bg-white text-blue-600 shadow-lg'
+                                                        : 'text-gray-600 hover:text-gray-900'
                                                         }`}
                                                 >
                                                     Pro Rata
