@@ -379,7 +379,44 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         };
         return styles[fontSize][element];
     };
+    // NEW FUNCTION - Add this after getClasses()
+    const getMatchRecordingClasses = (element) => {
+        // Only apply extra-large sizes when in Large font mode
+        // Optimized for mobile gameplay during match recording
+        if (fontSize === 'large') {
+            const classes = {
+                // Score input - MUCH larger for players without glasses
+                scoreInput: 'text-6xl p-8 font-black',
+                scoreLabel: 'text-3xl font-bold mb-3',
 
+                // Team selection
+                teamHeader: 'text-4xl font-bold',
+                teamDisplay: 'text-2xl font-bold',
+                playerName: 'text-2xl font-bold',
+                playerButton: 'text-xl px-8 py-4 font-bold',
+
+                // Match actions
+                recordButton: 'text-3xl px-10 py-8 font-black',
+                pointsPreview: 'text-2xl font-bold',
+                pointsLabel: 'text-xl'
+            };
+            return classes[element] || '';
+        }
+
+        // Small mode - use normal sizes
+        const classes = {
+            scoreInput: 'text-2xl p-3 font-bold',
+            scoreLabel: 'text-base font-semibold mb-2',
+            teamHeader: 'text-xl font-bold',
+            teamDisplay: 'text-base font-semibold',
+            playerName: 'text-base font-medium',
+            playerButton: 'text-sm px-4 py-2 font-medium',
+            recordButton: 'text-lg px-6 py-4 font-bold',
+            pointsPreview: 'text-base font-semibold',
+            pointsLabel: 'text-sm'
+        };
+        return classes[element] || '';
+    };
     const handleCreate = () => {
         if (!name.trim() || selectedPlayers.length < 4) {
             alert('Please enter a name and select at least 4 players');
@@ -1578,7 +1615,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                     <div className="grid md:grid-cols-2 gap-8">
                                         <div className="space-y-4">
-                                            <h4 className={`${getClasses('body')} font-bold text-blue-600 text-center`}>Team A</h4>
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-blue-600 text-center`}>Team A</h4>
                                             <div className="min-h-24 p-4 border-2 border-blue-200 rounded-2xl bg-blue-50">
                                                 {teamA.length === 0 ? (
                                                     <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
@@ -1586,7 +1623,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                     <div className="space-y-2">
                                                         {teamA.map(playerId => (
                                                             <div key={playerId} className="flex justify-between items-center">
-                                                                <span className={`${getClasses('small')} font-medium`}>
+                                                                <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
                                                                     {getPlayerName(playerId)}
                                                                 </span>
                                                                 <button
@@ -1603,7 +1640,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         </div>
 
                                         <div className="space-y-4">
-                                            <h4 className={`${getClasses('body')} font-bold text-green-600 text-center`}>Team B</h4>
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-green-600 text-center`}>Team B</h4>
                                             <div className="min-h-24 p-4 border-2 border-green-200 rounded-2xl bg-green-50">
                                                 {teamB.length === 0 ? (
                                                     <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
@@ -1630,22 +1667,22 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                     <div className="mt-8">
                                         <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             {attendingPlayers
                                                 .filter(id => !teamA.includes(id) && !teamB.includes(id))
                                                 .map(playerId => {
                                                     return (
                                                         <div key={playerId} className="space-y-2">
-                                                            <p className={`${getClasses('small')} font-medium text-center`}>
+                                                            <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
                                                                 {getPlayerName(playerId)}
                                                             </p>
                                                             <div className="flex space-x-2">
                                                                 <button
                                                                     onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
                                                                     disabled={teamA.length >= 2}
-                                                                    className={`flex-1 py-2 px-3 text-sm font-bold rounded-lg ${teamA.length >= 2
+                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
                                                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                                        : 'bg-blue-100 text-blue-700 active:bg-blue-300'
                                                                         }`}
                                                                 >
                                                                     Team A
@@ -1653,9 +1690,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                 <button
                                                                     onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
                                                                     disabled={teamB.length >= 2}
-                                                                    className={`flex-1 py-2 px-3 text-sm font-bold rounded-lg ${teamB.length >= 2
+                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
                                                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                        : 'bg-green-100 text-green-700 active:bg-green-300'
                                                                         }`}
                                                                 >
                                                                     Team B
@@ -1669,19 +1706,19 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                     {teamA.length === 2 && teamB.length === 2 && (
                                         <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-                                            <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4 text-center`}>
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-6 text-center`}>
                                                 Enter Match Score
                                             </h4>
                                             <div className="grid grid-cols-3 gap-4 items-center max-w-md mx-auto">
                                                 <div className="text-center">
-                                                    <p className={`${getClasses('small')} font-bold text-blue-600 mb-2`}>Team A</p>
+                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         max="20"
                                                         value={setScores.teamA}
                                                         onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
-                                                        className="w-full text-center text-2xl font-bold p-3 border-2 border-blue-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
                                                         placeholder="0"
                                                     />
                                                 </div>
@@ -1689,14 +1726,14 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                     <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
                                                 </div>
                                                 <div className="text-center">
-                                                    <p className={`${getClasses('small')} font-bold text-green-600 mb-2`}>Team B</p>
+                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         max="20"
                                                         value={setScores.teamB}
                                                         onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
-                                                        className="w-full text-center text-2xl font-bold p-3 border-2 border-green-200 rounded-xl focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
                                                         placeholder="0"
                                                     />
                                                 </div>
@@ -1704,12 +1741,12 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                             {setScores.teamA && setScores.teamB && (
                                                 <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
-                                                    <p className={`${getClasses('small')} text-center text-gray-600 mb-2`}>Points Preview (CJ System):</p>
-                                                    <div className="flex justify-center space-x-8">
-                                                        <span className="text-blue-600 font-bold">
+                                                    <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
+                                                    <div className="flex justify-center space-x-6 flex-wrap gap-2">
+                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
                                                             Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
                                                         </span>
-                                                        <span className="text-green-600 font-bold">
+                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
                                                             Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
                                                         </span>
                                                     </div>
@@ -1720,9 +1757,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 <button
                                                     onClick={handleScoreSubmit}
                                                     disabled={!setScores.teamA || !setScores.teamB}
-                                                    className={`${getClasses('button')} bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
+                                                    className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
                                                 >
-                                                    Record Match
+                                                    ✓ Record Match
                                                 </button>
                                             </div>
                                         </div>
