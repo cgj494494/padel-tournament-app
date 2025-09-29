@@ -1707,9 +1707,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     {teamA.length === 2 && teamB.length === 2 && (
                                         <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
                                             <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
-    Score
-</h4>
-                                            <div className="grid grid-cols-3 gap-4 items-center max-w-full mx-auto px-4">
+                                                Score
+                                            </h4>
+                                            <div className="grid grid-cols-[2fr_auto_2fr] gap-2 items-center w-full mx-auto px-2">
                                                 <div className="text-center">
                                                     <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
                                                     <input
