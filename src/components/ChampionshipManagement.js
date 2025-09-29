@@ -1008,41 +1008,75 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {currentChampionship.standings
-                                                            .sort((a, b) => b.points - a.points)
-                                                            .map((standing, index) => {
-                                                                const player = players.find(p => p.id === standing.playerId);
-                                                                const gameDiff = (standing.gamesWon || 0) - (standing.gamesLost || 0);
-                                                                return (
-                                                                    <tr key={standing.playerId} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
-                                                                        <td className="border border-gray-300 px-4 py-3 text-center font-bold">
-                                                                            {index + 1}
-                                                                        </td>
-                                                                        <td className="border border-gray-300 px-4 py-3">
-                                                                            <span className={`${getClasses('body')} font-bold`}>
-                                                                                {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                            <span className={`${getClasses('body')} font-bold text-blue-600`}>
-                                                                                {standing.points}
-                                                                            </span>
-                                                                        </td>
-                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                            {standing.matchesPlayed}
-                                                                        </td>
-                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                            {standing.matchesWon}
-                                                                        </td>
-                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                            <span className={gameDiff >= 0 ? 'text-green-600' : 'text-red-600'}>
-                                                                                {gameDiff >= 0 ? '+' : ''}{gameDiff}
-                                                                            </span>
-                                                                        </td>
-                                                                    </tr>
-                                                                );
-                                                            })}
-                                                    </tbody>
+                                                        <tbody>
+                                                            {currentChampionship.standings
+                                                                .map(standing => {
+                                                                    // Calculate pro rata points
+                                                                    const proRataPoints = standing.matchesPlayed > 0
+                                                                        ? (standing.points / standing.matchesPlayed).toFixed(2)
+                                                                        : '0.00';
+                                                                    return { ...standing, proRataPoints: parseFloat(proRataPoints) };
+                                                                })
+                                                                .filter(standing => {
+                                                                    // Filter based on minimum matches if in pro rata mode
+                                                                    if (standingsSortMode === 'prorata') {
+                                                                        const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
+                                                                        return standing.matchesPlayed >= minMatches;
+                                                                    }
+                                                                    return true;
+                                                                })
+                                                                .sort((a, b) => {
+                                                                    // Sort based on selected mode
+                                                                    if (standingsSortMode === 'prorata') {
+                                                                        if (b.proRataPoints === a.proRataPoints) {
+                                                                            return b.points - a.points; // Secondary sort by total points
+                                                                        }
+                                                                        return b.proRataPoints - a.proRataPoints;
+                                                                    } else {
+                                                                        if (b.points === a.points) {
+                                                                            return b.proRataPoints - a.proRataPoints; // Secondary sort by pro rata
+                                                                        }
+                                                                        return b.points - a.points;
+                                                                    }
+                                                                })
+                                                                .map((standing, index) => {
+                                                                    const player = players.find(p => p.id === standing.playerId);
+                                                                    const gameDiff = (standing.gamesWon || 0) - (standing.gamesLost || 0);
+                                                                    return (
+                                                                        <tr key={standing.playerId} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center font-bold">
+                                                                                {index + 1}
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3">
+                                                                                <span className={`${getClasses('body')} font-bold`}>
+                                                                                    {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                <span className={`${getClasses('body')} font-bold text-blue-600`}>
+                                                                                    {standing.points}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                <span className={`${getClasses('body')} font-bold text-purple-600`}>
+                                                                                    {standing.proRataPoints.toFixed(2)}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                {standing.matchesPlayed}
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                {standing.matchesWon}
+                                                                            </td>
+                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                <span className={gameDiff >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                                                                    {gameDiff >= 0 ? '+' : ''}{gameDiff}
+                                                                                </span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                        </tbody>
                                                 </table>
                                             </div>
                                         )}
