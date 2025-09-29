@@ -1480,8 +1480,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 <DebugInfo />
                 <ScoringSystemModal />
                 <ChampionshipSettingsModal />
-                <div className="pt-20 pb-32 px-6">
-                    <div className="max-w-4xl mx-auto">
+                <div className="pt-20 pb-32 px-2 sm:px-6">
+                    <div className="max-w-full sm:max-w-4xl mx-auto">
                         <div className="flex items-center mb-10">
                             <button
                                 onClick={() => setView('detail')}
