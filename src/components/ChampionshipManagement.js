@@ -1709,152 +1709,151 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
                                                 Score
                                             </h4>
-                                            <div className="grid grid-cols-[2fr_auto_2fr] gap-2 items-center w-full mx-auto px-2">
-                                                <div className="text-center">
-                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        value={setScores.teamA}
-                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
-                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        value={setScores.teamB}
-                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
-                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
-                                                        placeholder="0"
-                                                    />
-                                                </div>
+                                            <div className="grid grid-cols-[2fr_auto_2fr] gap-1 items-center w-full max-w-full mx-auto px-1">
+                                                <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="20"
+                                                    value={setScores.teamA}
+                                                    onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
+                                                    className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
+                                                    placeholder="0"
+                                                />
                                             </div>
+                                            <div className="text-center">
+                                                <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="20"
+                                                    value={setScores.teamB}
+                                                    onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
+                                                    className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
 
                                             {setScores.teamA && setScores.teamB && (
-                                                <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
-                                                    <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
-                                                    <div className="flex justify-center space-x-6 flex-wrap gap-2">
-                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
-                                                            Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
-                                                        </span>
-                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
-                                                            Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="text-center mt-6">
-                                                <button
-                                                    onClick={handleScoreSubmit}
-                                                    disabled={!setScores.teamA || !setScores.teamB}
-                                                    className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
-                                                >
-                                                    ✓ Record Match
-                                                </button>
+                                        <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
+                                            <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
+                                            <div className="flex justify-center space-x-6 flex-wrap gap-2">
+                                                <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
+                                                    Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
+                                                </span>
+                                                <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
+                                                    Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
+                                                </span>
                                             </div>
                                         </div>
                                     )}
+
+                                    <div className="text-center mt-6">
+                                        <button
+                                            onClick={handleScoreSubmit}
+                                            disabled={!setScores.teamA || !setScores.teamB}
+                                            className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
+                                        >
+                                            ✓ Record Match
+                                        </button>
+                                    </div>
                                 </div>
+                                    )}
+                            </div>
 
                                 {sessionMatches.length > 0 && (
-                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
-                                            Session Matches ({sessionMatches.length})
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {sessionMatches.map((match, index) => (
-                                                <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                    <div className="grid grid-cols-3 gap-4 items-center">
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
-                                                            <p className={`${getClasses('small')} text-gray-700`}>
-                                                                {match.teamA.map(id => getPlayerName(id)).join(' & ')}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('body')} font-bold`}>
-                                                                {match.gamesA} - {match.gamesB}
-                                                            </p>
-                                                            <p className={`${getClasses('small')} text-gray-500`}>
-                                                                {match.points.teamA} - {match.points.teamB} pts
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
-                                                            <p className={`${getClasses('small')} text-gray-700`}>
-                                                                {match.teamB.map(id => getPlayerName(id)).join(' & ')}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Session Complete */}
-                        {sessionStep === 'complete' && (
-                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
-                                <div className="text-8xl mb-6">🎾</div>
-                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                    Session Complete!
+                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                    Session Matches ({sessionMatches.length})
                                 </h3>
-                                <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                    Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
-                                </p>
                                 <div className="space-y-4">
-                                    <button
-                                        onClick={() => {
-                                            setSessionStep('setup');
-                                            setAttendingPlayers([]);
-                                            setSessionMatches([]);
-                                            setTeamA([]);
-                                            setTeamB([]);
-                                            setSetScores({ teamA: '', teamB: '' });
-                                        }}
-                                        className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
-                                    >
-                                        Record Another Session
-                                    </button>
-                                    <button
-                                        onClick={() => setView('detail')}
-                                        className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
-                                    >
-                                        View Championship
-                                    </button>
+                                    {sessionMatches.map((match, index) => (
+                                        <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                            <div className="grid grid-cols-3 gap-4 items-center">
+                                                <div className="text-center">
+                                                    <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
+                                                    <p className={`${getClasses('small')} text-gray-700`}>
+                                                        {match.teamA.map(id => getPlayerName(id)).join(' & ')}
+                                                    </p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className={`${getClasses('body')} font-bold`}>
+                                                        {match.gamesA} - {match.gamesB}
+                                                    </p>
+                                                    <p className={`${getClasses('small')} text-gray-500`}>
+                                                        {match.points.teamA} - {match.points.teamB} pts
+                                                    </p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
+                                                    <p className={`${getClasses('small')} text-gray-700`}>
+                                                        {match.teamB.map(id => getPlayerName(id)).join(' & ')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
                     </div>
+                        )}
+
+                    {/* Session Complete */}
+                    {sessionStep === 'complete' && (
+                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
+                            <div className="text-8xl mb-6">🎾</div>
+                            <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                Session Complete!
+                            </h3>
+                            <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
+                            </p>
+                            <div className="space-y-4">
+                                <button
+                                    onClick={() => {
+                                        setSessionStep('setup');
+                                        setAttendingPlayers([]);
+                                        setSessionMatches([]);
+                                        setTeamA([]);
+                                        setTeamB([]);
+                                        setSetScores({ teamA: '', teamB: '' });
+                                    }}
+                                    className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
+                                >
+                                    Record Another Session
+                                </button>
+                                <button
+                                    onClick={() => setView('detail')}
+                                    className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
+                                >
+                                    View Championship
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+            </div >
         );
     }
 
-    // Default view
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-            <FontToggle />
-            <DebugInfo />
-            <div className="pt-20 pb-32 px-6">
-                <div className="max-w-4xl mx-auto">
-                    <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
-                </div>
+// Default view
+return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+        <FontToggle />
+        <DebugInfo />
+        <div className="pt-20 pb-32 px-6">
+            <div className="max-w-4xl mx-auto">
+                <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
             </div>
         </div>
-    );
+    </div>
+);
 };
 
 export default ChampionshipManagement;
