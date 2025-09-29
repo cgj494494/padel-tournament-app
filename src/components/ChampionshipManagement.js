@@ -552,15 +552,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         );
     };
     const ChampionshipSettingsModal = () => {
-        // Initialize the value when modal opens - MUST be before any returns
-        const modalJustOpened = React.useRef(false);
+        const [localMinMatches, setLocalMinMatches] = React.useState(3);
 
         React.useEffect(() => {
-            if (showChampionshipSettings && !modalJustOpened.current) {
-                setSettingsMinMatches(currentChampionship?.settings?.minMatchesForProRata || 3);
-                modalJustOpened.current = true;
-            } else if (!showChampionshipSettings) {
-                modalJustOpened.current = false;
+            if (showChampionshipSettings && currentChampionship) {
+                setLocalMinMatches(currentChampionship?.settings?.minMatchesForProRata || 3);
             }
         }, [showChampionshipSettings]);
 
@@ -571,7 +567,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 ...currentChampionship,
                 settings: {
                     ...currentChampionship.settings,
-                    minMatchesForProRata: settingsMinMatches
+                    minMatchesForProRata: localMinMatches
                 }
             };
 
@@ -614,8 +610,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     type="number"
                                     min="1"
                                     max="10"
-                                    value={settingsMinMatches}
-                                    onChange={(e) => setSettingsMinMatches(parseInt(e.target.value) || 1)}
+                                    value={localMinMatches}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        if (!isNaN(val)) {
+                                            setLocalMinMatches(val);
+                                        }
+                                    }}
                                     className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
                                 />
                             </div>
