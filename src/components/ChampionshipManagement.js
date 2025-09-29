@@ -988,7 +988,25 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </button>
                                             </div>
                                         </div>
+                                        {standingsSortMode === 'prorata' && currentChampionship.standings && currentChampionship.standings.length > 0 && (
+                                            (() => {
+                                                const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
+                                                const totalPlayers = currentChampionship.standings.length;
+                                                const qualifiedPlayers = currentChampionship.standings.filter(s => s.matchesPlayed >= minMatches).length;
+                                                const hiddenPlayers = totalPlayers - qualifiedPlayers;
 
+                                                if (hiddenPlayers > 0) {
+                                                    return (
+                                                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                                            <p className={`${getClasses('small')} text-blue-700`}>
+                                                                <strong>Note:</strong> {hiddenPlayers} player{hiddenPlayers !== 1 ? 's' : ''} hidden (fewer than {minMatches} match{minMatches !== 1 ? 'es' : ''} played)
+                                                            </p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()
+                                        )}
                                         {(!currentChampionship.standings || currentChampionship.standings.length === 0) ? (
                                             <div className="text-center py-16">
                                                 <div className="text-8xl mb-6">🏆</div>
