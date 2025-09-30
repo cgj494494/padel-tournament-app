@@ -1174,691 +1174,691 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             </div>
                                         ) : (
                                             <div className="space-y-6">
-                                                <div className="space-y-6">
-                                                    {currentChampionship.matches
-                                                        .slice()
-                                                        .reverse()
-                                                        .map((match, index) => (
-                                                            <div key={match.id || index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
-                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                                                    <div className="text-center">
-                                                                        <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
-                                                                        <p className={`${getClasses('small')} text-gray-700`}>
-                                                                            {match.teamA?.map(id => getPlayerName(id)).join(' & ')}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="text-center">
-                                                                        <p className={`${getClasses('body')} font-bold`}>
-                                                                            {match.gamesA} - {match.gamesB}
-                                                                        </p>
-                                                                        <p className={`${getClasses('small')} text-gray-500`}>
-                                                                            {match.points?.teamA} - {match.points?.teamB} pts
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="text-center">
-                                                                        <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
-                                                                        <p className={`${getClasses('small')} text-gray-700`}>
-                                                                            {match.teamB?.map(id => getPlayerName(id)).join(' & ')}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
 
-                                                                <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                                                                    {editingMatchDate === match.id ? (
-                                                                        <div className="flex items-center space-x-2">
-                                                                            <input
-                                                                                type="date"
-                                                                                defaultValue={match.date}
-                                                                                onBlur={(e) => updateMatchDate(match.id, e.target.value)}
-                                                                                onKeyPress={(e) => {
-                                                                                    if (e.key === 'Enter') {
-                                                                                        updateMatchDate(match.id, e.target.value);
-                                                                                    }
-                                                                                }}
-                                                                                className="px-2 py-1 border rounded text-sm"
-                                                                                autoFocus
-                                                                            />
-                                                                            <button
-                                                                                onClick={() => setEditingMatchDate(null)}
-                                                                                className="text-gray-500 hover:text-gray-700"
-                                                                            >
-                                                                                ✕
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <button
-                                                                            onClick={() => setEditingMatchDate(match.id)}
-                                                                            className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
-                                                                        >
-                                                                            <span>{new Date(match.date).toLocaleDateString()}</span>
-                                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                            </svg>
-                                                                        </button>
-                                                                    )}
-                                                                    <span className={`${getClasses('small')} text-gray-400`}>
-                                                                        Match {index + 1}
-                                                                    </span>
+                                                {currentChampionship.matches
+                                                    .slice()
+                                                    .reverse()
+                                                    .map((match, index) => (
+                                                        <div key={match.id || index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                                                <div className="text-center">
+                                                                    <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
+                                                                    <p className={`${getClasses('small')} text-gray-700`}>
+                                                                        {match.teamA?.map(id => getPlayerName(id)).join(' & ')}
+                                                                    </p>
                                                                 </div>
+                                                                <div className="text-center">
+                                                                    <p className={`${getClasses('body')} font-bold`}>
+                                                                        {match.gamesA} - {match.gamesB}
+                                                                    </p>
+                                                                    <p className={`${getClasses('small')} text-gray-500`}>
+                                                                        {match.points?.teamA} - {match.points?.teamB} pts
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
+                                                                    <p className={`${getClasses('small')} text-gray-700`}>
+                                                                        {match.teamB?.map(id => getPlayerName(id)).join(' & ')}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                                                {editingMatchDate === match.id ? (
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <input
+                                                                            type="date"
+                                                                            defaultValue={match.date}
+                                                                            onBlur={(e) => updateMatchDate(match.id, e.target.value)}
+                                                                            onKeyPress={(e) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    updateMatchDate(match.id, e.target.value);
+                                                                                }
+                                                                            }}
+                                                                            className="px-2 py-1 border rounded text-sm"
+                                                                            autoFocus
+                                                                        />
+                                                                        <button
+                                                                            onClick={() => setEditingMatchDate(null)}
+                                                                            className="text-gray-500 hover:text-gray-700"
+                                                                        >
+                                                                            ✕
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => setEditingMatchDate(match.id)}
+                                                                        className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
+                                                                    >
+                                                                        <span>{new Date(match.date).toLocaleDateString()}</span>
+                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                        </svg>
+                                                                    </button>
+                                                                )}
+                                                                <span className={`${getClasses('small')} text-gray-400`}>
+                                                                    Match {index + 1}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeTab === 'players' && (
+                                    <div>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                                Championship Players ({currentChampionship.players?.length || 0})
+                                            </h3>
+                                            <div className="flex flex-wrap gap-3">
+                                                <button
+                                                    onClick={() => setShowAddNewPlayerModal(true)}
+                                                    className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                    <span>Add New Player</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowAddPlayersModal(true)}
+                                                    className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                                    </svg>
+                                                    <span>Add Existing Players</span>
+                                                </button>
+                                                <button
+                                                    onClick={refreshPlayers}
+                                                    className={`${getClasses('button')} bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    </svg>
+                                                    <span>Refresh</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <p className={`${getClasses('small')} text-yellow-700`}>
+                                                <strong>Debug:</strong> Total players in database: {players.length} |
+                                                Active players: {players.filter(p => p.isActive).length} |
+                                                Championship players: {currentChampionship.players?.length || 0}
+                                            </p>
+                                        </div>
+
+                                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                            {currentChampionship.players?.map((playerId) => {
+                                                const player = players.find(p => p.id === playerId);
+                                                const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
+
+                                                return (
+                                                    <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60 relative">
+                                                        <button
+                                                            onClick={() => removePlayerFromChampionship(playerId)}
+                                                            className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                                                            title="Remove from championship"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+
+                                                        <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2 pr-8`}>
+                                                            {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                                                        </h4>
+                                                        <p className={`${getClasses('small')} text-gray-600 mb-4`}>
+                                                            {player?.userId || 'No ID'}
+                                                        </p>
+                                                        {standing && (
+                                                            <div className="space-y-2">
+                                                                <p className={`${getClasses('small')} text-gray-600`}>
+                                                                    <span className="font-bold text-blue-600">{standing.points}</span> points
+                                                                </p>
+                                                                <p className={`${getClasses('small')} text-gray-600`}>
+                                                                    {standing.matchesWon}/{standing.matchesPlayed} matches won
+                                                                </p>
+                                                                <p className={`${getClasses('small')} text-gray-600`}>
+                                                                    {standing.gamesWon || 0}/{(standing.gamesWon || 0) + (standing.gamesLost || 0)} games
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                        {!player && (
+                                                            <p className={`${getClasses('small')} text-red-500`}>
+                                                                Player data not found - may have been deleted
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length > 0 && (
+                                            <div>
+                                                <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>
+                                                    Available Players ({players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length})
+                                                </h4>
+                                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                                    {players
+                                                        .filter(p => p.isActive && !currentChampionship.players.includes(p.id))
+                                                        .map((player) => (
+                                                            <div key={player.id} className="p-4 border border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                                                                <h5 className={`${getClasses('small')} font-bold text-gray-800 mb-2`}>
+                                                                    {player.firstName} {player.surname}
+                                                                </h5>
+                                                                <p className={`${getClasses('small')} text-gray-600 mb-3`}>
+                                                                    {player.userId}
+                                                                </p>
+                                                                <button
+                                                                    onClick={() => addPlayerToChampionship(player.id)}
+                                                                    className="w-full py-2 px-3 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                                >
+                                                                    Add to Championship
+                                                                </button>
                                                             </div>
                                                         ))}
                                                 </div>
-                                        )}
                                             </div>
                                         )}
 
-                                        {activeTab === 'players' && (
-                                            <div>
-                                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-                                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                                        Championship Players ({currentChampionship.players?.length || 0})
-                                                    </h3>
-                                                    <div className="flex flex-wrap gap-3">
-                                                        <button
-                                                            onClick={() => setShowAddNewPlayerModal(true)}
-                                                            className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                            </svg>
-                                                            <span>Add New Player</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setShowAddPlayersModal(true)}
-                                                            className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                                            </svg>
-                                                            <span>Add Existing Players</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={refreshPlayers}
-                                                            className={`${getClasses('button')} bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl shadow-lg transform hover:scale-105 transition-all flex items-center space-x-3`}
-                                                        >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                                            </svg>
-                                                            <span>Refresh</span>
-                                                        </button>
-                                                    </div>
+                                        {(!currentChampionship.players || currentChampionship.players.length === 0) && (
+                                            <div className="text-center py-16">
+                                                <div className="text-8xl mb-6">👥</div>
+                                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                                    No Players Added
+                                                </h3>
+                                                <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                                    Add players to get started with this championship
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {players.filter(p => p.isActive).length === 0 && (
+                                            <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
+                                                <h4 className={`${getClasses('body')} font-bold text-amber-700 mb-2`}>
+                                                    No Active Players Found
+                                                </h4>
+                                                <p className={`${getClasses('small')} text-amber-600 mb-4`}>
+                                                    You need to add some players to the system first.
+                                                </p>
+                                                <div className="flex gap-3">
+                                                    <button
+                                                        onClick={() => setShowAddNewPlayerModal(true)}
+                                                        className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg"
+                                                    >
+                                                        Add First Player
+                                                    </button>
+                                                    <Link
+                                                        to="/players"
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                                    >
+                                                        Go to Player Management
+                                                    </Link>
                                                 </div>
+                                            </div>
+                                        )}
 
-                                                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                                    <p className={`${getClasses('small')} text-yellow-700`}>
-                                                        <strong>Debug:</strong> Total players in database: {players.length} |
-                                                        Active players: {players.filter(p => p.isActive).length} |
-                                                        Championship players: {currentChampionship.players?.length || 0}
-                                                    </p>
-                                                </div>
+                                        {/* Add Existing Players Modal */}
+                                        {showAddPlayersModal && (
+                                            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                                                <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto border border-gray-200">
+                                                    <div className="p-6">
+                                                        <div className="flex justify-between items-center mb-6">
+                                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                                                Add Existing Players
+                                                            </h3>
+                                                            <button
+                                                                onClick={() => setShowAddPlayersModal(false)}
+                                                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                                            >
+                                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
 
-                                                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                                    {currentChampionship.players?.map((playerId) => {
-                                                        const player = players.find(p => p.id === playerId);
-                                                        const standing = currentChampionship.standings?.find(s => s.playerId === playerId);
-
-                                                        return (
-                                                            <div key={playerId} className="p-6 border-2 border-gray-200 rounded-2xl hover:shadow-lg transition-all bg-white/60 relative">
-                                                                <button
-                                                                    onClick={() => removePlayerFromChampionship(playerId)}
-                                                                    className="absolute top-2 right-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                                                                    title="Remove from championship"
-                                                                >
-                                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                    </svg>
-                                                                </button>
-
-                                                                <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-2 pr-8`}>
-                                                                    {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
-                                                                </h4>
-                                                                <p className={`${getClasses('small')} text-gray-600 mb-4`}>
-                                                                    {player?.userId || 'No ID'}
-                                                                </p>
-                                                                {standing && (
-                                                                    <div className="space-y-2">
-                                                                        <p className={`${getClasses('small')} text-gray-600`}>
-                                                                            <span className="font-bold text-blue-600">{standing.points}</span> points
-                                                                        </p>
-                                                                        <p className={`${getClasses('small')} text-gray-600`}>
-                                                                            {standing.matchesWon}/{standing.matchesPlayed} matches won
-                                                                        </p>
-                                                                        <p className={`${getClasses('small')} text-gray-600`}>
-                                                                            {standing.gamesWon || 0}/{(standing.gamesWon || 0) + (standing.gamesLost || 0)} games
-                                                                        </p>
-                                                                    </div>
-                                                                )}
-                                                                {!player && (
-                                                                    <p className={`${getClasses('small')} text-red-500`}>
-                                                                        Player data not found - may have been deleted
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length > 0 && (
-                                                    <div>
-                                                        <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>
-                                                            Available Players ({players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length})
-                                                        </h4>
-                                                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                                        <div className="space-y-3 max-h-64 overflow-y-auto">
                                                             {players
                                                                 .filter(p => p.isActive && !currentChampionship.players.includes(p.id))
                                                                 .map((player) => (
-                                                                    <div key={player.id} className="p-4 border border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                                                                        <h5 className={`${getClasses('small')} font-bold text-gray-800 mb-2`}>
-                                                                            {player.firstName} {player.surname}
-                                                                        </h5>
-                                                                        <p className={`${getClasses('small')} text-gray-600 mb-3`}>
-                                                                            {player.userId}
-                                                                        </p>
+                                                                    <div key={player.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                                                        <div>
+                                                                            <p className={`${getClasses('small')} font-bold text-gray-800`}>
+                                                                                {player.firstName} {player.surname}
+                                                                            </p>
+                                                                            <p className={`${getClasses('small')} text-gray-600`}>
+                                                                                {player.userId}
+                                                                            </p>
+                                                                        </div>
                                                                         <button
-                                                                            onClick={() => addPlayerToChampionship(player.id)}
-                                                                            className="w-full py-2 px-3 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                                                                            onClick={() => {
+                                                                                addPlayerToChampionship(player.id);
+                                                                            }}
+                                                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded"
                                                                         >
-                                                                            Add to Championship
+                                                                            Add
                                                                         </button>
                                                                     </div>
                                                                 ))}
                                                         </div>
+
+                                                        {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length === 0 && (
+                                                            <p className={`${getClasses('small')} text-gray-500 text-center py-4`}>
+                                                                All available players are already in this championship
+                                                            </p>
+                                                        )}
                                                     </div>
-                                                )}
-
-                                                {(!currentChampionship.players || currentChampionship.players.length === 0) && (
-                                                    <div className="text-center py-16">
-                                                        <div className="text-8xl mb-6">👥</div>
-                                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                                            No Players Added
-                                                        </h3>
-                                                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                                            Add players to get started with this championship
-                                                        </p>
-                                                    </div>
-                                                )}
-
-                                                {players.filter(p => p.isActive).length === 0 && (
-                                                    <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
-                                                        <h4 className={`${getClasses('body')} font-bold text-amber-700 mb-2`}>
-                                                            No Active Players Found
-                                                        </h4>
-                                                        <p className={`${getClasses('small')} text-amber-600 mb-4`}>
-                                                            You need to add some players to the system first.
-                                                        </p>
-                                                        <div className="flex gap-3">
-                                                            <button
-                                                                onClick={() => setShowAddNewPlayerModal(true)}
-                                                                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg"
-                                                            >
-                                                                Add First Player
-                                                            </button>
-                                                            <Link
-                                                                to="/players"
-                                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-                                                            >
-                                                                Go to Player Management
-                                                            </Link>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Add Existing Players Modal */}
-                                                {showAddPlayersModal && (
-                                                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                                                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto border border-gray-200">
-                                                            <div className="p-6">
-                                                                <div className="flex justify-between items-center mb-6">
-                                                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                                                        Add Existing Players
-                                                                    </h3>
-                                                                    <button
-                                                                        onClick={() => setShowAddPlayersModal(false)}
-                                                                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                                                                    >
-                                                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                        </svg>
-                                                                    </button>
-                                                                </div>
-
-                                                                <div className="space-y-3 max-h-64 overflow-y-auto">
-                                                                    {players
-                                                                        .filter(p => p.isActive && !currentChampionship.players.includes(p.id))
-                                                                        .map((player) => (
-                                                                            <div key={player.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                                                                <div>
-                                                                                    <p className={`${getClasses('small')} font-bold text-gray-800`}>
-                                                                                        {player.firstName} {player.surname}
-                                                                                    </p>
-                                                                                    <p className={`${getClasses('small')} text-gray-600`}>
-                                                                                        {player.userId}
-                                                                                    </p>
-                                                                                </div>
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        addPlayerToChampionship(player.id);
-                                                                                    }}
-                                                                                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded"
-                                                                                >
-                                                                                    Add
-                                                                                </button>
-                                                                            </div>
-                                                                        ))}
-                                                                </div>
-
-                                                                {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length === 0 && (
-                                                                    <p className={`${getClasses('small')} text-gray-500 text-center py-4`}>
-                                                                        All available players are already in this championship
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {/* Add New Player Modal */}
-                                                <PlayerManagementModal
-                                                    isOpen={showAddNewPlayerModal}
-                                                    onClose={() => setShowAddNewPlayerModal(false)}
-                                                    players={players}
-                                                    onAddPlayer={handleAddNewPlayer}
-                                                    onUpdatePlayer={handleUpdatePlayer}
-                                                    onDeletePlayer={handleDeletePlayer}
-                                                />
+                                                </div>
                                             </div>
                                         )}
+
+                                        {/* Add New Player Modal */}
+                                        <PlayerManagementModal
+                                            isOpen={showAddNewPlayerModal}
+                                            onClose={() => setShowAddNewPlayerModal(false)}
+                                            players={players}
+                                            onAddPlayer={handleAddNewPlayer}
+                                            onUpdatePlayer={handleUpdatePlayer}
+                                            onDeletePlayer={handleDeletePlayer}
+                                        />
                                     </div>
-                        </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-                );
+            </div>
+        );
     }
 
-                // SESSION/MATCH RECORDING VIEW
-                if (view === 'session') {
+    // SESSION/MATCH RECORDING VIEW
+    if (view === 'session') {
         return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-                    <FontToggle />
-                    <DebugInfo />
-                    <ScoringSystemModal />
-                    <ChampionshipSettingsModal />
-                    <div className="pt-20 pb-32 px-2 sm:px-6">
-                        <div className="max-w-full sm:max-w-4xl mx-auto">
-                            <div className="flex items-center mb-10">
-                                <button
-                                    onClick={() => setView('detail')}
-                                    className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                    </svg>
-                                    <span>Back</span>
-                                </button>
-                                <div className="flex-1">
-                                    <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                        Record Session - {currentChampionship.name}
-                                    </h1>
-                                    <p className={`${getClasses('body')} text-gray-600 font-medium`}>
-                                        {sessionStep === 'setup' && 'Set up your session'}
-                                        {sessionStep === 'recording' && `Recording matches for ${sessionDate}`}
-                                        {sessionStep === 'complete' && 'Session complete'}
-                                    </p>
-                                </div>
-                                {sessionStep === 'recording' && (
-                                    <button
-                                        onClick={() => setShowScoringModal(true)}
-                                        className={`${getClasses('button')} bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-2xl flex items-center space-x-3 shadow-lg`}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Scoring Help</span>
-                                    </button>
-                                )}
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+                <FontToggle />
+                <DebugInfo />
+                <ScoringSystemModal />
+                <ChampionshipSettingsModal />
+                <div className="pt-20 pb-32 px-2 sm:px-6">
+                    <div className="max-w-full sm:max-w-4xl mx-auto">
+                        <div className="flex items-center mb-10">
+                            <button
+                                onClick={() => setView('detail')}
+                                className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span>Back</span>
+                            </button>
+                            <div className="flex-1">
+                                <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                    Record Session - {currentChampionship.name}
+                                </h1>
+                                <p className={`${getClasses('body')} text-gray-600 font-medium`}>
+                                    {sessionStep === 'setup' && 'Set up your session'}
+                                    {sessionStep === 'recording' && `Recording matches for ${sessionDate}`}
+                                    {sessionStep === 'complete' && 'Session complete'}
+                                </p>
                             </div>
+                            {sessionStep === 'recording' && (
+                                <button
+                                    onClick={() => setShowScoringModal(true)}
+                                    className={`${getClasses('button')} bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-2xl flex items-center space-x-3 shadow-lg`}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Scoring Help</span>
+                                </button>
+                            )}
+                        </div>
 
-                            {/* Session Setup */}
-                            {sessionStep === 'setup' && (
-                                <div className="space-y-8">
-                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Session Date</h3>
-                                        <input
-                                            type="date"
-                                            value={sessionDate}
-                                            onChange={(e) => setSessionDate(e.target.value)}
-                                            className={`${getClasses('input')} border-2 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white/80 w-full max-w-md`}
-                                        />
+                        {/* Session Setup */}
+                        {sessionStep === 'setup' && (
+                            <div className="space-y-8">
+                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Session Date</h3>
+                                    <input
+                                        type="date"
+                                        value={sessionDate}
+                                        onChange={(e) => setSessionDate(e.target.value)}
+                                        className={`${getClasses('input')} border-2 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white/80 w-full max-w-md`}
+                                    />
+                                </div>
+
+                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                        Select Attending Players (minimum 4)
+                                    </h3>
+                                    <div className="grid md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                                        {currentChampionship.players?.map((playerId) => {
+                                            const player = players.find(p => p.id === playerId);
+                                            if (!player) return null;
+
+                                            return (
+                                                <label
+                                                    key={playerId}
+                                                    className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${attendingPlayers.includes(playerId)
+                                                        ? 'bg-blue-50 border-blue-300'
+                                                        : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={attendingPlayers.includes(playerId)}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setAttendingPlayers([...attendingPlayers, playerId]);
+                                                            } else {
+                                                                setAttendingPlayers(attendingPlayers.filter(id => id !== playerId));
+                                                            }
+                                                        }}
+                                                        className="w-5 h-5 text-blue-600 rounded"
+                                                    />
+                                                    <div>
+                                                        <span className={`${getClasses('body')} font-bold text-gray-800`}>
+                                                            {player.firstName} {player.surname}
+                                                        </span>
+                                                        <p className={`${getClasses('small')} text-gray-500`}>
+                                                            {player.userId}
+                                                        </p>
+                                                    </div>
+                                                </label>
+                                            );
+                                        })}
                                     </div>
+                                    <div className="mt-6 text-center">
+                                        <p className={`${getClasses('body')} text-gray-600`}>
+                                            Selected: <span className="font-bold text-blue-600">{attendingPlayers.length}</span> players
+                                        </p>
+                                    </div>
+                                </div>
 
-                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
-                                            Select Attending Players (minimum 4)
-                                        </h3>
-                                        <div className="grid md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                                            {currentChampionship.players?.map((playerId) => {
-                                                const player = players.find(p => p.id === playerId);
-                                                if (!player) return null;
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => attendingPlayers.length >= 4 ? setSessionStep('recording') : alert('Please select at least 4 players')}
+                                        disabled={attendingPlayers.length < 4}
+                                        className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
+                                    >
+                                        Start Session
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
-                                                return (
-                                                    <label
-                                                        key={playerId}
-                                                        className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${attendingPlayers.includes(playerId)
-                                                            ? 'bg-blue-50 border-blue-300'
-                                                            : 'bg-gray-50 border-gray-200 hover:border-blue-200'
-                                                            }`}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={attendingPlayers.includes(playerId)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) {
-                                                                    setAttendingPlayers([...attendingPlayers, playerId]);
-                                                                } else {
-                                                                    setAttendingPlayers(attendingPlayers.filter(id => id !== playerId));
-                                                                }
-                                                            }}
-                                                            className="w-5 h-5 text-blue-600 rounded"
-                                                        />
-                                                        <div>
-                                                            <span className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                                {player.firstName} {player.surname}
-                                                            </span>
-                                                            <p className={`${getClasses('small')} text-gray-500`}>
-                                                                {player.userId}
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="mt-6 text-center">
-                                            <p className={`${getClasses('body')} text-gray-600`}>
-                                                Selected: <span className="font-bold text-blue-600">{attendingPlayers.length}</span> players
+                        {/* Match Recording */}
+                        {sessionStep === 'recording' && (
+                            <div className="space-y-8">
+                                <div className="bg-white/90 backdrop-blur rounded-2xl shadow-lg p-6 border border-gray-200">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className={`${getClasses('body')} font-bold text-gray-800`}>
+                                                Session: {new Date(sessionDate).toLocaleDateString()}
+                                            </h3>
+                                            <p className={`${getClasses('small')} text-gray-600`}>
+                                                {attendingPlayers.length} players • {sessionMatches.length} matches recorded
                                             </p>
                                         </div>
-                                    </div>
-
-                                    <div className="text-center">
                                         <button
-                                            onClick={() => attendingPlayers.length >= 4 ? setSessionStep('recording') : alert('Please select at least 4 players')}
-                                            disabled={attendingPlayers.length < 4}
-                                            className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
+                                            onClick={() => setSessionStep('complete')}
+                                            className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg`}
                                         >
-                                            Start Session
+                                            Finish Session
                                         </button>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Match Recording */}
-                            {sessionStep === 'recording' && (
-                                <div className="space-y-8">
-                                    <div className="bg-white/90 backdrop-blur rounded-2xl shadow-lg p-6 border border-gray-200">
-                                        <div className="flex justify-between items-center">
-                                            <div>
-                                                <h3 className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                    Session: {new Date(sessionDate).toLocaleDateString()}
-                                                </h3>
-                                                <p className={`${getClasses('small')} text-gray-600`}>
-                                                    {attendingPlayers.length} players • {sessionMatches.length} matches recorded
-                                                </p>
-                                            </div>
-                                            <button
-                                                onClick={() => setSessionStep('complete')}
-                                                className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg`}
-                                            >
-                                                Finish Session
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Select Teams for Match</h3>
 
-                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Select Teams for Match</h3>
-
-                                        <div className="grid md:grid-cols-2 gap-8">
-                                            <div className="space-y-4">
-                                                <h4 className={`${getMatchRecordingClasses('teamHeader')} text-blue-600 text-center`}>Team A</h4>
-                                                <div className="min-h-24 p-4 border-2 border-blue-200 rounded-2xl bg-blue-50">
-                                                    {teamA.length === 0 ? (
-                                                        <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
-                                                    ) : (
-                                                        <div className="space-y-2">
-                                                            {teamA.map(playerId => (
-                                                                <div key={playerId} className="flex justify-between items-center">
-                                                                    <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
-                                                                        {getPlayerName(playerId)}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() => setTeamA(teamA.filter(id => id !== playerId))}
-                                                                        className="text-red-500 hover:text-red-700"
-                                                                    >
-                                                                        ✕
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-4">
-                                                <h4 className={`${getMatchRecordingClasses('teamHeader')} text-green-600 text-center`}>Team B</h4>
-                                                <div className="min-h-24 p-4 border-2 border-green-200 rounded-2xl bg-green-50">
-                                                    {teamB.length === 0 ? (
-                                                        <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
-                                                    ) : (
-                                                        <div className="space-y-2">
-                                                            {teamB.map(playerId => (
-                                                                <div key={playerId} className="flex justify-between items-center">
-                                                                    <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
-                                                                        {getPlayerName(playerId)}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() => setTeamB(teamB.filter(id => id !== playerId))}
-                                                                        className="text-red-500 hover:text-red-700"
-                                                                    >
-                                                                        ✕
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-8">
-                                            <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                {attendingPlayers
-                                                    .filter(id => !teamA.includes(id) && !teamB.includes(id))
-                                                    .map(playerId => {
-                                                        return (
-                                                            <div key={playerId} className="space-y-2">
-                                                                <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
+                                    <div className="grid md:grid-cols-2 gap-8">
+                                        <div className="space-y-4">
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-blue-600 text-center`}>Team A</h4>
+                                            <div className="min-h-24 p-4 border-2 border-blue-200 rounded-2xl bg-blue-50">
+                                                {teamA.length === 0 ? (
+                                                    <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {teamA.map(playerId => (
+                                                            <div key={playerId} className="flex justify-between items-center">
+                                                                <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
                                                                     {getPlayerName(playerId)}
-                                                                </p>
-                                                                <div className="flex space-x-2">
-                                                                    <button
-                                                                        onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
-                                                                        disabled={teamA.length >= 2}
-                                                                        className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
-                                                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                            : 'bg-blue-100 text-blue-700 active:bg-blue-300'
-                                                                            }`}
-                                                                    >
-                                                                        Team A
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
-                                                                        disabled={teamB.length >= 2}
-                                                                        className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
-                                                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                            : 'bg-green-100 text-green-700 active:bg-green-300'
-                                                                            }`}
-                                                                    >
-                                                                        Team B
-                                                                    </button>
-                                                                </div>
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => setTeamA(teamA.filter(id => id !== playerId))}
+                                                                    className="text-red-500 hover:text-red-700"
+                                                                >
+                                                                    ✕
+                                                                </button>
                                                             </div>
-                                                        );
-                                                    })}
-                                            </div>
-                                        </div>
-
-                                        {teamA.length === 2 && teamB.length === 2 && (
-                                            <div className="mt-8 py-6 px-2 bg-gray-50 rounded-2xl border border-gray-200">
-                                                <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
-                                                    Score
-                                                </h4>
-                                                <div className="grid grid-cols-[5fr_1fr_5fr] gap-1 items-center w-full px-0">
-                                                    <div className="text-center">
-                                                        <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="20"
-                                                            value={setScores.teamA}
-                                                            onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
-                                                            className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
-                                                            placeholder="0"
-                                                        />
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            max="20"
-                                                            value={setScores.teamB}
-                                                            onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
-                                                            className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
-                                                            placeholder="0"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {setScores.teamA && setScores.teamB && (
-                                                    <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
-                                                        <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
-                                                        <div className="flex justify-center space-x-6 flex-wrap gap-2">
-                                                            <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
-                                                                Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
-                                                            </span>
-                                                            <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
-                                                                Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
-                                                            </span>
-                                                        </div>
+                                                        ))}
                                                     </div>
                                                 )}
-
-                                                <div className="text-center mt-6">
-                                                    <button
-                                                        onClick={handleScoreSubmit}
-                                                        disabled={!setScores.teamA || !setScores.teamB}
-                                                        className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
-                                                    >
-                                                        ✓ Record Match
-                                                    </button>
-                                                </div>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-green-600 text-center`}>Team B</h4>
+                                            <div className="min-h-24 p-4 border-2 border-green-200 rounded-2xl bg-green-50">
+                                                {teamB.length === 0 ? (
+                                                    <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        {teamB.map(playerId => (
+                                                            <div key={playerId} className="flex justify-between items-center">
+                                                                <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
+                                                                    {getPlayerName(playerId)}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => setTeamB(teamB.filter(id => id !== playerId))}
+                                                                    className="text-red-500 hover:text-red-700"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {sessionMatches.length > 0 && (
-                                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
-                                                Session Matches ({sessionMatches.length})
-                                            </h3>
-                                            <div className="space-y-4">
-                                                {sessionMatches.map((match, index) => (
-                                                    <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                        <div className="grid grid-cols-3 gap-4 items-center">
-                                                            <div className="text-center">
-                                                                <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
-                                                                <p className={`${getClasses('small')} text-gray-700`}>
-                                                                    {match.teamA.map(id => getPlayerName(id)).join(' & ')}
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-center">
-                                                                <p className={`${getClasses('body')} font-bold`}>
-                                                                    {match.gamesA} - {match.gamesB}
-                                                                </p>
-                                                                <p className={`${getClasses('small')} text-gray-500`}>
-                                                                    {match.points.teamA} - {match.points.teamB} pts
-                                                                </p>
-                                                            </div>
-                                                            <div className="text-center">
-                                                                <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
-                                                                <p className={`${getClasses('small')} text-gray-700`}>
-                                                                    {match.teamB.map(id => getPlayerName(id)).join(' & ')}
-                                                                </p>
+                                    <div className="mt-8">
+                                        <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            {attendingPlayers
+                                                .filter(id => !teamA.includes(id) && !teamB.includes(id))
+                                                .map(playerId => {
+                                                    return (
+                                                        <div key={playerId} className="space-y-2">
+                                                            <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
+                                                                {getPlayerName(playerId)}
+                                                            </p>
+                                                            <div className="flex space-x-2">
+                                                                <button
+                                                                    onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
+                                                                    disabled={teamA.length >= 2}
+                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
+                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                        : 'bg-blue-100 text-blue-700 active:bg-blue-300'
+                                                                        }`}
+                                                                >
+                                                                    Team A
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
+                                                                    disabled={teamB.length >= 2}
+                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
+                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                        : 'bg-green-100 text-green-700 active:bg-green-300'
+                                                                        }`}
+                                                                >
+                                                                    Team B
+                                                                </button>
                                                             </div>
                                                         </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    </div>
+
+                                    {teamA.length === 2 && teamB.length === 2 && (
+                                        <div className="mt-8 py-6 px-2 bg-gray-50 rounded-2xl border border-gray-200">
+                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
+                                                Score
+                                            </h4>
+                                            <div className="grid grid-cols-[5fr_1fr_5fr] gap-1 items-center w-full px-0">
+                                                <div className="text-center">
+                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="20"
+                                                        value={setScores.teamA}
+                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
+                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="20"
+                                                        value={setScores.teamB}
+                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
+                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {setScores.teamA && setScores.teamB && (
+                                                <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
+                                                    <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
+                                                    <div className="flex justify-center space-x-6 flex-wrap gap-2">
+                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
+                                                            Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
+                                                        </span>
+                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
+                                                            Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
+                                                        </span>
                                                     </div>
-                                                ))}
+                                                </div>
+                                            )}
+
+                                            <div className="text-center mt-6">
+                                                <button
+                                                    onClick={handleScoreSubmit}
+                                                    disabled={!setScores.teamA || !setScores.teamB}
+                                                    className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
+                                                >
+                                                    ✓ Record Match
+                                                </button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                            )}
 
-                            {/* Session Complete */}
-                            {sessionStep === 'complete' && (
-                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
-                                    <div className="text-8xl mb-6">🎾</div>
-                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                        Session Complete!
-                                    </h3>
-                                    <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                        Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
-                                    </p>
-                                    <div className="space-y-4">
-                                        <button
-                                            onClick={() => {
-                                                setSessionStep('setup');
-                                                setAttendingPlayers([]);
-                                                setSessionMatches([]);
-                                                setTeamA([]);
-                                                setTeamB([]);
-                                                setSetScores({ teamA: '', teamB: '' });
-                                            }}
-                                            className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
-                                        >
-                                            Record Another Session
-                                        </button>
-                                        <button
-                                            onClick={() => setView('detail')}
-                                            className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
-                                        >
-                                            View Championship
-                                        </button>
+                                {sessionMatches.length > 0 && (
+                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                            Session Matches ({sessionMatches.length})
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {sessionMatches.map((match, index) => (
+                                                <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                                    <div className="grid grid-cols-3 gap-4 items-center">
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
+                                                            <p className={`${getClasses('small')} text-gray-700`}>
+                                                                {match.teamA.map(id => getPlayerName(id)).join(' & ')}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('body')} font-bold`}>
+                                                                {match.gamesA} - {match.gamesB}
+                                                            </p>
+                                                            <p className={`${getClasses('small')} text-gray-500`}>
+                                                                {match.points.teamA} - {match.points.teamB} pts
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
+                                                            <p className={`${getClasses('small')} text-gray-700`}>
+                                                                {match.teamB.map(id => getPlayerName(id)).join(' & ')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div >
-                );
-    }
+                                )}
+                            </div>
+                        )}
 
-                // Default view
-                return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-                    <FontToggle />
-                    <DebugInfo />
-                    <div className="pt-20 pb-32 px-6">
-                        <div className="max-w-4xl mx-auto">
-                            <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
-                        </div>
+                        {/* Session Complete */}
+                        {sessionStep === 'complete' && (
+                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
+                                <div className="text-8xl mb-6">🎾</div>
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                    Session Complete!
+                                </h3>
+                                <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                    Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
+                                </p>
+                                <div className="space-y-4">
+                                    <button
+                                        onClick={() => {
+                                            setSessionStep('setup');
+                                            setAttendingPlayers([]);
+                                            setSessionMatches([]);
+                                            setTeamA([]);
+                                            setTeamB([]);
+                                            setSetScores({ teamA: '', teamB: '' });
+                                        }}
+                                        className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
+                                    >
+                                        Record Another Session
+                                    </button>
+                                    <button
+                                        onClick={() => setView('detail')}
+                                        className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
+                                    >
+                                        View Championship
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-                );
+            </div >
+        );
+    }
+
+    // Default view
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+            <FontToggle />
+            <DebugInfo />
+            <div className="pt-20 pb-32 px-6">
+                <div className="max-w-4xl mx-auto">
+                    <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
+                </div>
+            </div>
+        </div>
+    );
 };
 
-                export default ChampionshipManagement;
+export default ChampionshipManagement;
