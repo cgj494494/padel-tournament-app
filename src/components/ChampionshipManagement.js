@@ -354,14 +354,12 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
-        // TEST: Log detection results (Stage 1 testing only)
+        // TEST: Show detection results in alert (Stage 1 mobile testing)
         const isAmbiguous = isAmbiguousScore(gamesA, gamesB);
         const autoDetected = detectComplete(gamesA, gamesB);
-        console.log('=== SCORE DETECTION TEST ===');
-        console.log(`Score: ${gamesA}-${gamesB}`);
-        console.log(`Is Ambiguous: ${isAmbiguous}`);
-        console.log(`Auto-detected as Complete: ${autoDetected}`);
-        console.log('===========================');
+
+        const testMessage = `DETECTION TEST\n\nScore: ${gamesA}-${gamesB}\nAmbiguous: ${isAmbiguous ? 'YES' : 'NO'}\nAuto-Complete: ${autoDetected ? 'YES' : 'NO'}`;
+        alert(testMessage);
 
         // Assume complete by default (will add UI toggle later for ambiguous scores)
         const isComplete = true;
