@@ -30,6 +30,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [sessionMatches, setSessionMatches] = useState([]);
     const [teamA, setTeamA] = useState([]);
     const [teamB, setTeamB] = useState([]);
+    const [showSetStatusDialog, setShowSetStatusDialog] = useState(false);
+    const [tempScores, setTempScores] = useState({ gamesA: 0, gamesB: 0 });
+    const [setComplete, setSetComplete] = useState(true);
     const [setScores, setSetScores] = useState({ teamA: '', teamB: '' });
     const [editingMatchDate, setEditingMatchDate] = useState(null);
     const [standingsSortMode, setStandingsSortMode] = useState('total'); // 'total' or 'prorata'
@@ -354,15 +357,18 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
-        // TEST: Show detection results in alert (Stage 1 mobile testing)
-        const isAmbiguous = isAmbiguousScore(gamesA, gamesB);
-        const autoDetected = detectComplete(gamesA, gamesB);
-
-        const testMessage = `DETECTION TEST\n\nScore: ${gamesA}-${gamesB}\nAmbiguous: ${isAmbiguous ? 'YES' : 'NO'}\nAuto-Complete: ${autoDetected ? 'YES' : 'NO'}`;
-        alert(testMessage);
-
-        // Assume complete by default (will add UI toggle later for ambiguous scores)
-        const isComplete = true;
+        // Check if ambiguous (7-6, 8-7, 9-8, etc.)
+        if (isAmbiguousScore(gamesA, gamesB)) {
+            setTempScores({ gamesA, gamesB });
+            setSetComplete(true); // Default to complete
+            setShowSetStatusDialog(true);
+        } else {
+            // Auto-detect and save directly
+            const isComplete = detectComplete(gamesA, gamesB);
+            saveMatchWithStatus(gamesA, gamesB, isComplete);
+        }
+    };
+    const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
         const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
 
         const match = {
@@ -372,7 +378,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             teamB: [...teamB],
             gamesA,
             gamesB,
-            isComplete: true,  // Still defaulting to true for now
+            isComplete,  // Save the status
             points: { teamA: pointsA, teamB: pointsB },
             timestamp: new Date().toISOString()
         };
@@ -1994,7 +2000,81 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         )}
                     </div>
                 </div>
+                {/* Set Status Confirmation Dialog */}
+                {showSetStatusDialog && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                            <h2 className="text-2xl font-bold mb-4">Confirm Set Status</h2>
+
+                            <div className="mb-6">
+                                <p className="text-gray-600 mb-2">
+                                    Team A: <span className="font-bold">{tempScores.gamesA} games</span>
+                                </p>
+                                <p className="text-gray-600 mb-4">
+                                    Team B: <span className="font-bold">{tempScores.gamesB} games</span>
+                                </p>
+                            </div>
+
+                            <div className="space-y-4 mb-6">
+                                <label
+                                    className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        checked={setComplete}
+                                        onChange={() => setSetComplete(true)}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <div className="font-bold">Set Completed (Tiebreak/Won by 2)</div>
+                                        <div className="text-sm text-gray-600">
+                                            Points: 4 pts vs 3 pts
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <label
+                                    className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${!setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        checked={!setComplete}
+                                        onChange={() => setSetComplete(false)}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <div className="font-bold">Incomplete (Time ran out)</div>
+                                        <div className="text-sm text-gray-600">
+                                            Points: 3 pts vs 2 pts
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={() => setShowSetStatusDialog(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        saveMatchWithStatus(tempScores.gamesA, tempScores.gamesB, setComplete);
+                                        setShowSetStatusDialog(false);
+                                    }}
+                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                >
+                                    Save Match
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div >
+
         );
     }
 
