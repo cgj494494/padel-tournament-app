@@ -229,36 +229,76 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     };
 
     // CJ Scoring System
-    const calculateCJPoints = (scoreA, scoreB) => {
+    // New CJ Scoring System - Updated Sep 2025
+    const calculateCJPoints = (scoreA, scoreB, isComplete = null) => {
         const gamesA = parseInt(scoreA) || 0;
         const gamesB = parseInt(scoreB) || 0;
 
         if (gamesA === 0 && gamesB === 0) return [0, 0];
 
-        const diff = gamesA - gamesB;
         const totalGames = gamesA + gamesB;
+        const diff = gamesA - gamesB;
+        const absDiff = Math.abs(diff);
+        const winner = Math.max(gamesA, gamesB);
 
-        // Minimum 4 games for points
-        if (totalGames < 4) return [0, 0];
+        // Auto-detect if complete/incomplete when not specified
+        if (isComplete === null) {
+            // Obviously complete: winner has 6+ and margin 2+
+            if (winner >= 6 && absDiff >= 2) {
+                isComplete = true;
+            }
+            // Obviously incomplete: neither team reached 6
+            else if (winner < 6) {
+                isComplete = false;
+            }
+            // Ambiguous (7-6, 8-7, etc.) - default to complete (tiebreak)
+            else {
+                isComplete = true;
+            }
+        }
 
-        if (diff >= 2) {
-            // Win by 2+ games
-            if (gamesA >= 6 && diff >= 3) return [5, 1]; // Big win vs standard loss
-            if (gamesA >= 6) return [4, 2]; // Win with games vs close loss
-            return [2, 1]; // Leading by 2+ vs losing (incomplete)
-        } else if (diff === 1) {
-            if (gamesA >= 6) return [4, 2]; // Win with games vs close loss
-            return [2, 1]; // Leading by 1 vs losing (incomplete)
-        } else if (diff === 0) {
-            return [1, 1]; // Draw
-        } else if (diff === -1) {
-            if (gamesB >= 6) return [2, 4]; // Close loss vs win with games
-            return [1, 2]; // Losing vs leading by 1 (incomplete)
-        } else {
-            // Loss by 2+ games
-            if (gamesB >= 6 && diff <= -3) return [1, 5]; // Standard loss vs big win
-            if (gamesB >= 6) return [2, 4]; // Close loss vs win with games
-            return [1, 2]; // Losing vs leading by 2+ (incomplete)
+        // COMPLETED SETS
+        if (isComplete) {
+            // Margin 4+ = Big Win
+            if (absDiff >= 4) {
+                return diff > 0 ? [5, 1] : [1, 5];
+            }
+            // Margin 2-3 = Win with Games
+            else if (absDiff >= 2) {
+                return diff > 0 ? [4, 2] : [2, 4];
+            }
+            // Margin 1 = Close Win/Tiebreak
+            else if (absDiff === 1) {
+                return diff > 0 ? [4, 3] : [3, 4];
+            }
+            // Draw (shouldn't happen in completed set)
+            else {
+                return [2, 2];
+            }
+        }
+
+        // INCOMPLETE SETS
+        else {
+            // Minimum 3 games total for any points
+            if (totalGames < 3) return [0, 0];
+
+            // Draw
+            if (diff === 0) return [2, 2];
+
+            // Leading by 2+
+            if (absDiff >= 2) {
+                return diff > 0 ? [3, 1] : [1, 3];
+            }
+
+            // Leading by 1
+            // Both teams reached 6+ = very competitive
+            if (gamesA >= 6 && gamesB >= 6) {
+                return diff > 0 ? [3, 2] : [2, 3];
+            }
+            // At least one team under 6
+            else {
+                return diff > 0 ? [2, 1] : [1, 2];
+            }
         }
     };
 
@@ -313,7 +353,10 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
-        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB);
+
+        // Assume complete by default (will add UI toggle later for ambiguous scores)
+        const isComplete = true;
+        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
 
         const match = {
             id: Date.now(),
@@ -322,6 +365,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             teamB: [...teamB],
             gamesA,
             gamesB,
+            isComplete: true,  // NEW FIELD - default to true
             points: { teamA: pointsA, teamB: pointsB },
             timestamp: new Date().toISOString()
         };
@@ -455,7 +499,69 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setName('');
         setSelectedPlayers([]);
     };
+    // Recalculate all matches with new scoring system
+    const recalculateChampionshipScoring = () => {
+        if (!currentChampionship) return;
 
+        // Clone championship
+        const updatedChampionship = { ...currentChampionship };
+
+        // Reset all standings
+        updatedChampionship.standings = updatedChampionship.standings.map(standing => ({
+            ...standing,
+            points: 0,
+            matchesPlayed: 0,
+            matchesWon: 0,
+            setsPlayed: 0,
+            gamesWon: 0,
+            gamesLost: 0
+        }));
+
+        // Recalculate each match
+        updatedChampionship.matches = updatedChampionship.matches.map(match => {
+            // Auto-detect if complete based on score
+            const isComplete = match.isComplete !== undefined ? match.isComplete : null;
+            const [pointsA, pointsB] = calculateCJPoints(match.gamesA, match.gamesB, isComplete);
+
+            return {
+                ...match,
+                isComplete: isComplete === null ? true : isComplete,  // Store the flag
+                points: { teamA: pointsA, teamB: pointsB }
+            };
+        });
+
+        // Recalculate standings from updated matches
+        updatedChampionship.matches.forEach(match => {
+            [...match.teamA, ...match.teamB].forEach(playerId => {
+                const standingIndex = updatedChampionship.standings.findIndex(s => s.playerId === playerId);
+                if (standingIndex !== -1) {
+                    const standing = updatedChampionship.standings[standingIndex];
+                    const isTeamA = match.teamA.includes(playerId);
+                    const playerPoints = isTeamA ? match.points.teamA : match.points.teamB;
+
+                    standing.points += playerPoints;
+                    standing.matchesPlayed += 1;
+                    if ((isTeamA && match.points.teamA > match.points.teamB) ||
+                        (!isTeamA && match.points.teamB > match.points.teamA)) {
+                        standing.matchesWon += 1;
+                    }
+                    standing.setsPlayed = (standing.setsPlayed || 0) + 1;
+                    standing.gamesWon = (standing.gamesWon || 0) + (isTeamA ? match.gamesA : match.gamesB);
+                    standing.gamesLost = (standing.gamesLost || 0) + (isTeamA ? match.gamesB : match.gamesA);
+                }
+            });
+        });
+
+        // Save updated championship
+        const updatedChampionships = championships.map(c =>
+            c.id === currentChampionship.id ? updatedChampionship : c
+        );
+
+        saveChampionships(updatedChampionships);
+        setCurrentChampionship(updatedChampionship);
+
+        alert('Scoring system updated! All matches have been recalculated with the new point system.');
+    };
     // UI Components
     const FontToggle = () => (
         <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-3">
@@ -665,19 +771,35 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             </div>
                         </div>
 
-                        <div className="flex space-x-4 mt-8">
+                        <div className="space-y-4 mt-8">
+                            {/* Recalculation Button */}
                             <button
-                                onClick={() => setShowChampionshipSettings(false)}
-                                className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
+                                onClick={() => {
+                                    if (window.confirm('This will recalculate all match points using the updated scoring system. Current standings will change. Continue?')) {
+                                        recalculateChampionshipScoring();
+                                        setShowChampionshipSettings(false);
+                                    }
+                                }}
+                                className={`w-full ${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-xl`}
                             >
-                                Cancel
+                                🔄 Recalculate with New Scoring System
                             </button>
-                            <button
-                                onClick={handleSave}
-                                className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
-                            >
-                                Save
-                            </button>
+
+                            {/* Original buttons */}
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={() => setShowChampionshipSettings(false)}
+                                    className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
+                                >
+                                    Save Settings
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1237,7 +1359,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                     </button>
                                                                 )}
                                                                 <span className={`${getClasses('small')} text-gray-400`}>
-                                                                    Match {index + 1}
+                                                                    Match {currentChampionship.matches.length - index}
                                                                 </span>
                                                             </div>
                                                         </div>
