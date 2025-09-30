@@ -354,6 +354,15 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
+        // TEST: Log detection results (Stage 1 testing only)
+        const isAmbiguous = isAmbiguousScore(gamesA, gamesB);
+        const autoDetected = detectComplete(gamesA, gamesB);
+        console.log('=== SCORE DETECTION TEST ===');
+        console.log(`Score: ${gamesA}-${gamesB}`);
+        console.log(`Is Ambiguous: ${isAmbiguous}`);
+        console.log(`Auto-detected as Complete: ${autoDetected}`);
+        console.log('===========================');
+
         // Assume complete by default (will add UI toggle later for ambiguous scores)
         const isComplete = true;
         const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
@@ -365,7 +374,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             teamB: [...teamB],
             gamesA,
             gamesB,
-            isComplete: true,  // NEW FIELD - default to true
+            isComplete: true,  // Still defaulting to true for now
             points: { teamA: pointsA, teamB: pointsB },
             timestamp: new Date().toISOString()
         };
@@ -377,7 +386,29 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setTeamB([]);
         setSetScores({ teamA: '', teamB: '' });
     };
+    // Helper function to detect ambiguous scores
+    const isAmbiguousScore = (gamesA, gamesB) => {
+        const margin = Math.abs(gamesA - gamesB);
+        const minGames = Math.min(gamesA, gamesB);
 
+        // Ambiguous if margin is 1 AND both teams reached 6+
+        // Examples: 7-6, 8-7, 9-8, 10-9
+        return margin === 1 && minGames >= 6;
+    };
+    // Auto-detection for non-ambiguous scores
+    const detectComplete = (gamesA, gamesB) => {
+        const winner = Math.max(gamesA, gamesB);
+        const margin = Math.abs(gamesA - gamesB);
+
+        // Complete if winner has 6+ AND margin 2+
+        if (winner >= 6 && margin >= 2) return true;
+
+        // Incomplete if winner has less than 6
+        if (winner < 6) return false;
+
+        // Default to true (shouldn't reach here for ambiguous scores)
+        return true;
+    };
     const updateMatchDate = (matchId, newDate) => {
         const updatedMatches = currentChampionship.matches.map(match =>
             match.id === matchId ? { ...match, date: newDate } : match
