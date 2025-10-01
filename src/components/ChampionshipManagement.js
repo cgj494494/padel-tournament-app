@@ -436,7 +436,32 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const player = players.find(p => p.id === playerId);
         return player ? `${player.firstName} ${player.surname}` : 'Unknown';
     };
+    const getFormattedScore = (match) => {
+        const gamesA = match.gamesA;
+        const gamesB = match.gamesB;
+        const isComplete = match.isComplete !== false; // Default to true if not specified
 
+        // Determine if this is a tiebreak win scenario
+        // Tiebreak: complete set with margin of 1 and at least one team has 6+
+        const isTiebreak = isComplete &&
+            Math.abs(gamesA - gamesB) === 1 &&
+            (gamesA >= 6 || gamesB >= 6);
+
+        if (isTiebreak) {
+            // Show W superscript on winner's side only
+            if (gamesA > gamesB) {
+                return `${gamesA}ᵂ-${gamesB}`;
+            } else {
+                return `${gamesA}-${gamesB}ᵂ`;
+            }
+        } else if (!isComplete) {
+            // Show I superscript on both sides for incomplete
+            return `${gamesA}ᴵ-${gamesB}ᴵ`;
+        } else {
+            // Regular complete match, no indicator
+            return `${gamesA}-${gamesB}`;
+        }
+    };
     const getClasses = (element) => {
         const styles = {
             small: {
@@ -1346,7 +1371,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                 </div>
                                                                 <div className="text-center">
                                                                     <p className={`${getClasses('body')} font-bold`}>
-                                                                        {match.gamesA} - {match.gamesB}
+                                                                        {getFormattedScore(match)}
                                                                     </p>
                                                                     <p className={`${getClasses('small')} text-gray-500`}>
                                                                         {match.points?.teamA} - {match.points?.teamB} pts
@@ -1944,7 +1969,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                         </div>
                                                         <div className="text-center">
                                                             <p className={`${getClasses('body')} font-bold`}>
-                                                                {match.gamesA} - {match.gamesB}
+                                                                {getFormattedScore(match)}
                                                             </p>
                                                             <p className={`${getClasses('small')} text-gray-500`}>
                                                                 {match.points.teamA} - {match.points.teamB} pts
