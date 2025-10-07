@@ -155,6 +155,217 @@ const exportPlayerToExcel = (playerId, championships, players) => {
   const filename = `${player.firstName}_${player.surname}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
   XLSX.writeFile(wb, filename);
 };
+// Export Championship to PDF
+const exportChampionshipToPDF = (championship, players) => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(20);
+  doc.setFont(undefined, 'bold');
+  doc.text(championship.name, 105, 20, { align: 'center' });
+
+  // Subtitle
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Championship Report - ${formatDate(new Date().toISOString())}`, 105, 28, { align: 'center' });
+
+  // Championship Info
+  doc.setFontSize(10);
+  doc.text(`Start Date: ${formatDate(championship.startDate)}`, 14, 40);
+  doc.text(`Total Players: ${championship.players.length}`, 14, 46);
+  doc.text(`Total Matches: ${championship.matches.length}`, 14, 52);
+
+  // Standings Table
+  doc.setFontSize(14);
+  doc.setFont(undefined, 'bold');
+  doc.text('Standings', 14, 65);
+
+  const standingsData = championship.standings
+    .sort((a, b) => b.points - a.points)
+    .map((standing, index) => {
+      const player = players.find(p => p.id === standing.playerId);
+      return [
+        index + 1,
+        player ? `${player.firstName} ${player.surname}` : 'Unknown',
+        standing.points,
+        standing.matchesPlayed,
+        standing.matchesWon,
+        `${standing.gamesWon || 0}-${standing.gamesLost || 0}`
+      ];
+    });
+
+  doc.autoTable({
+    startY: 70,
+    head: [['Pos', 'Player', 'Points', 'Matches', 'Wins', 'Games']],
+    body: standingsData,
+    theme: 'striped',
+    headStyles: { fillColor: [147, 51, 234] }
+  });
+
+  // Match Results (new page if needed)
+  const finalY = doc.lastAutoTable.finalY || 70;
+  if (finalY > 200) {
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Match Results', 14, 20);
+  } else {
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.text('Match Results', 14, finalY + 15);
+  }
+
+  const matchData = championship.matches.slice(0, 20).map(match => [
+    formatDate(match.date),
+    `${getPlayerName(match.teamA[0], players)} & ${getPlayerName(match.teamA[1], players)}`,
+    `${match.gamesA}-${match.gamesB}`,
+    `${getPlayerName(match.teamB[0], players)} & ${getPlayerName(match.teamB[1], players)}`,
+    `${match.points.teamA}-${match.points.teamB}`
+  ]);
+
+  doc.autoTable({
+    startY: finalY > 200 ? 25 : finalY + 20,
+    head: [['Date', 'Team A', 'Score', 'Team B', 'Points']],
+    body: matchData,
+    theme: 'striped',
+    headStyles: { fillColor: [147, 51, 234] },
+    styles: { fontSize: 8 }
+  });
+
+  if (championship.matches.length > 20) {
+    const noteY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text(`Showing first 20 of ${championship.matches.length} matches. Export to Excel for complete data.`, 14, noteY);
+  }
+
+  // Save
+  const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.pdf`;
+  doc.save(filename);
+};
+
+// Export Player to PDF
+const exportPlayerToPDF = (playerId, championships, players) => {
+  const player = players.find(p => p.id === playerId);
+  if (!player) return;
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Gather all matches for this player
+  let playerMatches = [];
+  let totalPoints = 0;
+  let wins = 0;
+
+  championships.forEach(championship => {
+    championship.matches.forEach(match => {
+      if (match.teamA.includes(playerId) || match.teamB.includes(playerId)) {
+        const isTeamA = match.teamA.includes(playerId);
+        const partnerId = isTeamA
+          ? match.teamA.find(id => id !== playerId)
+          : match.teamB.find(id => id !== playerId);
+        const opponentIds = isTeamA ? match.teamB : match.teamA;
+        const playerPoints = isTeamA ? match.points.teamA : match.points.teamB;
+        const opponentPoints = isTeamA ? match.points.teamB : match.points.teamA;
+        const won = playerPoints > opponentPoints;
+        const score = isTeamA
+          ? `${match.gamesA}-${match.gamesB}`
+          : `${match.gamesB}-${match.gamesA}`;
+
+        if (won) wins++;
+        totalPoints += playerPoints;
+
+        playerMatches.push({
+          date: formatDate(match.date),
+          championship: championship.name,
+          partner: getPlayerName(partnerId, players),
+          opponent1: getPlayerName(opponentIds[0], players),
+          opponent2: getPlayerName(opponentIds[1], players),
+          score: score,
+          result: won ? 'W' : 'L',
+          points: playerPoints
+        });
+      }
+    });
+  });
+
+  // Title
+  doc.setFontSize(20);
+  doc.setFont(undefined, 'bold');
+  doc.text(`${player.firstName} ${player.surname}`, 105, 20, { align: 'center' });
+
+  // Subtitle
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Match History Report - ${formatDate(new Date().toISOString())}`, 105, 28, { align: 'center' });
+
+  // Performance Summary Box
+  doc.setFillColor(240, 240, 250);
+  doc.rect(14, 35, 182, 35, 'F');
+
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.text('PERFORMANCE SUMMARY', 105, 42, { align: 'center' });
+
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'normal');
+  const losses = playerMatches.length - wins;
+  const winRate = playerMatches.length > 0 ? ((wins / playerMatches.length) * 100).toFixed(1) : '0.0';
+  const avgPoints = playerMatches.length > 0 ? (totalPoints / playerMatches.length).toFixed(1) : '0.0';
+
+  doc.text(`Total Matches: ${playerMatches.length}`, 30, 52);
+  doc.text(`Wins: ${wins}  |  Losses: ${losses}`, 30, 58);
+  doc.text(`Win Rate: ${winRate}%`, 30, 64);
+
+  doc.text(`Total CJ Points: ${totalPoints}`, 120, 52);
+  doc.text(`Avg Points/Match: ${avgPoints}`, 120, 58);
+  doc.text(`Championships: ${championships.length}`, 120, 64);
+
+  // Match History Table
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('Match History', 14, 80);
+
+  const matchData = playerMatches.slice(0, 30).map(m => [
+    m.date,
+    m.championship,
+    m.partner,
+    `${m.opponent1} & ${m.opponent2}`,
+    m.score,
+    m.result,
+    m.points
+  ]);
+
+  doc.autoTable({
+    startY: 85,
+    head: [['Date', 'Championship', 'Partner', 'Opponents', 'Score', 'W/L', 'Pts']],
+    body: matchData,
+    theme: 'striped',
+    headStyles: { fillColor: [147, 51, 234] },
+    styles: { fontSize: 8 },
+    columnStyles: {
+      0: { cellWidth: 18 },
+      1: { cellWidth: 35 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: 50 },
+      4: { cellWidth: 18 },
+      5: { cellWidth: 10 },
+      6: { cellWidth: 12 }
+    }
+  });
+
+  if (playerMatches.length > 30) {
+    const noteY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'italic');
+    doc.text(`Showing first 30 of ${playerMatches.length} matches. Export to Excel for complete data.`, 14, noteY);
+  }
+
+  // Save
+  const filename = `${player.firstName}_${player.surname}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.pdf`;
+  doc.save(filename);
+};
 // Fixed PlayerManagementView Component in App.js
 const PlayerManagementView = ({ saveLastUsed }) => {
   const [players, setPlayers] = useState([]);
@@ -377,16 +588,16 @@ const HomePage = ({ activeSection, setActiveSection }) => {
   const [exportPdf, setExportPdf] = useState(true);
   const [championships, setChampionships] = useState([]);
   const [players, setPlayers] = useState([]);
-// Load championships and players for export
-useEffect(() => {
-  const loadedChampionships = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
-  const loadedPlayers = PlayerManagementUtils.loadPlayers(); // USE THE UTILITY!
-  console.log('Loaded players:', loadedPlayers);
-  console.log('First player:', loadedPlayers[0]);
-  setChampionships(loadedChampionships);
-  setPlayers(loadedPlayers);
-}, []);
-  
+  // Load championships and players for export
+  useEffect(() => {
+    const loadedChampionships = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
+    const loadedPlayers = PlayerManagementUtils.loadPlayers(); // USE THE UTILITY!
+    console.log('Loaded players:', loadedPlayers);
+    console.log('First player:', loadedPlayers[0]);
+    setChampionships(loadedChampionships);
+    setPlayers(loadedPlayers);
+  }, []);
+
   // Load last used item on mount
   useEffect(() => {
     const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
@@ -766,7 +977,14 @@ useEffect(() => {
                       }
 
                       if (exportPdf) {
-                        alert('PDF export will be implemented in Stage 5');
+                        if (exportScope === 'championship') {
+                          const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                          if (championship) {
+                            exportChampionshipToPDF(championship, players);
+                          }
+                        } else if (exportScope === 'player') {
+                          exportPlayerToPDF(selectedPlayerId, championships, players);
+                        }
                       }
 
                       // Close modal
