@@ -454,7 +454,10 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                   <h3 className="text-xl font-bold mb-2">📊 Data Export</h3>
                   <p className="text-gray-600 mb-4">Export championship and player data to Excel or PDF</p>
                   <button
-                    onClick={() => alert('Export modal will open here (Stage 3)')}
+                    onClick={() => {
+                      setShowExportModal(true);
+                      setShowGlobalSettings(false);
+                    }}
                     className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors"
                   >
                     Export Data...
