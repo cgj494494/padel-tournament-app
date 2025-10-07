@@ -51,7 +51,7 @@ const PlayerManagementView = ({ saveLastUsed }) => {
   };
 
   const handleUpdatePlayer = (updatedPlayer) => {
-    const updatedPlayers = players.map(p =>
+    const updatedPlayers = players.map(p => 
       p.id === updatedPlayer.id ? updatedPlayer : p
     );
     PlayerManagementUtils.savePlayers(updatedPlayers);
@@ -154,10 +154,11 @@ const PlayerManagementView = ({ saveLastUsed }) => {
                     </td>
                     <td className="border border-gray-300 px-4 py-2">{player.userId}</td>
                     <td className="border border-gray-300 px-4 py-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${player.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                        }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        player.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
                         {player.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
@@ -244,7 +245,7 @@ const HomePage = ({ activeSection, setActiveSection }) => {
 
   const getLastUsedPath = () => {
     if (lastUsed?.type === 'championship') return '/championships';
-    if (lastUsed?.type === 'tournament') return '/tournaments';
+    if (lastUsed?.type === 'tournament') return '/tournaments';  
     if (lastUsed?.type === 'players') return '/players';
     return '/';
   };
@@ -285,7 +286,7 @@ const HomePage = ({ activeSection, setActiveSection }) => {
       {lastUsed && (
         <div className="mb-12">
           <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Continue Where You Left Off</h3>
-          <Link
+          <Link 
             to={getLastUsedPath()}
             className="block p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-xl transform transition-all duration-200 hover:scale-105 hover:shadow-2xl home-card press-effect no-select"
             onClick={() => {
@@ -308,26 +309,17 @@ const HomePage = ({ activeSection, setActiveSection }) => {
           </Link>
         </div>
       )}
-      {/* Settings Icon */}
-      <div className="flex justify-end mb-6">
-        <button
-          onClick={() => setShowGlobalSettings(true)}
-          className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 border-2 border-blue-200"
-          aria-label="Global Settings"
-        >
-          <span className="text-2xl">⚙️</span>
-        </button>
-      </div>
 
       {/* Main Options */}
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         {/* Championships Card */}
-        <Link
+        <Link 
           to="/championships"
-          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'championships'
-            ? 'bg-blue-700 text-white scale-105 shadow-xl'
-            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-            }`}
+          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${
+            activeSection === 'championships' 
+              ? 'bg-blue-700 text-white scale-105 shadow-xl' 
+              : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+          }`}
           onClick={() => {
             setActiveSection('championships');
             if (navigator.vibrate) {
@@ -347,14 +339,15 @@ const HomePage = ({ activeSection, setActiveSection }) => {
             </p>
           </div>
         </Link>
-
+        
         {/* Tournaments Card */}
-        <Link
+        <Link 
           to="/tournaments"
-          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'tournaments'
-            ? 'bg-blue-700 text-white scale-105 shadow-xl'
-            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-            }`}
+          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${
+            activeSection === 'tournaments' 
+              ? 'bg-blue-700 text-white scale-105 shadow-xl' 
+              : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+          }`}
           onClick={() => {
             setActiveSection('tournaments');
             if (navigator.vibrate) {
@@ -376,12 +369,13 @@ const HomePage = ({ activeSection, setActiveSection }) => {
         </Link>
 
         {/* Player Management Card */}
-        <Link
+        <Link 
           to="/players"
-          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'players'
-            ? 'bg-blue-700 text-white scale-105 shadow-xl'
-            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-            }`}
+          className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${
+            activeSection === 'players' 
+              ? 'bg-blue-700 text-white scale-105 shadow-xl' 
+              : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+          }`}
           onClick={() => {
             setActiveSection('players');
             if (navigator.vibrate) {
@@ -402,27 +396,27 @@ const HomePage = ({ activeSection, setActiveSection }) => {
           </div>
         </Link>
       </div>
-
+      
       {/* Description Area */}
       <div className="mt-12 p-6 bg-white rounded-xl shadow-md">
         <h3 className="text-2xl font-bold text-blue-800 mb-4">
-          {activeSection === 'championships' ? 'About Championships' :
-            activeSection === 'tournaments' ? 'About Tournaments' : 'About Player Management'}
+          {activeSection === 'championships' ? 'About Championships' : 
+           activeSection === 'tournaments' ? 'About Tournaments' : 'About Player Management'}
         </h3>
-
+        
         {activeSection === 'championships' ? (
           <p className="text-gray-600 text-lg leading-relaxed">
-            Championships are ongoing competitions where you can record matches over time.
+            Championships are ongoing competitions where you can record matches over time. 
             Perfect for club leagues, seasonal competitions, or extended competitions with flexible scheduling.
           </p>
         ) : activeSection === 'tournaments' ? (
           <p className="text-gray-600 text-lg leading-relaxed">
-            Tournaments are structured, one-time events with automatic scheduling and bracket generation.
+            Tournaments are structured, one-time events with automatic scheduling and bracket generation. 
             Ideal for competition days, knockout tournaments, or round-robin formats.
           </p>
         ) : (
           <p className="text-gray-600 text-lg leading-relaxed">
-            Manage your player database centrally. Add new players, edit existing ones, import from CSV files,
+            Manage your player database centrally. Add new players, edit existing ones, import from CSV files, 
             and export your player data. All players added here are available in both Championships and Tournaments.
           </p>
         )}
@@ -434,7 +428,6 @@ const HomePage = ({ activeSection, setActiveSection }) => {
 // Main App Component
 function App() {
   const [activeSection, setActiveSection] = useState('championships');
-  const [showGlobalSettings, setShowGlobalSettings] = useState(false);
 
   return (
     <RoleProvider>
@@ -445,7 +438,7 @@ function App() {
             <h1 className="text-2xl font-bold text-center">Padel Manager</h1>
           </div>
         </header>
-
+        
         <div className="container mx-auto p-4">
           <Routes>
             <Route path="/" element={<HomePage activeSection={activeSection} setActiveSection={setActiveSection} />} />
