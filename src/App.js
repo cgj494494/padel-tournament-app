@@ -231,6 +231,21 @@ const HomePage = ({ activeSection, setActiveSection }) => {
 
   const [lastUsed, setLastUsed] = useState(null);
   const [showGlobalSettings, setShowGlobalSettings] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportScope, setExportScope] = useState('championship'); // 'championship' or 'player'
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+  const [selectedPlayerId, setSelectedPlayerId] = useState('');
+  const [exportExcel, setExportExcel] = useState(true);
+  const [exportPdf, setExportPdf] = useState(true);
+  const [championships, setChampionships] = useState([]);
+  const [players, setPlayers] = useState([]);
+  // Load championships and players for export
+  useEffect(() => {
+    const loadedChampionships = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
+    const loadedPlayers = JSON.parse(localStorage.getItem('padelPlayers') || '[]');
+    setChampionships(loadedChampionships);
+    setPlayers(loadedPlayers);
+  }, []);
   // Load last used item on mount
   useEffect(() => {
     const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
