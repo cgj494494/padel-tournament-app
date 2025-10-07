@@ -384,6 +384,15 @@ const HomePage = ({ activeSection, setActiveSection }) => {
     setChampionships(loadedChampionships);
     setPlayers(loadedPlayers);
   }, []);
+  // Load championships and players for export
+  useEffect(() => {
+    const loadedChampionships = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
+    const loadedPlayers = JSON.parse(localStorage.getItem('padelPlayers') || '[]');
+    console.log('Loaded players:', loadedPlayers); // ADD THIS LINE
+    console.log('First player:', loadedPlayers[0]); // ADD THIS LINE
+    setChampionships(loadedChampionships);
+    setPlayers(loadedPlayers);
+  }, []);
   // Load last used item on mount
   useEffect(() => {
     const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
