@@ -475,7 +475,158 @@ const HomePage = ({ activeSection, setActiveSection }) => {
             </div>
           </div>
         )}
+        {/* Export Data Modal */}
+        {showExportModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <h2 className="text-3xl font-bold mb-6">📊 Export Data</h2>
 
+                {/* Export Scope Selection */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold mb-3">What do you want to export?</h3>
+
+                  <div className="space-y-3">
+                    {/* Championship Option */}
+                    <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      style={{ borderColor: exportScope === 'championship' ? '#9333ea' : '#e5e7eb' }}>
+                      <input
+                        type="radio"
+                        name="exportScope"
+                        value="championship"
+                        checked={exportScope === 'championship'}
+                        onChange={(e) => setExportScope(e.target.value)}
+                        className="mt-1 mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-bold">Full Championship</div>
+                        <div className="text-sm text-gray-600">Export all matches, standings, and player stats from a championship</div>
+
+                        {exportScope === 'championship' && (
+                          <select
+                            value={selectedChampionshipId}
+                            onChange={(e) => setSelectedChampionshipId(e.target.value)}
+                            className="mt-3 w-full p-2 border rounded-lg"
+                          >
+                            <option value="">Select a championship...</option>
+                            {championships.map(champ => (
+                              <option key={champ.id} value={champ.id}>
+                                {champ.name} ({champ.matches?.length || 0} matches)
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </label>
+
+                    {/* Player Option */}
+                    <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                      style={{ borderColor: exportScope === 'player' ? '#9333ea' : '#e5e7eb' }}>
+                      <input
+                        type="radio"
+                        name="exportScope"
+                        value="player"
+                        checked={exportScope === 'player'}
+                        onChange={(e) => setExportScope(e.target.value)}
+                        className="mt-1 mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-bold">Individual Player</div>
+                        <div className="text-sm text-gray-600">Export a player's complete match history and statistics</div>
+
+                        {exportScope === 'player' && (
+                          <select
+                            value={selectedPlayerId}
+                            onChange={(e) => setSelectedPlayerId(e.target.value)}
+                            className="mt-3 w-full p-2 border rounded-lg"
+                          >
+                            <option value="">Select a player...</option>
+                            {players.map(player => (
+                              <option key={player.id} value={player.id}>
+                                {player.firstName} {player.surname}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Format Selection */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold mb-3">Export Format:</h3>
+                  <div className="space-y-2">
+                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={exportExcel}
+                        onChange={(e) => setExportExcel(e.target.checked)}
+                        className="mr-3"
+                      />
+                      <div>
+                        <div className="font-bold">Excel (.xlsx)</div>
+                        <div className="text-sm text-gray-600">Comprehensive data with multiple sheets for analysis</div>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        checked={exportPdf}
+                        onChange={(e) => setExportPdf(e.target.checked)}
+                        className="mr-3"
+                      />
+                      <div>
+                        <div className="font-bold">PDF (.pdf)</div>
+                        <div className="text-sm text-gray-600">Nicely formatted report for sharing</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Preview */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <div className="text-sm text-blue-800">
+                    {exportScope === 'championship' && selectedChampionshipId && (
+                      <>Preview: {championships.find(c => c.id === parseInt(selectedChampionshipId))?.matches?.length || 0} matches from {championships.find(c => c.id === parseInt(selectedChampionshipId))?.name}</>
+                    )}
+                    {exportScope === 'player' && selectedPlayerId && (
+                      <>Preview: All matches for {players.find(p => p.id === selectedPlayerId)?.firstName} {players.find(p => p.id === selectedPlayerId)?.surname}</>
+                    )}
+                    {(!selectedChampionshipId && exportScope === 'championship') || (!selectedPlayerId && exportScope === 'player') ? (
+                      <>Please select a {exportScope} to export</>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowExportModal(false);
+                      setShowGlobalSettings(true);
+                    }}
+                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => alert('Export function will be implemented in Stage 4')}
+                    disabled={
+                      (!exportExcel && !exportPdf) ||
+                      (exportScope === 'championship' && !selectedChampionshipId) ||
+                      (exportScope === 'player' && !selectedPlayerId)
+                    }
+                    className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
+                  >
+                    Export ⬇
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
