@@ -5,6 +5,7 @@ import PadelTournamentApp from './components/PadelTournamentApp';
 import ChampionshipManagement from './components/ChampionshipManagement';
 import { PlayerManagementModal, PlayerManagementUtils } from './components/PlayerManagementComponent';
 import './index.css';
+import * as XLSX from 'xlsx';
 
 // Function to save the last used item
 export const saveLastUsedItem = (itemId, itemName, itemType) => {
@@ -16,7 +17,144 @@ export const saveLastUsedItem = (itemId, itemName, itemType) => {
   };
   localStorage.setItem('padelManagerLastUsed', JSON.stringify(lastUsed));
 };
+// Helper function to format dates as dd/mm/yy
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+};
 
+// Helper function to get player name
+const getPlayerName = (playerId, players) => {
+  const player = players.find(p => p.id === playerId);
+  return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+};
+
+// Export Championship to Excel
+const exportChampionshipToExcel = (championship, players) => {
+  const wb = XLSX.utils.book_new();
+
+  // SHEET 1: Match Summary
+  const matchData = championship.matches.map(match => ({
+    'Date': formatDate(match.date),
+    'Team A Player 1': getPlayerName(match.teamA[0], players),
+    'Team A Player 2': getPlayerName(match.teamA[1], players),
+    'Team B Player 1': getPlayerName(match.teamB[0], players),
+    'Team B Player 2': getPlayerName(match.teamB[1], players),
+    'Score A': match.gamesA,
+    'Score B': match.gamesB,
+    'Points A': match.points.teamA,
+    'Points B': match.points.teamB,
+    'Complete': match.isComplete ? 'Yes' : 'No'
+  }));
+
+  const matchSheet = XLSX.utils.json_to_sheet(matchData);
+  XLSX.utils.book_append_sheet(wb, matchSheet, "Matches");
+
+  // SHEET 2: Standings
+  const standingsData = championship.standings.map(standing => {
+    const player = players.find(p => p.id === standing.playerId);
+    return {
+      'Player': player ? `${player.firstName} ${player.surname}` : 'Unknown',
+      'Points': standing.points,
+      'Matches': standing.matchesPlayed,
+      'Wins': standing.matchesWon,
+      'Games Won': standing.gamesWon,
+      'Games Lost': standing.gamesLost,
+      'Game Diff': (standing.gamesWon || 0) - (standing.gamesLost || 0)
+    };
+  }).sort((a, b) => b.Points - a.Points); // Sort by points descending
+
+  const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
+  XLSX.utils.book_append_sheet(wb, standingsSheet, "Standings");
+
+  // SHEET 3: Championship Info
+  const infoData = [{
+    'Championship Name': championship.name,
+    'Start Date': formatDate(championship.startDate),
+    'Total Players': championship.players.length,
+    'Total Matches': championship.matches.length,
+    'Scoring System': championship.settings?.scoringSystem || 'CJ Updated 2025',
+    'Export Date': formatDate(new Date().toISOString())
+  }];
+
+  const infoSheet = XLSX.utils.json_to_sheet(infoData);
+  XLSX.utils.book_append_sheet(wb, infoSheet, "Championship Info");
+
+  // Generate filename and download
+  const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+};
+
+// Export Player to Excel
+const exportPlayerToExcel = (playerId, championships, players) => {
+  const player = players.find(p => p.id === playerId);
+  if (!player) return;
+
+  const wb = XLSX.utils.book_new();
+
+  // Gather all matches for this player
+  let playerMatches = [];
+  championships.forEach(championship => {
+    championship.matches.forEach(match => {
+      if (match.teamA.includes(playerId) || match.teamB.includes(playerId)) {
+        const isTeamA = match.teamA.includes(playerId);
+        const partnerId = isTeamA
+          ? match.teamA.find(id => id !== playerId)
+          : match.teamB.find(id => id !== playerId);
+        const opponentIds = isTeamA ? match.teamB : match.teamA;
+        const playerPoints = isTeamA ? match.points.teamA : match.points.teamB;
+        const opponentPoints = isTeamA ? match.points.teamB : match.points.teamA;
+        const won = playerPoints > opponentPoints;
+        const score = isTeamA
+          ? `${match.gamesA}-${match.gamesB}`
+          : `${match.gamesB}-${match.gamesA}`;
+
+        playerMatches.push({
+          'Date': formatDate(match.date),
+          'Championship': championship.name,
+          'Partner': getPlayerName(partnerId, players),
+          'Opponent 1': getPlayerName(opponentIds[0], players),
+          'Opponent 2': getPlayerName(opponentIds[1], players),
+          'Score': score,
+          'Result': won ? 'Win' : 'Loss',
+          'CJ Points': playerPoints,
+          'Complete': match.isComplete ? 'Yes' : 'No'
+        });
+      }
+    });
+  });
+
+  // SHEET 1: Player Summary
+  const wins = playerMatches.filter(m => m.Result === 'Win').length;
+  const losses = playerMatches.filter(m => m.Result === 'Loss').length;
+  const totalPoints = playerMatches.reduce((sum, m) => sum + m['CJ Points'], 0);
+  const winRate = playerMatches.length > 0 ? ((wins / playerMatches.length) * 100).toFixed(1) : '0.0';
+
+  const summaryData = [{
+    'Player Name': `${player.firstName} ${player.surname}`,
+    'Total Matches': playerMatches.length,
+    'Wins': wins,
+    'Losses': losses,
+    'Win Rate': `${winRate}%`,
+    'Total CJ Points': totalPoints,
+    'Avg Points/Match': playerMatches.length > 0 ? (totalPoints / playerMatches.length).toFixed(1) : '0.0',
+    'Export Date': formatDate(new Date().toISOString())
+  }];
+
+  const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summarySheet, "Player Summary");
+
+  // SHEET 2: Match History
+  const historySheet = XLSX.utils.json_to_sheet(playerMatches);
+  XLSX.utils.book_append_sheet(wb, historySheet, "Match History");
+
+  // Generate filename and download
+  const filename = `${player.firstName}_${player.surname}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
+  XLSX.writeFile(wb, filename);
+};
 // Fixed PlayerManagementView Component in App.js
 const PlayerManagementView = ({ saveLastUsed }) => {
   const [players, setPlayers] = useState([]);
@@ -612,7 +750,25 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                     Back
                   </button>
                   <button
-                    onClick={() => alert('Export function will be implemented in Stage 4')}
+                    onClick={() => {
+                      if (exportExcel) {
+                        if (exportScope === 'championship') {
+                          const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                          if (championship) {
+                            exportChampionshipToExcel(championship, players);
+                          }
+                        } else if (exportScope === 'player') {
+                          exportPlayerToExcel(selectedPlayerId, championships, players);
+                        }
+                      }
+
+                      if (exportPdf) {
+                        alert('PDF export will be implemented in Stage 5');
+                      }
+
+                      // Close modal
+                      setShowExportModal(false);
+                    }}
                     disabled={
                       (!exportExcel && !exportPdf) ||
                       (exportScope === 'championship' && !selectedChampionshipId) ||
