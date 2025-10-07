@@ -228,8 +228,9 @@ const PlayerManagementView = ({ saveLastUsed }) => {
 
 // HomePage Component
 const HomePage = ({ activeSection, setActiveSection }) => {
-  const [lastUsed, setLastUsed] = useState(null);
 
+  const [lastUsed, setLastUsed] = useState(null);
+  const [showGlobalSettings, setShowGlobalSettings] = useState(false);
   // Load last used item on mount
   useEffect(() => {
     const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
