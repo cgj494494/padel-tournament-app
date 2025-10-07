@@ -427,6 +427,37 @@ const HomePage = ({ activeSection, setActiveSection }) => {
             and export your player data. All players added here are available in both Championships and Tournaments.
           </p>
         )}
+        {/* Global Settings Modal */}
+        {showGlobalSettings && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-8">
+                <h2 className="text-3xl font-bold mb-6">⚙️ Global Settings</h2>
+
+                {/* Export Data Section */}
+                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                  <h3 className="text-xl font-bold mb-2">📊 Data Export</h3>
+                  <p className="text-gray-600 mb-4">Export championship and player data to Excel or PDF</p>
+                  <button
+                    onClick={() => alert('Export modal will open here (Stage 3)')}
+                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors"
+                  >
+                    Export Data...
+                  </button>
+                </div>
+
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowGlobalSettings(false)}
+                  className="w-full mt-6 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
