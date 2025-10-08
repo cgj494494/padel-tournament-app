@@ -864,7 +864,24 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 />
                             </div>
                         </div>
-
+                        {/* Danger Zone - Delete Championship */}
+                        <div className="mt-8 pt-6 border-t-2 border-red-200">
+                            <h3 className={`${getClasses('body')} font-bold text-red-600 mb-2`}>
+                                ⚠️ Danger Zone
+                            </h3>
+                            <p className={`${getClasses('small')} text-gray-600 mb-4`}>
+                                Permanently delete this championship and all its data. This action cannot be undone.
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setShowChampionshipSettings(false);
+                                    setShowDeleteConfirm(true);
+                                }}
+                                className={`w-full ${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg`}
+                            >
+                                🗑️ Delete Championship
+                            </button>
+                        </div>
                         <div className="space-y-4 mt-8">
                             {/* Recalculation Button */}
                             <button
@@ -1189,15 +1206,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 </svg>
                                 <span>Record Match</span>
                             </button>
-                            <button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                className={`${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-lg flex items-center space-x-4 transform hover:scale-105 transition-all mt-4 sm:mt-0 sm:ml-4`}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                <span>Delete</span>
-                            </button>
+
                         </div>
 
                         <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
