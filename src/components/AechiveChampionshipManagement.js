@@ -10,9 +10,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [currentChampionship, setCurrentChampionship] = useState(null);
     const [players, setPlayers] = useState([]);
     const [fontSize, setFontSize] = useState('large');
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
-    const [deleteStep, setDeleteStep] = useState(1); // 1 = first confirm, 2 = type name
+
     // Form states
     const [name, setName] = useState('');
     const [selectedPlayers, setSelectedPlayers] = useState([]);
@@ -46,39 +44,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         loadChampionships();
         loadPlayers();
     }, []);
-    //deletion function
-    const handleDeleteChampionship = () => {
-        if (deleteStep === 1) {
-            // First confirmation passed, move to step 2
-            setDeleteStep(2);
-            return;
-        }
 
-        // Step 2: Verify typed name matches
-        if (deleteConfirmText.trim() !== currentChampionship.name.trim()) {
-            alert('Championship name does not match. Deletion cancelled.');
-            return;
-        }
-
-        // Perform deletion
-        const updatedChampionships = championships.filter(c => c.id !== currentChampionship.id);
-        saveChampionships(updatedChampionships);
-
-        // Reset state and return to home
-        setShowDeleteConfirm(false);
-        setDeleteConfirmText('');
-        setDeleteStep(1);
-        setCurrentChampionship(null);
-        setView('home');
-
-        alert(`Championship "${currentChampionship.name}" has been deleted.`);
-    };
-
-    const cancelDelete = () => {
-        setShowDeleteConfirm(false);
-        setDeleteConfirmText('');
-        setDeleteStep(1);
-    };
     // Save font preference
     useEffect(() => {
         localStorage.setItem('padelFontSize', fontSize);
@@ -1188,15 +1154,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                                 </svg>
                                 <span>Record Match</span>
-                            </button>
-                            <button
-                                onClick={() => setShowDeleteConfirm(true)}
-                                className={`${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl shadow-lg flex items-center space-x-4 transform hover:scale-105 transition-all mt-4 sm:mt-0 sm:ml-4`}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                <span>Delete</span>
                             </button>
                         </div>
 
