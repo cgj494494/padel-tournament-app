@@ -874,13 +874,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             </p>
                             <button
                                 onClick={() => {
-                                    console.log('Delete button clicked');
-                                    console.log('Current state - showDeleteConfirm:', showDeleteConfirm);
+                                    alert('Delete button clicked!');
                                     setShowChampionshipSettings(false);
                                     setTimeout(() => {
-                                        console.log('Setting showDeleteConfirm to true');
+                                        alert('About to show delete confirmation');
                                         setShowDeleteConfirm(true);
-                                        console.log('After setting - showDeleteConfirm should be true');
                                     }, 100);
                                 }}
                                 className={`w-full ${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg`}
