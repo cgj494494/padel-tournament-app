@@ -875,7 +875,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             <button
                                 onClick={() => {
                                     setShowChampionshipSettings(false);
-                                    setShowDeleteConfirm(true);
+                                    setTimeout(() => {
+                                        setShowDeleteConfirm(true);
+                                    }, 100);
                                 }}
                                 className={`w-full ${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg`}
                             >
