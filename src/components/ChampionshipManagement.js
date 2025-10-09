@@ -874,10 +874,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             </p>
                             <button
                                 onClick={() => {
-                                    alert('Delete button clicked!');
                                     setShowChampionshipSettings(false);
                                     setTimeout(() => {
-                                        alert('About to show delete confirmation');
                                         setShowDeleteConfirm(true);
                                     }, 100);
                                 }}
