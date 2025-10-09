@@ -1700,6 +1700,49 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             onUpdatePlayer={handleUpdatePlayer}
                                             onDeletePlayer={handleDeletePlayer}
                                         />
+
+                                        {/* DELETE MODALS START HERE */}
+                                        {showDeleteConfirm && currentChampionship && (
+                                            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                                                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                                                    {deleteStep === 1 && (
+                                                        <>
+                                                            <h2 className="text-2xl font-bold mb-4 text-red-600">⚠️ Delete Championship?</h2>
+                                                            <p className="text-gray-700 mb-4">
+                                                                Are you sure you want to delete <strong>"{currentChampionship.name}"</strong>?
+                                                            </p>
+                                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                                                                <p className="text-sm text-red-800 mb-2">This will permanently delete:</p>
+                                                                <ul className="text-sm text-red-800 list-disc list-inside space-y-1">
+                                                                    <li>{currentChampionship.matches?.length || 0} matches</li>
+                                                                    <li>All player standings</li>
+                                                                    <li>All championship data</li>
+                                                                </ul>
+                                                                <p className="text-sm text-red-800 mt-3 font-bold">This action cannot be undone!</p>
+                                                            </div>
+                                                            <div className="flex gap-3">
+                                                                <button onClick={cancelDelete} className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors">Cancel</button>
+                                                                <button onClick={handleDeleteChampionship} className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors">Yes, Continue</button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    {deleteStep === 2 && (
+                                                        <>
+                                                            <h2 className="text-2xl font-bold mb-4 text-red-600">🔒 Final Confirmation</h2>
+                                                            <p className="text-gray-700 mb-4">To confirm deletion, please type the championship name exactly:</p>
+                                                            <p className="font-bold text-lg mb-4 text-center bg-gray-100 p-3 rounded-lg">{currentChampionship.name}</p>
+                                                            <input type="text" value={deleteConfirmText} onChange={(e) => setDeleteConfirmText(e.target.value)} placeholder="Type championship name here" className="w-full p-3 border-2 border-gray-300 rounded-lg mb-6 text-lg" autoFocus />
+                                                            <div className="flex gap-3">
+                                                                <button onClick={cancelDelete} className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors">Cancel</button>
+                                                                <button onClick={handleDeleteChampionship} disabled={deleteConfirmText.trim() !== currentChampionship.name.trim()} className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors">Delete Forever</button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* DELETE MODALS END HERE */}
+
                                     </div>
                                 )}
                             </div>
