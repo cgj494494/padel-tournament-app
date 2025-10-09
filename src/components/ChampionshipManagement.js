@@ -1706,7 +1706,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         />
 
                                         {/* DELETE MODALS START HERE */}
-                                        {showDeleteConfirm && currentChampionship && (
+                                        {showDeleteConfirm && (
                                             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                                                 <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
                                                     {deleteStep === 1 && (
