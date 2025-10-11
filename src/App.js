@@ -837,15 +837,36 @@ const HomePage = ({ activeSection, setActiveSection }) => {
             const supportedSystems = ['cj-updated-2025', 'simple', 'margin'];
             const importedSystem = parsedChampionship.settings.scoringSystem;
 
-            if (!supportedSystems.includes(importedSystem)) {
+            // Normalize the scoring system name (handle both IDs and display names)
+            let normalizedSystem = importedSystem?.toLowerCase() || '';
+
+            // Map common variations to their IDs
+            const systemMapping = {
+                'cj updated 2025': 'cj-updated-2025',
+                'cj system (updated 2025)': 'cj-updated-2025',
+                'cj-updated-2025': 'cj-updated-2025',
+                'simple win/loss': 'simple',
+                'simple': 'simple',
+                'win/loss with margin': 'margin',
+                'margin': 'margin'
+            };
+
+            // Try to map it to a known system
+            const mappedSystem = systemMapping[normalizedSystem] || importedSystem;
+
+            if (!supportedSystems.includes(mappedSystem)) {
                 setScoringWarning({
                     show: true,
                     type: 'custom-not-available',
                     importedSystem: importedSystem,
                     willUse: 'cj-updated-2025'
                 });
+                // Update the parsed championship to use the mapped system
+                parsedChampionship.settings.scoringSystem = 'cj-updated-2025';
             } else {
                 setScoringWarning({ show: false, type: null, importedSystem: null, willUse: null });
+                // Update the parsed championship to use the correct ID
+                parsedChampionship.settings.scoringSystem = mappedSystem;
             }
 
             // ⬆️ END OF DUPLICATE DETECTION ⬆️
