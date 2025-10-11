@@ -33,185 +33,63 @@ const getPlayerName = (playerId, players) => {
 };
 // ⬇️ ADD THE THREE NEW HELPER FUNCTIONS HERE ⬇️
 
-// Helper function to parse UK date format (dd/mm/yy) to ISO
-const parseUKDate = (dateString) => {
-    if (!dateString) return new Date().toISOString();
 
-    const parts = dateString.toString().split('/');
-    if (parts.length !== 3) return new Date().toISOString();
 
-    const [day, month, year] = parts;
-    const fullYear = year.length === 2 ? `20${year}` : year;
-    return new Date(`${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
-};
 
-// Helper function to find or create player by name
-const findOrCreatePlayer = (playerName) => {
-    if (!playerName || playerName === 'Unknown') return null;
 
-    const players = PlayerManagementUtils.loadPlayers();
 
-    // Search for existing player
-    const existing = players.find(p =>
-        `${p.firstName} ${p.surname}`.toLowerCase() === playerName.toLowerCase()
-    );
 
-    if (existing) return existing.id;
 
-    // Create new player if not found
-    const nameParts = playerName.trim().split(' ');
-    const firstName = nameParts[0];
-    const surname = nameParts.slice(1).join(' ') || '';
 
-    const newPlayer = {
-        id: Date.now().toString() + Math.random().toString().substring(2, 8),
-        firstName,
-        surname
-    };
 
-    players.push(newPlayer);
-    PlayerManagementUtils.savePlayers(players);
 
-    console.log(`Created new player: ${firstName} ${surname}`);
-    return newPlayer.id;
-};
 
-// Helper function to get player name by ID
-const getPlayerNameById = (playerId) => {
-    const players = PlayerManagementUtils.loadPlayers();
-    const player = players.find(p => p.id === playerId);
-    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ⬆️ END OF NEW HELPER FUNCTIONS ⬆️
 
 // ⬇️ ADD THIS ENTIRE FUNCTION HERE ⬇️
 
-// Main function to handle import preview
-const handleImportPreview = async () => {
-    if (!importFile) {
-        alert('Please select a file first');
-        return;
-    }
-
-    setIsProcessingFile(true);
-
-    try {
-        // Read the Excel file
-        const fileData = await importFile.arrayBuffer();
-        const workbook = XLSX.read(fileData);
-
-        // Validate that required sheets exist
-        const requiredSheets = ['Matches', 'Standings', 'Championship Info'];
-        const missingSheets = requiredSheets.filter(sheet => !workbook.Sheets[sheet]);
-
-        if (missingSheets.length > 0) {
-            alert(`Invalid file format!\n\nMissing sheets: ${missingSheets.join(', ')}\n\nPlease use an Excel file exported from this app.`);
-            setIsProcessingFile(false);
-            return;
-        }
-
-        // Extract Championship Info (Sheet 3)
-        const infoSheet = workbook.Sheets['Championship Info'];
-        const infoData = XLSX.utils.sheet_to_json(infoSheet);
-        const champInfo = infoData[0];
-
-        console.log('Championship Info:', champInfo);
-
-        // Extract Matches (Sheet 1)
-        const matchSheet = workbook.Sheets['Matches'];
-        const matchData = XLSX.utils.sheet_to_json(matchSheet);
-
-        console.log('Match Data:', matchData.length, 'matches');
-
-        // Extract Standings (Sheet 2)
-        const standingsSheet = workbook.Sheets['Standings'];
-        const standingsData = XLSX.utils.sheet_to_json(standingsSheet);
-
-        console.log('Standings Data:', standingsData.length, 'players');
-
-        // Parse into championship structure
-        const parsedChampionship = {
-            id: Date.now().toString(),
-            name: champInfo['Championship Name'] || 'Imported Championship',
-            startDate: parseUKDate(champInfo['Start Date']),
-            players: [],
-            matches: [],
-            standings: [],
-            settings: {
-                minMatchesForProRata: 3,
-                scoringSystem: champInfo['Scoring System'] || 'cj-updated-2025',
-                scoringSystemSource: 'imported'
-            }
-        };
-
-        // Parse matches
-        const playerIdsMap = new Map(); // Track player IDs
-
-        parsedChampionship.matches = matchData.map((match, index) => {
-            const teamAPlayer1Id = findOrCreatePlayer(match['Team A Player 1']);
-            const teamAPlayer2Id = findOrCreatePlayer(match['Team A Player 2']);
-            const teamBPlayer1Id = findOrCreatePlayer(match['Team B Player 1']);
-            const teamBPlayer2Id = findOrCreatePlayer(match['Team B Player 2']);
-
-            // Track all player IDs
-            [teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id].forEach(id => {
-                if (id) playerIdsMap.set(id, true);
-            });
-
-            return {
-                id: Date.now() + index,
-                date: parseUKDate(match['Date']),
-                teamA: [teamAPlayer1Id, teamAPlayer2Id].filter(id => id),
-                teamB: [teamBPlayer1Id, teamBPlayer2Id].filter(id => id),
-                gamesA: parseInt(match['Score A']) || 0,
-                gamesB: parseInt(match['Score B']) || 0,
-                isComplete: match['Complete'] === 'Yes',
-                points: {
-                    teamA: parseInt(match['Points A']) || 0,
-                    teamB: parseInt(match['Points B']) || 0
-                }
-            };
-        });
-
-        // Set players list from all players found in matches
-        parsedChampionship.players = Array.from(playerIdsMap.keys());
-
-        // Parse standings
-        const players = PlayerManagementUtils.loadPlayers(); // Load players for name lookup
-        parsedChampionship.standings = standingsData.map(standing => {
-            const playerName = standing['Player'];
-            const playerId = parsedChampionship.players.find(id => {
-                return getPlayerName(id, players) === playerName;
-            });
-
-            return {
-                playerId: playerId || null,
-                points: standing['Points'] || 0,
-                matchesPlayed: standing['Matches'] || 0,
-                matchesWon: standing['Wins'] || 0,
-                setsPlayed: standing['Matches'] || 0,
-                gamesWon: standing['Games Won'] || 0,
-                gamesLost: standing['Games Lost'] || 0
-            };
-        }).filter(s => s.playerId); // Remove any standings without valid player IDs
-
-        console.log('Parsed Championship:', parsedChampionship);
-
-        // Show preview
-        setImportPreview(parsedChampionship);
-        setShowImportModal(false);
-        setShowPreviewModal(true);
-        setIsProcessingFile(false);
-
-    } catch (error) {
-        console.error('Import error:', error);
-        alert(`Error reading file: ${error.message}\n\nPlease make sure you selected a valid Excel file exported from this app.`);
-        setIsProcessingFile(false);
-    }
-};
-
-// ⬆️ END OF FUNCTION ⬆️
 
 
 // Export Championship to Excel
@@ -788,548 +666,706 @@ const HomePage = ({ activeSection, setActiveSection }) => {
         setPlayers(loadedPlayers);
     }, []);
 
-    // Load last used item on mount
-    useEffect(() => {
-        const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
-        if (storedLastUsed) {
-            try {
-                setLastUsed(JSON.parse(storedLastUsed));
-            } catch (e) {
-                console.error('Error parsing last used item:', e);
-            }
+    // ⬇️ PASTE THE THREE FUNCTIONS HERE ⬇️
+
+    // Helper function to parse UK date format
+    const parseUKDate = (dateString) => {
+        if (!dateString) return new Date().toISOString();
+
+        const parts = dateString.toString().split('/');
+        if (parts.length !== 3) return new Date().toISOString();
+
+        const [day, month, year] = parts;
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return new Date(`${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
+    };
+
+    // Helper function to find or create player by name
+    const findOrCreatePlayer = (playerName) => {
+        if (!playerName || playerName === 'Unknown') return null;
+
+        const players = PlayerManagementUtils.loadPlayers();
+
+        const existing = players.find(p =>
+            `${p.firstName} ${p.surname}`.toLowerCase() === playerName.toLowerCase()
+        );
+
+        if (existing) return existing.id;
+
+        const nameParts = playerName.trim().split(' ');
+        const firstName = nameParts[0];
+        const surname = nameParts.slice(1).join(' ') || '';
+
+        const newPlayer = {
+            id: Date.now().toString() + Math.random().toString().substring(2, 8),
+            firstName,
+            surname
+        };
+
+        players.push(newPlayer);
+        PlayerManagementUtils.savePlayers(players);
+
+        console.log(`Created new player: ${firstName} ${surname}`);
+        return newPlayer.id;
+    };
+
+    // Main function to handle import preview
+    const handleImportPreview = async () => {
+        if (!importFile) {
+            alert('Please select a file first');
+            return;
         }
-    }, []);
+
+        setIsProcessingFile(true);
+
+        try {
+            const fileData = await importFile.arrayBuffer();
+            const workbook = XLSX.read(fileData);
+
+            const requiredSheets = ['Matches', 'Standings', 'Championship Info'];
+            const missingSheets = requiredSheets.filter(sheet => !workbook.Sheets[sheet]);
+
+            if (missingSheets.length > 0) {
+                alert(`Invalid file format!\n\nMissing sheets: ${missingSheets.join(', ')}\n\nPlease use an Excel file exported from this app.`);
+                setIsProcessingFile(false);
+                return;
+            }
+
+            const infoSheet = workbook.Sheets['Championship Info'];
+            const infoData = XLSX.utils.sheet_to_json(infoSheet);
+            const champInfo = infoData[0];
+
+            console.log('Championship Info:', champInfo);
+
+            const matchSheet = workbook.Sheets['Matches'];
+            const matchData = XLSX.utils.sheet_to_json(matchSheet);
+
+            console.log('Match Data:', matchData.length, 'matches');
+
+            const standingsSheet = workbook.Sheets['Standings'];
+            const standingsData = XLSX.utils.sheet_to_json(standingsSheet);
+
+            console.log('Standings Data:', standingsData.length, 'players');
+
+            const parsedChampionship = {
+                id: Date.now().toString(),
+                name: champInfo['Championship Name'] || 'Imported Championship',
+                startDate: parseUKDate(champInfo['Start Date']),
+                players: [],
+                matches: [],
+                standings: [],
+                settings: {
+                    minMatchesForProRata: 3,
+                    scoringSystem: champInfo['Scoring System'] || 'cj-updated-2025',
+                    scoringSystemSource: 'imported'
+                }
+            };
+
+            const playerIdsMap = new Map();
+
+            parsedChampionship.matches = matchData.map((match, index) => {
+                const teamAPlayer1Id = findOrCreatePlayer(match['Team A Player 1']);
+                const teamAPlayer2Id = findOrCreatePlayer(match['Team A Player 2']);
+                const teamBPlayer1Id = findOrCreatePlayer(match['Team B Player 1']);
+                const teamBPlayer2Id = findOrCreatePlayer(match['Team B Player 2']);
+
+                [teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id].forEach(id => {
+                    if (id) playerIdsMap.set(id, true);
+                });
+
+                return {
+                    id: Date.now() + index,
+                    date: parseUKDate(match['Date']),
+                    teamA: [teamAPlayer1Id, teamAPlayer2Id].filter(id => id),
+                    teamB: [teamBPlayer1Id, teamBPlayer2Id].filter(id => id),
+                    gamesA: parseInt(match['Score A']) || 0,
+                    gamesB: parseInt(match['Score B']) || 0,
+                    isComplete: match['Complete'] === 'Yes',
+                    points: {
+                        teamA: parseInt(match['Points A']) || 0,
+                        teamB: parseInt(match['Points B']) || 0
+                    }
+                };
+            });
+
+            parsedChampionship.players = Array.from(playerIdsMap.keys());
+
+            const playersForLookup = PlayerManagementUtils.loadPlayers();
+            parsedChampionship.standings = standingsData.map(standing => {
+                const playerName = standing['Player'];
+                const playerId = parsedChampionship.players.find(id => {
+                    return getPlayerName(id, playersForLookup) === playerName;
+                });
+
+                return {
+                    playerId: playerId || null,
+                    points: standing['Points'] || 0,
+                    matchesPlayed: standing['Matches'] || 0,
+                    matchesWon: standing['Wins'] || 0,
+                    setsPlayed: standing['Matches'] || 0,
+                    gamesWon: standing['Games Won'] || 0,
+                    gamesLost: standing['Games Lost'] || 0
+                };
+            }).filter(s => s.playerId);
+
+            console.log('Parsed Championship:', parsedChampionship);
+
+            setImportPreview(parsedChampionship);
+            setShowImportModal(false);
+            setShowPreviewModal(true);
+            setIsProcessingFile(false);
+
+        } catch (error) {
+            console.error('Import error:', error);
+            alert(`Error reading file: ${error.message}\n\nPlease make sure you selected a valid Excel file exported from this app.`);
+            setIsProcessingFile(false);
+        }
+    };
 
     const getLastUsedPath = () => {
-        if (lastUsed?.type === 'championship') return '/championships';
-        if (lastUsed?.type === 'tournament') return '/tournaments';
-        if (lastUsed?.type === 'players') return '/players';
-        return '/';
-    };
 
-    const getLastUsedIcon = () => {
-        if (lastUsed?.type === 'championship') {
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-            );
-        }
-        if (lastUsed?.type === 'tournament') {
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-            );
-        }
-        if (lastUsed?.type === 'players') {
-            return (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-            );
-        }
-        return null;
-    };
+        // Load last used item on mount
+        useEffect(() => {
+            const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
+            if (storedLastUsed) {
+                try {
+                    setLastUsed(JSON.parse(storedLastUsed));
+                } catch (e) {
+                    console.error('Error parsing last used item:', e);
+                }
+            }
+        }, []);
 
-    return (
-        <div className="max-w-4xl mx-auto py-8">
-            <div className="text-center mb-12">
-                <h2 className="text-5xl font-bold text-blue-900 mb-4">Padel Manager</h2>
-                <p className="text-xl text-gray-600">Professional tournament and championship management</p>
-            </div>
+        const getLastUsedPath = () => {
+            if (lastUsed?.type === 'championship') return '/championships';
+            if (lastUsed?.type === 'tournament') return '/tournaments';
+            if (lastUsed?.type === 'players') return '/players';
+            return '/';
+        };
 
-            {/* Last Used Hero Card */}
-            {lastUsed && (
-                <div className="mb-12">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Continue Where You Left Off</h3>
+        const getLastUsedIcon = () => {
+            if (lastUsed?.type === 'championship') {
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                    </svg>
+                );
+            }
+            if (lastUsed?.type === 'tournament') {
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                );
+            }
+            if (lastUsed?.type === 'players') {
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                );
+            }
+            return null;
+        };
+
+        return (
+            <div className="max-w-4xl mx-auto py-8">
+                <div className="text-center mb-12">
+                    <h2 className="text-5xl font-bold text-blue-900 mb-4">Padel Manager</h2>
+                    <p className="text-xl text-gray-600">Professional tournament and championship management</p>
+                </div>
+
+                {/* Last Used Hero Card */}
+                {lastUsed && (
+                    <div className="mb-12">
+                        <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Continue Where You Left Off</h3>
+                        <Link
+                            to={getLastUsedPath()}
+                            className="block p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-xl transform transition-all duration-200 hover:scale-105 hover:shadow-2xl home-card press-effect no-select"
+                            onClick={() => {
+                                if (navigator.vibrate) {
+                                    navigator.vibrate(20);
+                                }
+                            }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h4 className="text-2xl font-bold mb-2">{lastUsed.name}</h4>
+                                    <p className="text-blue-100 capitalize">
+                                        {lastUsed.type} • {new Date(lastUsed.timestamp).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <div className="text-white">
+                                    {getLastUsedIcon()}
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+                )}
+                {/* Settings Icon */}
+                <div className="flex justify-end mb-6">
+                    <button
+                        onClick={() => setShowGlobalSettings(true)}
+                        className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 border-2 border-blue-200"
+                        aria-label="Global Settings"
+                    >
+                        <span className="text-2xl">⚙️</span>
+                    </button>
+                </div>
+
+                {/* Main Options */}
+                <div className="grid md:grid-cols-3 gap-8 mb-12">
+                    {/* Championships Card */}
                     <Link
-                        to={getLastUsedPath()}
-                        className="block p-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl shadow-xl transform transition-all duration-200 hover:scale-105 hover:shadow-2xl home-card press-effect no-select"
+                        to="/championships"
+                        className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'championships'
+                            ? 'bg-blue-700 text-white scale-105 shadow-xl'
+                            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+                            }`}
                         onClick={() => {
+                            setActiveSection('championships');
                             if (navigator.vibrate) {
                                 navigator.vibrate(20);
                             }
                         }}
                     >
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h4 className="text-2xl font-bold mb-2">{lastUsed.name}</h4>
-                                <p className="text-blue-100 capitalize">
-                                    {lastUsed.type} • {new Date(lastUsed.timestamp).toLocaleDateString()}
-                                </p>
+                        <div className="text-center">
+                            <h3 className="text-4xl font-bold mb-4">Championships</h3>
+                            <div className="mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
                             </div>
-                            <div className="text-white">
-                                {getLastUsedIcon()}
+                            <p className={`text-lg ${activeSection === 'championships' ? 'text-blue-100' : 'text-gray-600'}`}>
+                                Manage ongoing championships with flexible scoring and player management
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Tournaments Card */}
+                    <Link
+                        to="/tournaments"
+                        className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'tournaments'
+                            ? 'bg-blue-700 text-white scale-105 shadow-xl'
+                            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+                            }`}
+                        onClick={() => {
+                            setActiveSection('tournaments');
+                            if (navigator.vibrate) {
+                                navigator.vibrate(20);
+                            }
+                        }}
+                    >
+                        <div className="text-center">
+                            <h3 className="text-4xl font-bold mb-4">Tournaments</h3>
+                            <div className="mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
                             </div>
+                            <p className={`text-lg ${activeSection === 'tournaments' ? 'text-blue-100' : 'text-gray-600'}`}>
+                                Create and manage one-off tournaments with automatic scheduling
+                            </p>
+                        </div>
+                    </Link>
+
+                    {/* Player Management Card */}
+                    <Link
+                        to="/players"
+                        className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'players'
+                            ? 'bg-blue-700 text-white scale-105 shadow-xl'
+                            : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
+                            }`}
+                        onClick={() => {
+                            setActiveSection('players');
+                            if (navigator.vibrate) {
+                                navigator.vibrate(20);
+                            }
+                        }}
+                    >
+                        <div className="text-center">
+                            <h3 className="text-4xl font-bold mb-4">Players</h3>
+                            <div className="mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                </svg>
+                            </div>
+                            <p className={`text-lg ${activeSection === 'players' ? 'text-blue-100' : 'text-gray-600'}`}>
+                                Manage your player database with import/export capabilities
+                            </p>
                         </div>
                     </Link>
                 </div>
-            )}
-            {/* Settings Icon */}
-            <div className="flex justify-end mb-6">
-                <button
-                    onClick={() => setShowGlobalSettings(true)}
-                    className="p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 border-2 border-blue-200"
-                    aria-label="Global Settings"
-                >
-                    <span className="text-2xl">⚙️</span>
-                </button>
-            </div>
 
-            {/* Main Options */}
-            <div className="grid md:grid-cols-3 gap-8 mb-12">
-                {/* Championships Card */}
-                <Link
-                    to="/championships"
-                    className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'championships'
-                        ? 'bg-blue-700 text-white scale-105 shadow-xl'
-                        : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-                        }`}
-                    onClick={() => {
-                        setActiveSection('championships');
-                        if (navigator.vibrate) {
-                            navigator.vibrate(20);
-                        }
-                    }}
-                >
-                    <div className="text-center">
-                        <h3 className="text-4xl font-bold mb-4">Championships</h3>
-                        <div className="mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                            </svg>
-                        </div>
-                        <p className={`text-lg ${activeSection === 'championships' ? 'text-blue-100' : 'text-gray-600'}`}>
-                            Manage ongoing championships with flexible scoring and player management
+                {/* Description Area */}
+                <div className="mt-12 p-6 bg-white rounded-xl shadow-md">
+                    <h3 className="text-2xl font-bold text-blue-800 mb-4">
+                        {activeSection === 'championships' ? 'About Championships' :
+                            activeSection === 'tournaments' ? 'About Tournaments' : 'About Player Management'}
+                    </h3>
+
+                    {activeSection === 'championships' ? (
+                        <p className="text-gray-600 text-lg leading-relaxed">
+                            Championships are ongoing competitions where you can record matches over time.
+                            Perfect for club leagues, seasonal competitions, or extended competitions with flexible scheduling.
                         </p>
-                    </div>
-                </Link>
-
-                {/* Tournaments Card */}
-                <Link
-                    to="/tournaments"
-                    className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'tournaments'
-                        ? 'bg-blue-700 text-white scale-105 shadow-xl'
-                        : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-                        }`}
-                    onClick={() => {
-                        setActiveSection('tournaments');
-                        if (navigator.vibrate) {
-                            navigator.vibrate(20);
-                        }
-                    }}
-                >
-                    <div className="text-center">
-                        <h3 className="text-4xl font-bold mb-4">Tournaments</h3>
-                        <div className="mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                        </div>
-                        <p className={`text-lg ${activeSection === 'tournaments' ? 'text-blue-100' : 'text-gray-600'}`}>
-                            Create and manage one-off tournaments with automatic scheduling
+                    ) : activeSection === 'tournaments' ? (
+                        <p className="text-gray-600 text-lg leading-relaxed">
+                            Tournaments are structured, one-time events with automatic scheduling and bracket generation.
+                            Ideal for competition days, knockout tournaments, or round-robin formats.
                         </p>
-                    </div>
-                </Link>
-
-                {/* Player Management Card */}
-                <Link
-                    to="/players"
-                    className={`block p-6 rounded-xl shadow-lg transform transition-all duration-200 home-card press-effect no-select ${activeSection === 'players'
-                        ? 'bg-blue-700 text-white scale-105 shadow-xl'
-                        : 'bg-white text-blue-800 hover:scale-105 hover:shadow-xl'
-                        }`}
-                    onClick={() => {
-                        setActiveSection('players');
-                        if (navigator.vibrate) {
-                            navigator.vibrate(20);
-                        }
-                    }}
-                >
-                    <div className="text-center">
-                        <h3 className="text-4xl font-bold mb-4">Players</h3>
-                        <div className="mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                            </svg>
-                        </div>
-                        <p className={`text-lg ${activeSection === 'players' ? 'text-blue-100' : 'text-gray-600'}`}>
-                            Manage your player database with import/export capabilities
+                    ) : (
+                        <p className="text-gray-600 text-lg leading-relaxed">
+                            Manage your player database centrally. Add new players, edit existing ones, import from CSV files,
+                            and export your player data. All players added here are available in both Championships and Tournaments.
                         </p>
-                    </div>
-                </Link>
-            </div>
+                    )}
+                    {/* Global Settings Modal */}
+                    {showGlobalSettings && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                <div className="p-8">
+                                    <h2 className="text-3xl font-bold mb-6">⚙️ Global Settings</h2>
 
-            {/* Description Area */}
-            <div className="mt-12 p-6 bg-white rounded-xl shadow-md">
-                <h3 className="text-2xl font-bold text-blue-800 mb-4">
-                    {activeSection === 'championships' ? 'About Championships' :
-                        activeSection === 'tournaments' ? 'About Tournaments' : 'About Player Management'}
-                </h3>
-
-                {activeSection === 'championships' ? (
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                        Championships are ongoing competitions where you can record matches over time.
-                        Perfect for club leagues, seasonal competitions, or extended competitions with flexible scheduling.
-                    </p>
-                ) : activeSection === 'tournaments' ? (
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                        Tournaments are structured, one-time events with automatic scheduling and bracket generation.
-                        Ideal for competition days, knockout tournaments, or round-robin formats.
-                    </p>
-                ) : (
-                    <p className="text-gray-600 text-lg leading-relaxed">
-                        Manage your player database centrally. Add new players, edit existing ones, import from CSV files,
-                        and export your player data. All players added here are available in both Championships and Tournaments.
-                    </p>
-                )}
-                {/* Global Settings Modal */}
-                {showGlobalSettings && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-8">
-                                <h2 className="text-3xl font-bold mb-6">⚙️ Global Settings</h2>
-
-                                {/* Export Data Section */}
-                                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
-                                    <h3 className="text-xl font-bold mb-2">📊 Data Export</h3>
-                                    <p className="text-gray-600 mb-4">Export championship and player data to Excel or PDF</p>
+                                    {/* Export Data Section */}
+                                    <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                                        <h3 className="text-xl font-bold mb-2">📊 Data Export</h3>
+                                        <p className="text-gray-600 mb-4">Export championship and player data to Excel or PDF</p>
+                                        <button
+                                            onClick={() => {
+                                                setShowExportModal(true);
+                                                setShowGlobalSettings(false);
+                                            }}
+                                            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors"
+                                        >
+                                            Export Data...
+                                        </button>
+                                    </div>
+                                    {/* Import Data Section - ADD THIS ENTIRE SECTION */}
+                                    <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                                        <h3 className="text-xl font-bold mb-2">📥 Data Import</h3>
+                                        <p className="text-gray-600 mb-4">Import championship data from Excel files</p>
+                                        <button
+                                            onClick={() => {
+                                                setShowGlobalSettings(false);
+                                                setTimeout(() => setShowImportModal(true), 100);
+                                            }}
+                                            className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
+                                        >
+                                            Import Data...
+                                        </button>
+                                    </div>
+                                    {/* Close Button */}
                                     <button
-                                        onClick={() => {
-                                            setShowExportModal(true);
-                                            setShowGlobalSettings(false);
-                                        }}
-                                        className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors"
+                                        onClick={() => setShowGlobalSettings(false)}
+                                        className="w-full mt-6 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
                                     >
-                                        Export Data...
+                                        Close
                                     </button>
                                 </div>
-                                {/* Import Data Section - ADD THIS ENTIRE SECTION */}
-                                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
-                                    <h3 className="text-xl font-bold mb-2">📥 Data Import</h3>
-                                    <p className="text-gray-600 mb-4">Import championship data from Excel files</p>
-                                    <button
-                                        onClick={() => {
-                                            setShowGlobalSettings(false);
-                                            setTimeout(() => setShowImportModal(true), 100);
-                                        }}
-                                        className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
-                                    >
-                                        Import Data...
-                                    </button>
-                                </div>
-                                {/* Close Button */}
-                                <button
-                                    onClick={() => setShowGlobalSettings(false)}
-                                    className="w-full mt-6 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                >
-                                    Close
-                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Export Data Modal */}
-                {showExportModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-8">
-                                <h2 className="text-3xl font-bold mb-6">📊 Export Data</h2>
+                    {/* Export Data Modal */}
+                    {showExportModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                <div className="p-8">
+                                    <h2 className="text-3xl font-bold mb-6">📊 Export Data</h2>
 
-                                {/* Export Scope Selection */}
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold mb-3">What do you want to export?</h3>
+                                    {/* Export Scope Selection */}
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-bold mb-3">What do you want to export?</h3>
 
-                                    <div className="space-y-3">
-                                        {/* Championship Option */}
-                                        <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                                            style={{ borderColor: exportScope === 'championship' ? '#9333ea' : '#e5e7eb' }}>
+                                        <div className="space-y-3">
+                                            {/* Championship Option */}
+                                            <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                                style={{ borderColor: exportScope === 'championship' ? '#9333ea' : '#e5e7eb' }}>
+                                                <input
+                                                    type="radio"
+                                                    name="exportScope"
+                                                    value="championship"
+                                                    checked={exportScope === 'championship'}
+                                                    onChange={(e) => setExportScope(e.target.value)}
+                                                    className="mt-1 mr-3"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="font-bold">Full Championship</div>
+                                                    <div className="text-sm text-gray-600">Export all matches, standings, and player stats from a championship</div>
+
+                                                    {exportScope === 'championship' && (
+                                                        <select
+                                                            value={selectedChampionshipId}
+                                                            onChange={(e) => setSelectedChampionshipId(e.target.value)}
+                                                            className="mt-3 w-full p-2 border rounded-lg"
+                                                        >
+                                                            <option value="">Select a championship...</option>
+                                                            {championships.map(champ => (
+                                                                <option key={champ.id} value={champ.id}>
+                                                                    {champ.name} ({champ.matches?.length || 0} matches)
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                            </label>
+
+                                            {/* Player Option */}
+                                            <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                                                style={{ borderColor: exportScope === 'player' ? '#9333ea' : '#e5e7eb' }}>
+                                                <input
+                                                    type="radio"
+                                                    name="exportScope"
+                                                    value="player"
+                                                    checked={exportScope === 'player'}
+                                                    onChange={(e) => setExportScope(e.target.value)}
+                                                    className="mt-1 mr-3"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="font-bold">Individual Player</div>
+                                                    <div className="text-sm text-gray-600">Export a player's complete match history and statistics</div>
+
+                                                    {exportScope === 'player' && (
+                                                        <select
+                                                            value={selectedPlayerId}
+                                                            onChange={(e) => setSelectedPlayerId(e.target.value)}
+                                                            className="mt-3 w-full p-2 border rounded-lg"
+                                                        >
+                                                            <option value="">Select a player...</option>
+                                                            {players.map(player => (
+                                                                <option key={player.id} value={player.id}>
+                                                                    {player.firstName} {player.surname}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Format Selection */}
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-bold mb-3">Export Format:</h3>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={exportExcel}
+                                                    onChange={(e) => setExportExcel(e.target.checked)}
+                                                    className="mr-3"
+                                                />
+                                                <div>
+                                                    <div className="font-bold">Excel (.xlsx)</div>
+                                                    <div className="text-sm text-gray-600">Comprehensive data with multiple sheets for analysis</div>
+                                                </div>
+                                            </label>
+
+                                            <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={exportPdf}
+                                                    onChange={(e) => setExportPdf(e.target.checked)}
+                                                    className="mr-3"
+                                                />
+                                                <div>
+                                                    <div className="font-bold">PDF (.pdf)</div>
+                                                    <div className="text-sm text-gray-600">Nicely formatted report for sharing</div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview */}
+                                    <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                                        <div className="text-sm text-blue-800">
+                                            {exportScope === 'championship' && selectedChampionshipId && (
+                                                <>Preview: {championships.find(c => c.id === parseInt(selectedChampionshipId))?.matches?.length || 0} matches from {championships.find(c => c.id === parseInt(selectedChampionshipId))?.name}</>
+                                            )}
+                                            {exportScope === 'player' && selectedPlayerId && (
+                                                <>Preview: All matches for {players.find(p => p.id === selectedPlayerId)?.firstName} {players.find(p => p.id === selectedPlayerId)?.surname}</>
+                                            )}
+                                            {(!selectedChampionshipId && exportScope === 'championship') || (!selectedPlayerId && exportScope === 'player') ? (
+                                                <>Please select a {exportScope} to export</>
+                                            ) : null}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowExportModal(false);
+                                                setShowGlobalSettings(true);
+                                            }}
+                                            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                                        >
+                                            Back
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (exportExcel) {
+                                                    if (exportScope === 'championship') {
+                                                        const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                                                        if (championship) {
+                                                            exportChampionshipToExcel(championship, players);
+                                                        }
+                                                    } else if (exportScope === 'player') {
+                                                        exportPlayerToExcel(selectedPlayerId, championships, players);
+                                                    }
+                                                }
+
+                                                if (exportPdf) {
+                                                    if (exportScope === 'championship') {
+                                                        const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                                                        if (championship) {
+                                                            exportChampionshipToPDF(championship, players);
+                                                        }
+                                                    } else if (exportScope === 'player') {
+                                                        exportPlayerToPDF(selectedPlayerId, championships, players);
+                                                    }
+                                                }
+
+                                                // Close modal
+                                                setShowExportModal(false);
+                                            }}
+                                            disabled={
+                                                (!exportExcel && !exportPdf) ||
+                                                (exportScope === 'championship' && !selectedChampionshipId) ||
+                                                (exportScope === 'player' && !selectedPlayerId)
+                                            }
+                                            className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
+                                        >
+                                            Export ⬇
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ⬇️ ADD THE IMPORT MODAL HERE ⬇️ */}
+                    {/* Import Modal */}
+                    {showImportModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                <div className="p-8">
+                                    <h2 className="text-3xl font-bold mb-6 text-green-800">📥 Import Championship Data</h2>
+
+                                    {/* File Picker */}
+                                    <div className="mb-6">
+                                        <label className="block text-lg font-bold mb-2 text-gray-700">
+                                            Select Excel File
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept=".xlsx"
+                                            onChange={(e) => setImportFile(e.target.files[0])}
+                                            className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+                                        />
+                                        {importFile && (
+                                            <p className="text-sm text-green-600 mt-2 font-medium">
+                                                ✓ Selected: {importFile.name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Import Mode Selection */}
+                                    <div className="mb-6">
+                                        <p className="text-lg font-bold mb-3 text-gray-700">Import Mode:</p>
+
+                                        <label className="flex items-start mb-4 cursor-pointer p-4 border-2 rounded-xl hover:bg-green-50 transition-colors"
+                                            style={{ borderColor: importMode === 'merge' ? '#16a34a' : '#d1d5db', backgroundColor: importMode === 'merge' ? '#f0fdf4' : 'white' }}>
                                             <input
                                                 type="radio"
-                                                name="exportScope"
-                                                value="championship"
-                                                checked={exportScope === 'championship'}
-                                                onChange={(e) => setExportScope(e.target.value)}
-                                                className="mt-1 mr-3"
+                                                value="merge"
+                                                checked={importMode === 'merge'}
+                                                onChange={(e) => setImportMode(e.target.value)}
+                                                className="mr-3 mt-1"
                                             />
-                                            <div className="flex-1">
-                                                <div className="font-bold">Full Championship</div>
-                                                <div className="text-sm text-gray-600">Export all matches, standings, and player stats from a championship</div>
-
-                                                {exportScope === 'championship' && (
-                                                    <select
-                                                        value={selectedChampionshipId}
-                                                        onChange={(e) => setSelectedChampionshipId(e.target.value)}
-                                                        className="mt-3 w-full p-2 border rounded-lg"
-                                                    >
-                                                        <option value="">Select a championship...</option>
-                                                        {championships.map(champ => (
-                                                            <option key={champ.id} value={champ.id}>
-                                                                {champ.name} ({champ.matches?.length || 0} matches)
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                )}
+                                            <div>
+                                                <span className="font-bold text-lg">Merge - Add to existing championships</span>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    Imported championships will be added alongside your current ones. Nothing will be deleted.
+                                                </p>
                                             </div>
                                         </label>
 
-                                        {/* Player Option */}
-                                        <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                                            style={{ borderColor: exportScope === 'player' ? '#9333ea' : '#e5e7eb' }}>
+                                        <label className="flex items-start cursor-pointer p-4 border-2 rounded-xl hover:bg-red-50 transition-colors"
+                                            style={{ borderColor: importMode === 'replace' ? '#dc2626' : '#d1d5db', backgroundColor: importMode === 'replace' ? '#fef2f2' : 'white' }}>
                                             <input
                                                 type="radio"
-                                                name="exportScope"
-                                                value="player"
-                                                checked={exportScope === 'player'}
-                                                onChange={(e) => setExportScope(e.target.value)}
-                                                className="mt-1 mr-3"
-                                            />
-                                            <div className="flex-1">
-                                                <div className="font-bold">Individual Player</div>
-                                                <div className="text-sm text-gray-600">Export a player's complete match history and statistics</div>
-
-                                                {exportScope === 'player' && (
-                                                    <select
-                                                        value={selectedPlayerId}
-                                                        onChange={(e) => setSelectedPlayerId(e.target.value)}
-                                                        className="mt-3 w-full p-2 border rounded-lg"
-                                                    >
-                                                        <option value="">Select a player...</option>
-                                                        {players.map(player => (
-                                                            <option key={player.id} value={player.id}>
-                                                                {player.firstName} {player.surname}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                )}
-                                            </div>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                {/* Format Selection */}
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold mb-3">Export Format:</h3>
-                                    <div className="space-y-2">
-                                        <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                checked={exportExcel}
-                                                onChange={(e) => setExportExcel(e.target.checked)}
-                                                className="mr-3"
+                                                value="replace"
+                                                checked={importMode === 'replace'}
+                                                onChange={(e) => setImportMode(e.target.value)}
+                                                className="mr-3 mt-1"
                                             />
                                             <div>
-                                                <div className="font-bold">Excel (.xlsx)</div>
-                                                <div className="text-sm text-gray-600">Comprehensive data with multiple sheets for analysis</div>
-                                            </div>
-                                        </label>
-
-                                        <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                checked={exportPdf}
-                                                onChange={(e) => setExportPdf(e.target.checked)}
-                                                className="mr-3"
-                                            />
-                                            <div>
-                                                <div className="font-bold">PDF (.pdf)</div>
-                                                <div className="text-sm text-gray-600">Nicely formatted report for sharing</div>
+                                                <span className="font-bold text-lg text-red-600">Replace - Clear existing and import fresh</span>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    ⚠️ <strong>WARNING:</strong> All existing championships will be permanently deleted before importing.
+                                                </p>
                                             </div>
                                         </label>
                                     </div>
-                                </div>
 
-                                {/* Preview */}
-                                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                                    <div className="text-sm text-blue-800">
-                                        {exportScope === 'championship' && selectedChampionshipId && (
-                                            <>Preview: {championships.find(c => c.id === parseInt(selectedChampionshipId))?.matches?.length || 0} matches from {championships.find(c => c.id === parseInt(selectedChampionshipId))?.name}</>
-                                        )}
-                                        {exportScope === 'player' && selectedPlayerId && (
-                                            <>Preview: All matches for {players.find(p => p.id === selectedPlayerId)?.firstName} {players.find(p => p.id === selectedPlayerId)?.surname}</>
-                                        )}
-                                        {(!selectedChampionshipId && exportScope === 'championship') || (!selectedPlayerId && exportScope === 'player') ? (
-                                            <>Please select a {exportScope} to export</>
-                                        ) : null}
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowImportModal(false);
+                                                setImportFile(null);
+                                            }}
+                                            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleImportPreview}
+                                            disabled={!importFile || isProcessingFile}
+                                            className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {isProcessingFile ? 'Reading file...' : 'Preview Import →'}
+                                        </button>
                                     </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowExportModal(false);
-                                            setShowGlobalSettings(true);
-                                        }}
-                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                    >
-                                        Back
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (exportExcel) {
-                                                if (exportScope === 'championship') {
-                                                    const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
-                                                    if (championship) {
-                                                        exportChampionshipToExcel(championship, players);
-                                                    }
-                                                } else if (exportScope === 'player') {
-                                                    exportPlayerToExcel(selectedPlayerId, championships, players);
-                                                }
-                                            }
-
-                                            if (exportPdf) {
-                                                if (exportScope === 'championship') {
-                                                    const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
-                                                    if (championship) {
-                                                        exportChampionshipToPDF(championship, players);
-                                                    }
-                                                } else if (exportScope === 'player') {
-                                                    exportPlayerToPDF(selectedPlayerId, championships, players);
-                                                }
-                                            }
-
-                                            // Close modal
-                                            setShowExportModal(false);
-                                        }}
-                                        disabled={
-                                            (!exportExcel && !exportPdf) ||
-                                            (exportScope === 'championship' && !selectedChampionshipId) ||
-                                            (exportScope === 'player' && !selectedPlayerId)
-                                        }
-                                        className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
-                                    >
-                                        Export ⬇
-                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* ⬇️ ADD THE IMPORT MODAL HERE ⬇️ */}
-                {/* Import Modal */}
-                {showImportModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-8">
-                                <h2 className="text-3xl font-bold mb-6 text-green-800">📥 Import Championship Data</h2>
-
-                                {/* File Picker */}
-                                <div className="mb-6">
-                                    <label className="block text-lg font-bold mb-2 text-gray-700">
-                                        Select Excel File
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept=".xlsx"
-                                        onChange={(e) => setImportFile(e.target.files[0])}
-                                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-                                    />
-                                    {importFile && (
-                                        <p className="text-sm text-green-600 mt-2 font-medium">
-                                            ✓ Selected: {importFile.name}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Import Mode Selection */}
-                                <div className="mb-6">
-                                    <p className="text-lg font-bold mb-3 text-gray-700">Import Mode:</p>
-
-                                    <label className="flex items-start mb-4 cursor-pointer p-4 border-2 rounded-xl hover:bg-green-50 transition-colors"
-                                        style={{ borderColor: importMode === 'merge' ? '#16a34a' : '#d1d5db', backgroundColor: importMode === 'merge' ? '#f0fdf4' : 'white' }}>
-                                        <input
-                                            type="radio"
-                                            value="merge"
-                                            checked={importMode === 'merge'}
-                                            onChange={(e) => setImportMode(e.target.value)}
-                                            className="mr-3 mt-1"
-                                        />
-                                        <div>
-                                            <span className="font-bold text-lg">Merge - Add to existing championships</span>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                Imported championships will be added alongside your current ones. Nothing will be deleted.
-                                            </p>
-                                        </div>
-                                    </label>
-
-                                    <label className="flex items-start cursor-pointer p-4 border-2 rounded-xl hover:bg-red-50 transition-colors"
-                                        style={{ borderColor: importMode === 'replace' ? '#dc2626' : '#d1d5db', backgroundColor: importMode === 'replace' ? '#fef2f2' : 'white' }}>
-                                        <input
-                                            type="radio"
-                                            value="replace"
-                                            checked={importMode === 'replace'}
-                                            onChange={(e) => setImportMode(e.target.value)}
-                                            className="mr-3 mt-1"
-                                        />
-                                        <div>
-                                            <span className="font-bold text-lg text-red-600">Replace - Clear existing and import fresh</span>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                ⚠️ <strong>WARNING:</strong> All existing championships will be permanently deleted before importing.
-                                            </p>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowImportModal(false);
-                                            setImportFile(null);
-                                        }}
-                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleImportPreview}
-                                        disabled={!importFile || isProcessingFile}
-                                        className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        {isProcessingFile ? 'Reading file...' : 'Preview Import →'}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {/* ⬆️ END OF IMPORT MODAL ⬆️ */}
-            </div>
-        </div>
-    );
-};
-
-// Main App Component
-function App() {
-    const [activeSection, setActiveSection] = useState('championships');
-    const [showGlobalSettings, setShowGlobalSettings] = useState(false);
-
-    return (
-        <RoleProvider>
-            <div className="App min-h-screen bg-gray-50">
-                {/* Header */}
-                <header className="bg-blue-800 text-white p-4 shadow-md">
-                    <div className="max-w-6xl mx-auto">
-                        <h1 className="text-2xl font-bold text-center">Padel Manager</h1>
-                    </div>
-                </header>
-
-                <div className="container mx-auto p-4">
-                    <Routes>
-                        <Route path="/" element={<HomePage activeSection={activeSection} setActiveSection={setActiveSection} />} />
-                        <Route path="/tournaments" element={<PadelTournamentApp saveLastUsed={saveLastUsedItem} />} />
-                        <Route path="/championships" element={<ChampionshipManagement saveLastUsed={saveLastUsedItem} />} />
-                        <Route path="/players" element={<PlayerManagementView saveLastUsed={saveLastUsedItem} />} />
-                        <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
+                    )}
+                    {/* ⬆️ END OF IMPORT MODAL ⬆️ */}
                 </div>
             </div>
-        </RoleProvider>
-    );
-}
+        );
+    };
 
-export default App;
+    // Main App Component
+    function App() {
+        const [activeSection, setActiveSection] = useState('championships');
+        const [showGlobalSettings, setShowGlobalSettings] = useState(false);
+
+        return (
+            <RoleProvider>
+                <div className="App min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-blue-800 text-white p-4 shadow-md">
+                        <div className="max-w-6xl mx-auto">
+                            <h1 className="text-2xl font-bold text-center">Padel Manager</h1>
+                        </div>
+                    </header>
+
+                    <div className="container mx-auto p-4">
+                        <Routes>
+                            <Route path="/" element={<HomePage activeSection={activeSection} setActiveSection={setActiveSection} />} />
+                            <Route path="/tournaments" element={<PadelTournamentApp saveLastUsed={saveLastUsedItem} />} />
+                            <Route path="/championships" element={<ChampionshipManagement saveLastUsed={saveLastUsedItem} />} />
+                            <Route path="/players" element={<PlayerManagementView saveLastUsed={saveLastUsedItem} />} />
+                            <Route path="*" element={<Navigate to="/" />} />
+                        </Routes>
+                    </div>
+                </div>
+            </RoleProvider>
+        );
+    }
+
+    export default App;
