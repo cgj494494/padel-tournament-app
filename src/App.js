@@ -819,7 +819,20 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                         Export Data...
                                     </button>
                                 </div>
-
+                                {/* Import Data Section - ADD THIS ENTIRE SECTION */}
+                                <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                                    <h3 className="text-xl font-bold mb-2">📥 Data Import</h3>
+                                    <p className="text-gray-600 mb-4">Import championship data from Excel files</p>
+                                    <button
+                                        onClick={() => {
+                                            setShowGlobalSettings(false);
+                                            setTimeout(() => setShowImportModal(true), 100);
+                                        }}
+                                        className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors"
+                                    >
+                                        Import Data...
+                                    </button>
+                                </div>
                                 {/* Close Button */}
                                 <button
                                     onClick={() => setShowGlobalSettings(false)}
@@ -1009,16 +1022,7 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                         </div>
                     </div>
                 )}
-                {/* Import Data Button - ADD THIS */}
-                <button
-                    onClick={() => {
-                        setShowGlobalSettings(false);
-                        setTimeout(() => setShowImportModal(true), 100);
-                    }}
-                    className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 mt-3"
-                >
-                    📥 Import Data
-                </button>
+
             </div>
         </div>
     );
