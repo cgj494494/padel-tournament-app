@@ -822,20 +822,7 @@ const HomePage = ({ activeSection, setActiveSection }) => {
         }
     };
 
-    const getLastUsedPath = () => {
-
-        // Load last used item on mount
-        useEffect(() => {
-            const storedLastUsed = localStorage.getItem('padelManagerLastUsed');
-            if (storedLastUsed) {
-                try {
-                    setLastUsed(JSON.parse(storedLastUsed));
-                } catch (e) {
-                    console.error('Error parsing last used item:', e);
-                }
-            }
-        }, []);
-
+  
         const getLastUsedPath = () => {
             if (lastUsed?.type === 'championship') return '/championships';
             if (lastUsed?.type === 'tournament') return '/tournaments';
