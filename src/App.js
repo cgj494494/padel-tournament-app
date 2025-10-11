@@ -85,13 +85,6 @@ const getPlayerNameById = (playerId) => {
 
 // ⬆️ END OF NEW HELPER FUNCTIONS ⬆️
 
-// Helper function to get player name by ID
-const getPlayerNameById = (playerId) => {
-    const players = PlayerManagementUtils.loadPlayers();
-    const player = players.find(p => p.id === playerId);
-    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
-};
-
 // ⬇️ ADD THIS ENTIRE FUNCTION HERE ⬇️
 
 // Main function to handle import preview
@@ -185,10 +178,11 @@ const handleImportPreview = async () => {
         parsedChampionship.players = Array.from(playerIdsMap.keys());
 
         // Parse standings
+        const players = PlayerManagementUtils.loadPlayers(); // Load players for name lookup
         parsedChampionship.standings = standingsData.map(standing => {
             const playerName = standing['Player'];
             const playerId = parsedChampionship.players.find(id => {
-                return getPlayerNameById(id) === playerName;
+                return getPlayerName(id, players) === playerName;
             });
 
             return {
