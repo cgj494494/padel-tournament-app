@@ -31,6 +31,194 @@ const getPlayerName = (playerId, players) => {
     const player = players.find(p => p.id === playerId);
     return player ? `${player.firstName} ${player.surname}` : 'Unknown';
 };
+// ⬇️ ADD THE THREE NEW HELPER FUNCTIONS HERE ⬇️
+
+// Helper function to parse UK date format (dd/mm/yy) to ISO
+const parseUKDate = (dateString) => {
+    if (!dateString) return new Date().toISOString();
+
+    const parts = dateString.toString().split('/');
+    if (parts.length !== 3) return new Date().toISOString();
+
+    const [day, month, year] = parts;
+    const fullYear = year.length === 2 ? `20${year}` : year;
+    return new Date(`${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`).toISOString();
+};
+
+// Helper function to find or create player by name
+const findOrCreatePlayer = (playerName) => {
+    if (!playerName || playerName === 'Unknown') return null;
+
+    const players = PlayerManagementUtils.loadPlayers();
+
+    // Search for existing player
+    const existing = players.find(p =>
+        `${p.firstName} ${p.surname}`.toLowerCase() === playerName.toLowerCase()
+    );
+
+    if (existing) return existing.id;
+
+    // Create new player if not found
+    const nameParts = playerName.trim().split(' ');
+    const firstName = nameParts[0];
+    const surname = nameParts.slice(1).join(' ') || '';
+
+    const newPlayer = {
+        id: Date.now().toString() + Math.random().toString().substring(2, 8),
+        firstName,
+        surname
+    };
+
+    players.push(newPlayer);
+    PlayerManagementUtils.savePlayers(players);
+
+    console.log(`Created new player: ${firstName} ${surname}`);
+    return newPlayer.id;
+};
+
+// Helper function to get player name by ID
+const getPlayerNameById = (playerId) => {
+    const players = PlayerManagementUtils.loadPlayers();
+    const player = players.find(p => p.id === playerId);
+    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+};
+
+// ⬆️ END OF NEW HELPER FUNCTIONS ⬆️
+
+// Helper function to get player name by ID
+const getPlayerNameById = (playerId) => {
+    const players = PlayerManagementUtils.loadPlayers();
+    const player = players.find(p => p.id === playerId);
+    return player ? `${player.firstName} ${player.surname}` : 'Unknown';
+};
+
+// ⬇️ ADD THIS ENTIRE FUNCTION HERE ⬇️
+
+// Main function to handle import preview
+const handleImportPreview = async () => {
+    if (!importFile) {
+        alert('Please select a file first');
+        return;
+    }
+
+    setIsProcessingFile(true);
+
+    try {
+        // Read the Excel file
+        const fileData = await importFile.arrayBuffer();
+        const workbook = XLSX.read(fileData);
+
+        // Validate that required sheets exist
+        const requiredSheets = ['Matches', 'Standings', 'Championship Info'];
+        const missingSheets = requiredSheets.filter(sheet => !workbook.Sheets[sheet]);
+
+        if (missingSheets.length > 0) {
+            alert(`Invalid file format!\n\nMissing sheets: ${missingSheets.join(', ')}\n\nPlease use an Excel file exported from this app.`);
+            setIsProcessingFile(false);
+            return;
+        }
+
+        // Extract Championship Info (Sheet 3)
+        const infoSheet = workbook.Sheets['Championship Info'];
+        const infoData = XLSX.utils.sheet_to_json(infoSheet);
+        const champInfo = infoData[0];
+
+        console.log('Championship Info:', champInfo);
+
+        // Extract Matches (Sheet 1)
+        const matchSheet = workbook.Sheets['Matches'];
+        const matchData = XLSX.utils.sheet_to_json(matchSheet);
+
+        console.log('Match Data:', matchData.length, 'matches');
+
+        // Extract Standings (Sheet 2)
+        const standingsSheet = workbook.Sheets['Standings'];
+        const standingsData = XLSX.utils.sheet_to_json(standingsSheet);
+
+        console.log('Standings Data:', standingsData.length, 'players');
+
+        // Parse into championship structure
+        const parsedChampionship = {
+            id: Date.now().toString(),
+            name: champInfo['Championship Name'] || 'Imported Championship',
+            startDate: parseUKDate(champInfo['Start Date']),
+            players: [],
+            matches: [],
+            standings: [],
+            settings: {
+                minMatchesForProRata: 3,
+                scoringSystem: champInfo['Scoring System'] || 'cj-updated-2025',
+                scoringSystemSource: 'imported'
+            }
+        };
+
+        // Parse matches
+        const playerIdsMap = new Map(); // Track player IDs
+
+        parsedChampionship.matches = matchData.map((match, index) => {
+            const teamAPlayer1Id = findOrCreatePlayer(match['Team A Player 1']);
+            const teamAPlayer2Id = findOrCreatePlayer(match['Team A Player 2']);
+            const teamBPlayer1Id = findOrCreatePlayer(match['Team B Player 1']);
+            const teamBPlayer2Id = findOrCreatePlayer(match['Team B Player 2']);
+
+            // Track all player IDs
+            [teamAPlayer1Id, teamAPlayer2Id, teamBPlayer1Id, teamBPlayer2Id].forEach(id => {
+                if (id) playerIdsMap.set(id, true);
+            });
+
+            return {
+                id: Date.now() + index,
+                date: parseUKDate(match['Date']),
+                teamA: [teamAPlayer1Id, teamAPlayer2Id].filter(id => id),
+                teamB: [teamBPlayer1Id, teamBPlayer2Id].filter(id => id),
+                gamesA: parseInt(match['Score A']) || 0,
+                gamesB: parseInt(match['Score B']) || 0,
+                isComplete: match['Complete'] === 'Yes',
+                points: {
+                    teamA: parseInt(match['Points A']) || 0,
+                    teamB: parseInt(match['Points B']) || 0
+                }
+            };
+        });
+
+        // Set players list from all players found in matches
+        parsedChampionship.players = Array.from(playerIdsMap.keys());
+
+        // Parse standings
+        parsedChampionship.standings = standingsData.map(standing => {
+            const playerName = standing['Player'];
+            const playerId = parsedChampionship.players.find(id => {
+                return getPlayerNameById(id) === playerName;
+            });
+
+            return {
+                playerId: playerId || null,
+                points: standing['Points'] || 0,
+                matchesPlayed: standing['Matches'] || 0,
+                matchesWon: standing['Wins'] || 0,
+                setsPlayed: standing['Matches'] || 0,
+                gamesWon: standing['Games Won'] || 0,
+                gamesLost: standing['Games Lost'] || 0
+            };
+        }).filter(s => s.playerId); // Remove any standings without valid player IDs
+
+        console.log('Parsed Championship:', parsedChampionship);
+
+        // Show preview
+        setImportPreview(parsedChampionship);
+        setShowImportModal(false);
+        setShowPreviewModal(true);
+        setIsProcessingFile(false);
+
+    } catch (error) {
+        console.error('Import error:', error);
+        alert(`Error reading file: ${error.message}\n\nPlease make sure you selected a valid Excel file exported from this app.`);
+        setIsProcessingFile(false);
+    }
+};
+
+// ⬆️ END OF FUNCTION ⬆️
+
 
 // Export Championship to Excel
 const exportChampionshipToExcel = (championship, players) => {
@@ -592,6 +780,10 @@ const HomePage = ({ activeSection, setActiveSection }) => {
     const [showImportModal, setShowImportModal] = useState(false);
     const [importFile, setImportFile] = useState(null);
     const [importMode, setImportMode] = useState('merge');
+    // Stage 2 variables - ADD THESE NEW ONES
+    const [importPreview, setImportPreview] = useState(null);
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [isProcessingFile, setIsProcessingFile] = useState(false);
     // Load championships and players for export
     useEffect(() => {
         const loadedChampionships = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
@@ -1100,11 +1292,11 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                         Cancel
                                     </button>
                                     <button
-                                        onClick={() => alert('Preview functionality coming in Stage 2!')}
-                                        disabled={!importFile}
+                                        onClick={handleImportPreview}
+                                        disabled={!importFile || isProcessingFile}
                                         className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        Preview Import →
+                                        {isProcessingFile ? 'Reading file...' : 'Preview Import →'}
                                     </button>
                                 </div>
                             </div>
