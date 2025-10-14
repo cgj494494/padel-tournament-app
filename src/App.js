@@ -882,8 +882,84 @@ const HomePage = ({ activeSection, setActiveSection }) => {
             alert(`Error reading file: ${error.message}\n\nPlease make sure you selected a valid Excel file exported from this app.`);
             setIsProcessingFile(false);
         }
-    };
+    }; // End of handleImportPreview
 
+    // ⬇️ ADD THIS NEW FUNCTION HERE ⬇️
+
+    // Execute the actual import
+    const executeImport = () => {
+        try {
+            let finalChampionship = { ...importPreview };
+
+            // Handle duplicate action
+            if (duplicateDetected.exists) {
+                if (duplicateAction === 'skip') {
+                    alert('Import cancelled - championship skipped');
+                    setShowPreviewModal(false);
+                    return;
+                }
+
+                if (duplicateAction === 'rename') {
+                    // Generate unique name
+                    let counter = 1;
+                    let newName = `${finalChampionship.name} (${counter})`;
+                    const existing = championships;
+
+                    while (existing.some(c => c.name === newName)) {
+                        counter++;
+                        newName = `${finalChampionship.name} (${counter})`;
+                    }
+
+                    finalChampionship.name = newName;
+                }
+
+                if (duplicateAction === 'replace') {
+                    // Remove existing championship with same name
+                    const filtered = championships.filter(c =>
+                        c.name.toLowerCase() !== importPreview.name.toLowerCase()
+                    );
+                    localStorage.setItem('padelChampionships', JSON.stringify(filtered));
+                }
+            }
+
+            // Execute import based on mode
+            if (importMode === 'replace') {
+                if (confirm('⚠️ FINAL CONFIRMATION: This will DELETE ALL existing championships and replace with this import. Are you absolutely sure?')) {
+                    localStorage.setItem('padelChampionships', JSON.stringify([finalChampionship]));
+                } else {
+                    return;
+                }
+            } else {
+                // Merge mode - add to existing
+                const existing = JSON.parse(localStorage.getItem('padelChampionships') || '[]');
+
+                // Remove any existing championship with the same name if replacing
+                const filtered = duplicateAction === 'replace'
+                    ? existing.filter(c => c.name.toLowerCase() !== importPreview.name.toLowerCase())
+                    : existing;
+
+                localStorage.setItem('padelChampionships', JSON.stringify([...filtered, finalChampionship]));
+            }
+
+            // Success!
+            const successMsg = `✅ Successfully imported "${finalChampionship.name}"!\n\nPlayers: ${finalChampionship.players.length}\nMatches: ${finalChampionship.matches.length}`;
+
+            alert(successMsg);
+
+            // Close modals and reload
+            setShowPreviewModal(false);
+            setShowImportModal(false);
+            setImportFile(null);
+
+            // Reload the page to show the new championship
+            window.location.reload();
+
+        } catch (error) {
+            alert('Import failed: ' + error.message);
+            console.error('Import error:', error);
+        }
+    };
+    // ⬆️ END OF EXECUTE IMPORT FUNCTION ⬆️
 
     const getLastUsedPath = () => {
         if (lastUsed?.type === 'championship') return '/championships';
@@ -1515,7 +1591,8 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                         Back
                                     </button>
                                     <button
-                                        onClick={() => alert('Import execution coming in Stage 4!')}
+                                        <button
+                                        onClick={executeImport}
                                         disabled={scoringWarning.type === 'custom-not-available'}
                                         className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                                     >
