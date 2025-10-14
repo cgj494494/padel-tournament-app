@@ -17,7 +17,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [name, setName] = useState('');
     const [selectedPlayers, setSelectedPlayers] = useState([]);
     const [activeTab, setActiveTab] = useState('standings');
-
+    const [partnershipSortMode, setPartnershipSortMode] = useState('prorata'); // 'prorata', 'matches', or 'games'
     // Modal states
     const [showAddPlayersModal, setShowAddPlayersModal] = useState(false);
     const [showAddNewPlayerModal, setShowAddNewPlayerModal] = useState(false);
@@ -497,90 +497,90 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
     };
     // Partnership Statistics Calculator
-const calculatePartnershipStats = () => {
-    if (!currentChampionship || !currentChampionship.matches || currentChampionship.matches.length === 0) {
-        return [];
-    }
-
-    const partnershipMap = new Map();
-    const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
-
-    // Loop through all matches
-    currentChampionship.matches.forEach(match => {
-        // Process Team A partnerships
-        if (match.teamA && match.teamA.length === 2) {
-            const [player1, player2] = match.teamA.sort(); // Sort to ensure consistent key
-            const partnershipKey = `${player1}_${player2}`;
-
-            if (!partnershipMap.has(partnershipKey)) {
-                partnershipMap.set(partnershipKey, {
-                    player1Id: player1,
-                    player2Id: player2,
-                    matches: 0,
-                    won: 0,
-                    lost: 0,
-                    totalPoints: 0,
-                    gamesWon: 0,
-                    gamesLost: 0
-                });
-            }
-
-            const stats = partnershipMap.get(partnershipKey);
-            stats.matches += 1;
-            stats.totalPoints += match.points.teamA;
-            stats.gamesWon += match.gamesA;
-            stats.gamesLost += match.gamesB;
-
-            if (match.points.teamA > match.points.teamB) {
-                stats.won += 1;
-            } else if (match.points.teamA < match.points.teamB) {
-                stats.lost += 1;
-            }
+    const calculatePartnershipStats = () => {
+        if (!currentChampionship || !currentChampionship.matches || currentChampionship.matches.length === 0) {
+            return [];
         }
 
-        // Process Team B partnerships
-        if (match.teamB && match.teamB.length === 2) {
-            const [player1, player2] = match.teamB.sort(); // Sort to ensure consistent key
-            const partnershipKey = `${player1}_${player2}`;
+        const partnershipMap = new Map();
+        const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
 
-            if (!partnershipMap.has(partnershipKey)) {
-                partnershipMap.set(partnershipKey, {
-                    player1Id: player1,
-                    player2Id: player2,
-                    matches: 0,
-                    won: 0,
-                    lost: 0,
-                    totalPoints: 0,
-                    gamesWon: 0,
-                    gamesLost: 0
-                });
+        // Loop through all matches
+        currentChampionship.matches.forEach(match => {
+            // Process Team A partnerships
+            if (match.teamA && match.teamA.length === 2) {
+                const [player1, player2] = match.teamA.sort(); // Sort to ensure consistent key
+                const partnershipKey = `${player1}_${player2}`;
+
+                if (!partnershipMap.has(partnershipKey)) {
+                    partnershipMap.set(partnershipKey, {
+                        player1Id: player1,
+                        player2Id: player2,
+                        matches: 0,
+                        won: 0,
+                        lost: 0,
+                        totalPoints: 0,
+                        gamesWon: 0,
+                        gamesLost: 0
+                    });
+                }
+
+                const stats = partnershipMap.get(partnershipKey);
+                stats.matches += 1;
+                stats.totalPoints += match.points.teamA;
+                stats.gamesWon += match.gamesA;
+                stats.gamesLost += match.gamesB;
+
+                if (match.points.teamA > match.points.teamB) {
+                    stats.won += 1;
+                } else if (match.points.teamA < match.points.teamB) {
+                    stats.lost += 1;
+                }
             }
 
-            const stats = partnershipMap.get(partnershipKey);
-            stats.matches += 1;
-            stats.totalPoints += match.points.teamB;
-            stats.gamesWon += match.gamesB;
-            stats.gamesLost += match.gamesA;
+            // Process Team B partnerships
+            if (match.teamB && match.teamB.length === 2) {
+                const [player1, player2] = match.teamB.sort(); // Sort to ensure consistent key
+                const partnershipKey = `${player1}_${player2}`;
 
-            if (match.points.teamB > match.points.teamA) {
-                stats.won += 1;
-            } else if (match.points.teamB < match.points.teamA) {
-                stats.lost += 1;
+                if (!partnershipMap.has(partnershipKey)) {
+                    partnershipMap.set(partnershipKey, {
+                        player1Id: player1,
+                        player2Id: player2,
+                        matches: 0,
+                        won: 0,
+                        lost: 0,
+                        totalPoints: 0,
+                        gamesWon: 0,
+                        gamesLost: 0
+                    });
+                }
+
+                const stats = partnershipMap.get(partnershipKey);
+                stats.matches += 1;
+                stats.totalPoints += match.points.teamB;
+                stats.gamesWon += match.gamesB;
+                stats.gamesLost += match.gamesA;
+
+                if (match.points.teamB > match.points.teamA) {
+                    stats.won += 1;
+                } else if (match.points.teamB < match.points.teamA) {
+                    stats.lost += 1;
+                }
             }
-        }
-    });
+        });
 
-    // Convert to array and calculate derived stats
-    const partnerships = Array.from(partnershipMap.values()).map(stats => ({
-        ...stats,
-        proRataScore: stats.matches > 0 ? (stats.totalPoints / stats.matches).toFixed(2) : '0.00',
-        gameDifferential: stats.gamesWon - stats.gamesLost,
-        winRate: stats.matches > 0 ? ((stats.won / stats.matches) * 100).toFixed(1) : '0.0'
-    }));
+        // Convert to array and calculate derived stats
+        const partnerships = Array.from(partnershipMap.values()).map(stats => ({
+            ...stats,
+            proRataScore: stats.matches > 0 ? (stats.totalPoints / stats.matches).toFixed(2) : '0.00',
+            gameDifferential: stats.gamesWon - stats.gamesLost,
+            winRate: stats.matches > 0 ? ((stats.won / stats.matches) * 100).toFixed(1) : '0.0'
+        }));
 
-    // Filter by minimum matches (same as pro rata standings)
-    return partnerships.filter(p => p.matches >= minMatches);
-};
+        // Filter by minimum matches (same as pro rata standings)
+        return partnerships.filter(p => p.matches >= minMatches);
+    };
     const getClasses = (element) => {
         const styles = {
             small: {
@@ -1700,6 +1700,145 @@ const calculatePartnershipStats = () => {
                                                     </div>
                                                 );
                                             })}
+                                            {activeTab === 'partnerships' && (
+                                                <div>
+                                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+                                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                                            Partnership Statistics
+                                                        </h3>
+
+                                                        {/* Sorting Toggle Buttons */}
+                                                        <div className="flex items-center space-x-2 bg-gray-100 rounded-2xl p-2 flex-wrap">
+                                                            <button
+                                                                onClick={() => setPartnershipSortMode('prorata')}
+                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'prorata'
+                                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                                    : 'text-gray-600 hover:text-gray-900'
+                                                                    }`}
+                                                            >
+                                                                Pro Rata
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setPartnershipSortMode('matches')}
+                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'matches'
+                                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                                    : 'text-gray-600 hover:text-gray-900'
+                                                                    }`}
+                                                            >
+                                                                Matches
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setPartnershipSortMode('games')}
+                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'games'
+                                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                                    : 'text-gray-600 hover:text-gray-900'
+                                                                    }`}
+                                                            >
+                                                                Games +/-
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Info message about minimum matches */}
+                                                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                                        <p className={`${getClasses('small')} text-blue-700`}>
+                                                            <strong>Showing partnerships with {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches played together.</strong> This uses the same minimum as Pro Rata standings.
+                                                        </p>
+                                                    </div>
+
+                                                    {(() => {
+                                                        const partnerships = calculatePartnershipStats();
+
+                                                        if (partnerships.length === 0) {
+                                                            return (
+                                                                <div className="text-center py-16">
+                                                                    <div className="text-8xl mb-6">🤝</div>
+                                                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                                                        No Partnerships Yet
+                                                                    </h3>
+                                                                    <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                                                        Partnerships will appear here once player pairs have played {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches together
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        // Sort partnerships based on selected mode
+                                                        const sortedPartnerships = [...partnerships].sort((a, b) => {
+                                                            if (partnershipSortMode === 'prorata') {
+                                                                const diff = parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
+                                                                return diff !== 0 ? diff : b.matches - a.matches; // Secondary sort by matches
+                                                            } else if (partnershipSortMode === 'matches') {
+                                                                const diff = b.matches - a.matches;
+                                                                return diff !== 0 ? diff : parseFloat(b.proRataScore) - parseFloat(a.proRataScore); // Secondary sort by pro rata
+                                                            } else { // games
+                                                                const diff = b.gameDifferential - a.gameDifferential;
+                                                                return diff !== 0 ? diff : b.matches - a.matches; // Secondary sort by matches
+                                                            }
+                                                        });
+
+                                                        return (
+                                                            <div className="overflow-x-auto">
+                                                                <table className="w-full border-collapse border border-gray-300">
+                                                                    <thead>
+                                                                        <tr className="bg-gray-100">
+                                                                            <th className="border border-gray-300 px-4 py-3 text-left font-bold">Rank</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-left font-bold">Partnership</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Win %</th>
+                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {sortedPartnerships.map((partnership, index) => {
+                                                                            const player1 = players.find(p => p.id === partnership.player1Id);
+                                                                            const player2 = players.find(p => p.id === partnership.player2Id);
+
+                                                                            return (
+                                                                                <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center font-bold">
+                                                                                        {index + 1}
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3">
+                                                                                        <span className={`${getClasses('body')} font-bold`}>
+                                                                                            {player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown'} & {player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown'}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                        <span className={`${getClasses('body')} font-bold text-purple-600`}>
+                                                                                            {partnership.proRataScore}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                        <span className={`${getClasses('body')} font-bold`}>
+                                                                                            {partnership.matches}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                        {partnership.won}
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                        <span className="text-gray-600">
+                                                                                            {partnership.winRate}%
+                                                                                        </span>
+                                                                                    </td>
+                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                                        <span className={partnership.gameDifferential >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                                                                                            {partnership.gameDifferential >= 0 ? '+' : ''}{partnership.gameDifferential}
+                                                                                        </span>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            );
+                                                                        })}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length > 0 && (
