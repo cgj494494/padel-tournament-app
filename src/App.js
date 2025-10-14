@@ -352,7 +352,47 @@ const exportChampionshipToPDF = (championship, players) => {
         doc.setFont(undefined, 'italic');
         doc.text(`Showing first 20 of ${championship.matches.length} matches. Export to Excel for complete data.`, 14, noteY);
     }
+    // Partnership Statistics (new page if needed)
+    const matchFinalY = doc.lastAutoTable.finalY || 70;
+    if (matchFinalY > 200) {
+        doc.addPage();
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Partnership Statistics', 14, 20);
+    } else {
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Partnership Statistics', 14, matchFinalY + 15);
+    }
 
+    // Calculate partnerships
+    const partnershipStats = calculatePartnershipStatsForExport(championship, players);
+    const partnershipData = partnershipStats.slice(0, 15).map((stats, index) => [
+        index + 1,
+        stats.player1Name,
+        stats.player2Name,
+        stats.proRataScore.toFixed(2),
+        stats.matches,
+        stats.won,
+        `${stats.winRate.toFixed(1)}%`,
+        stats.gameDifferential > 0 ? `+${stats.gameDifferential}` : stats.gameDifferential
+    ]);
+
+    doc.autoTable({
+        startY: matchFinalY > 200 ? 25 : matchFinalY + 20,
+        head: [['#', 'Player 1', 'Player 2', 'Pro Rata', 'Played', 'Won', 'Win %', 'Games +/-']],
+        body: partnershipData,
+        theme: 'striped',
+        headStyles: { fillColor: [147, 51, 234] },
+        styles: { fontSize: 8 }
+    });
+
+    if (partnershipStats.length > 15) {
+        const partnershipNoteY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(9);
+        doc.setFont(undefined, 'italic');
+        doc.text(`Showing top 15 of ${partnershipStats.length} partnerships. Export to Excel for complete data.`, 14, partnershipNoteY);
+    }
     // Save
     const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.pdf`;
     doc.save(filename);
