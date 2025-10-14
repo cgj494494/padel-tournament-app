@@ -1591,7 +1591,6 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                         Back
                                     </button>
                                     <button
-                                        <button
                                         onClick={executeImport}
                                         disabled={scoringWarning.type === 'custom-not-available'}
                                         className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
