@@ -35,7 +35,7 @@ const getPlayerName = (playerId, players) => {
 // Helper function to calculate partnership statistics for a championship
 const calculatePartnershipStatsForExport = (championship, players) => {
     const partnershipMap = new Map();
-    const minMatches = championship.proRataMinimumMatches || 3;
+    const minMatches = championship.settings?.minMatchesForProRata || championship.proRataMinimumMatches || 3;
 
     // Loop through all matches and build partnership statistics
     championship.matches.forEach(match => {
