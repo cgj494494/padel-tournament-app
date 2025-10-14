@@ -118,6 +118,7 @@ const exportChampionshipToExcel = (championship, players) => {
         const player = players.find(p => p.id === standing.playerId);
         return {
             'Player': player ? `${player.firstName} ${player.surname}` : 'Unknown',
+            'User ID': player ? player.userId : '',
             'Points': standing.points,
             'Matches': standing.matchesPlayed,
             'Wins': standing.matchesWon,
