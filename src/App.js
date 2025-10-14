@@ -31,67 +31,103 @@ const getPlayerName = (playerId, players) => {
     const player = players.find(p => p.id === playerId);
     return player ? `${player.firstName} ${player.surname}` : 'Unknown';
 };
-// ⬇️ ADD THE THREE NEW HELPER FUNCTIONS HERE ⬇️
 
+// Helper function to calculate partnership statistics for a championship
+const calculatePartnershipStatsForExport = (championship, players) => {
+    const partnershipMap = new Map();
+    const minMatches = championship.proRataMinimumMatches || 3;
 
+    // Loop through all matches and build partnership statistics
+    championship.matches.forEach(match => {
+        // Process Team A partnership
+        const teamAKey = [match.teamA[0], match.teamA[1]].sort().join('-');
+        if (!partnershipMap.has(teamAKey)) {
+            partnershipMap.set(teamAKey, {
+                player1Id: match.teamA[0],
+                player2Id: match.teamA[1],
+                matches: 0,
+                won: 0,
+                lost: 0,
+                totalPoints: 0,
+                gamesWon: 0,
+                gamesLost: 0
+            });
+        }
 
+        const teamAStats = partnershipMap.get(teamAKey);
+        teamAStats.matches += 1;
+        teamAStats.totalPoints += match.points.teamA;
+        teamAStats.gamesWon += match.gamesA;
+        teamAStats.gamesLost += match.gamesB;
 
+        if (match.points.teamA > match.points.teamB) {
+            teamAStats.won += 1;
+        } else if (match.points.teamA < match.points.teamB) {
+            teamAStats.lost += 1;
+        }
 
+        // Process Team B partnership
+        const teamBKey = [match.teamB[0], match.teamB[1]].sort().join('-');
+        if (!partnershipMap.has(teamBKey)) {
+            partnershipMap.set(teamBKey, {
+                player1Id: match.teamB[0],
+                player2Id: match.teamB[1],
+                matches: 0,
+                won: 0,
+                lost: 0,
+                totalPoints: 0,
+                gamesWon: 0,
+                gamesLost: 0
+            });
+        }
 
+        const teamBStats = partnershipMap.get(teamBKey);
+        teamBStats.matches += 1;
+        teamBStats.totalPoints += match.points.teamB;
+        teamBStats.gamesWon += match.gamesB;
+        teamBStats.gamesLost += match.gamesA;
 
+        if (match.points.teamB > match.points.teamA) {
+            teamBStats.won += 1;
+        } else if (match.points.teamB < match.points.teamA) {
+            teamBStats.lost += 1;
+        }
+    });
 
+    // Convert to array and filter by minimum matches
+    const partnershipArray = Array.from(partnershipMap.values())
+        .filter(stats => stats.matches >= minMatches)
+        .map(stats => {
+            const player1 = players.find(p => p.id === stats.player1Id);
+            const player2 = players.find(p => p.id === stats.player2Id);
 
+            const proRataScore = stats.matches > 0
+                ? (stats.totalPoints / stats.matches).toFixed(2)
+                : '0.00';
 
+            const winRate = stats.matches > 0
+                ? ((stats.won / stats.matches) * 100).toFixed(1)
+                : '0.0';
 
+            const gameDifferential = stats.gamesWon - stats.gamesLost;
 
+            return {
+                player1Name: player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown',
+                player2Name: player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown',
+                matches: stats.matches,
+                won: stats.won,
+                lost: stats.lost,
+                proRataScore: parseFloat(proRataScore),
+                gamesWon: stats.gamesWon,
+                gamesLost: stats.gamesLost,
+                gameDifferential: gameDifferential,
+                winRate: parseFloat(winRate)
+            };
+        });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ⬆️ END OF NEW HELPER FUNCTIONS ⬆️
-
-// ⬇️ ADD THIS ENTIRE FUNCTION HERE ⬇️
-
-
-
+    // Sort by pro rata score (descending)
+    return partnershipArray.sort((a, b) => b.proRataScore - a.proRataScore);
+};
 // Export Championship to Excel
 const exportChampionshipToExcel = (championship, players) => {
     const wb = XLSX.utils.book_new();
@@ -143,7 +179,23 @@ const exportChampionshipToExcel = (championship, players) => {
 
     const infoSheet = XLSX.utils.json_to_sheet(infoData);
     XLSX.utils.book_append_sheet(wb, infoSheet, "Championship Info");
+    // Sheet 4: Partnership Statistics
+    const partnershipStats = calculatePartnershipStatsForExport(championship, players);
+    const partnershipData = partnershipStats.map((stats, index) => ({
+        'Rank': index + 1,
+        'Player 1': stats.player1Name,
+        'Player 2': stats.player2Name,
+        'Pro Rata Score': stats.proRataScore,
+        'Matches Played': stats.matches,
+        'Matches Won': stats.won,
+        'Win %': `${stats.winRate}%`,
+        'Games Won': stats.gamesWon,
+        'Games Lost': stats.gamesLost,
+        'Games +/-': stats.gameDifferential > 0 ? `+${stats.gameDifferential}` : stats.gameDifferential
+    }));
 
+    const partnershipSheet = XLSX.utils.json_to_sheet(partnershipData);
+    XLSX.utils.book_append_sheet(wb, partnershipSheet, 'Partnerships');
     // Generate filename and download
     const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, filename);
