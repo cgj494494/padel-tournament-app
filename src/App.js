@@ -924,7 +924,7 @@ const HomePage = ({ activeSection, setActiveSection }) => {
 
             // Execute import based on mode
             if (importMode === 'replace') {
-                if (confirm('⚠️ FINAL CONFIRMATION: This will DELETE ALL existing championships and replace with this import. Are you absolutely sure?')) {
+                if (window.confirm('⚠️ FINAL CONFIRMATION: This will DELETE ALL existing championships and replace with this import. Are you absolutely sure?')) {
                     localStorage.setItem('padelChampionships', JSON.stringify([finalChampionship]));
                 } else {
                     return;
