@@ -903,100 +903,102 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         };
 
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-200 my-8">
-                    <div className="p-8">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                Championship Settings
-                            </h3>
-                            <button
-                                onClick={() => setShowChampionshipSettings(false)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className={`block ${getClasses('body')} font-bold text-gray-700 mb-3`}>
-                                    Minimum Matches for Pro Rata
-                                </label>
-                                <p className={`${getClasses('small')} text-gray-600 mb-4`}>
-                                    Players must play at least this many matches to appear in Pro Rata standings
-                                </p>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    value={localMinMatches}
-                                    onFocus={(e) => e.target.select()}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === '' || val === '-') {
-                                            setLocalMinMatches(1); // Default to 1 if cleared
-                                        } else {
-                                            const num = parseInt(val);
-                                            if (!isNaN(num) && num >= 1 && num <= 10) {
-                                                setLocalMinMatches(num);
-                                            }
-                                        }
-                                    }}
-                                    className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
-                                />
-                            </div>
-                        </div>
-                        {/* Danger Zone - Delete Championship */}
-                        <div className="mt-8 pt-6 border-t-2 border-red-200">
-                            <h3 className={`${getClasses('body')} font-bold text-red-600 mb-2`}>
-                                ⚠️ Danger Zone
-                            </h3>
-                            <p className={`${getClasses('small')} text-gray-600 mb-4`}>
-                                Permanently delete this championship and all its data. This action cannot be undone.
-                            </p>
-                            <button
-                                onClick={() => {
-                                    setShowChampionshipSettings(false);
-                                    setTimeout(() => {
-                                        setShowDeleteConfirm(true);
-                                    }, 100);
-                                }}
-                                className={`w-full ${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg`}
-                            >
-                                🗑️ Delete Championship
-                            </button>
-                        </div>
-                        <div className="space-y-4 mt-8">
-                            {/* Recalculation Button */}
-                            <button
-                                onClick={() => {
-                                    if (window.confirm('This will recalculate all match points using the updated scoring system. Current standings will change. Continue?')) {
-                                        recalculateChampionshipScoring();
-                                        setShowChampionshipSettings(false);
-                                    }
-                                }}
-                                className={`w-full ${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-xl`}
-                            >
-                                🔄 Recalculate with New Scoring System
-                            </button>
-
-                            {/* Original buttons */}
-                            <div className="flex space-x-4">
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+                <div className="min-h-screen flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full border border-gray-200 my-8">
+                        <div className="p-8">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                    Championship Settings
+                                </h3>
                                 <button
                                     onClick={() => setShowChampionshipSettings(false)}
-                                    className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
+                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                                 >
-                                    Cancel
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                                 </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className={`block ${getClasses('body')} font-bold text-gray-700 mb-3`}>
+                                        Minimum Matches for Pro Rata
+                                    </label>
+                                    <p className={`${getClasses('small')} text-gray-600 mb-4`}>
+                                        Players must play at least this many matches to appear in Pro Rata standings
+                                    </p>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        value={localMinMatches}
+                                        onFocus={(e) => e.target.select()}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === '' || val === '-') {
+                                                setLocalMinMatches(1); // Default to 1 if cleared
+                                            } else {
+                                                const num = parseInt(val);
+                                                if (!isNaN(num) && num >= 1 && num <= 10) {
+                                                    setLocalMinMatches(num);
+                                                }
+                                            }
+                                        }}
+                                        className={`w-full ${getClasses('input')} border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white`}
+                                    />
+                                </div>
+                            </div>
+                            {/* Danger Zone - Delete Championship */}
+                            <div className="mt-8 pt-6 border-t-2 border-red-200">
+                                <h3 className={`${getClasses('body')} font-bold text-red-600 mb-2`}>
+                                    ⚠️ Danger Zone
+                                </h3>
+                                <p className={`${getClasses('small')} text-gray-600 mb-4`}>
+                                    Permanently delete this championship and all its data. This action cannot be undone.
+                                </p>
                                 <button
-                                    onClick={handleSave}
-                                    className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
+                                    onClick={() => {
+                                        setShowChampionshipSettings(false);
+                                        setTimeout(() => {
+                                            setShowDeleteConfirm(true);
+                                        }, 100);
+                                    }}
+                                    className={`w-full ${getClasses('button')} bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg`}
                                 >
-                                    Save Settings
+                                    🗑️ Delete Championship
                                 </button>
+                            </div>
+                            <div className="space-y-4 mt-8">
+                                {/* Recalculation Button */}
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('This will recalculate all match points using the updated scoring system. Current standings will change. Continue?')) {
+                                            recalculateChampionshipScoring();
+                                            setShowChampionshipSettings(false);
+                                        }
+                                    }}
+                                    className={`w-full ${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-xl`}
+                                >
+                                    🔄 Recalculate with New Scoring System
+                                </button>
+
+                                {/* Original buttons */}
+                                <div className="flex space-x-4">
+                                    <button
+                                        onClick={() => setShowChampionshipSettings(false)}
+                                        className={`flex-1 ${getClasses('button')} bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-2xl shadow-lg`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        className={`flex-1 ${getClasses('button')} bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-2xl shadow-xl`}
+                                    >
+                                        Save Settings
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1004,6 +1006,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             </div>
         );
     };
+
     // MAIN RENDER VIEWS
     if (view === 'list') {
         return (
