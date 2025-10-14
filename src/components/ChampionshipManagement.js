@@ -1700,145 +1700,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                     </div>
                                                 );
                                             })}
-                                            {activeTab === 'partnerships' && (
-                                                <div>
-                                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-                                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                                            Partnership Statistics
-                                                        </h3>
 
-                                                        {/* Sorting Toggle Buttons */}
-                                                        <div className="flex items-center space-x-2 bg-gray-100 rounded-2xl p-2 flex-wrap">
-                                                            <button
-                                                                onClick={() => setPartnershipSortMode('prorata')}
-                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'prorata'
-                                                                    ? 'bg-white text-blue-600 shadow-lg'
-                                                                    : 'text-gray-600 hover:text-gray-900'
-                                                                    }`}
-                                                            >
-                                                                Pro Rata
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setPartnershipSortMode('matches')}
-                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'matches'
-                                                                    ? 'bg-white text-blue-600 shadow-lg'
-                                                                    : 'text-gray-600 hover:text-gray-900'
-                                                                    }`}
-                                                            >
-                                                                Matches
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setPartnershipSortMode('games')}
-                                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'games'
-                                                                    ? 'bg-white text-blue-600 shadow-lg'
-                                                                    : 'text-gray-600 hover:text-gray-900'
-                                                                    }`}
-                                                            >
-                                                                Games +/-
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Info message about minimum matches */}
-                                                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                                        <p className={`${getClasses('small')} text-blue-700`}>
-                                                            <strong>Showing partnerships with {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches played together.</strong> This uses the same minimum as Pro Rata standings.
-                                                        </p>
-                                                    </div>
-
-                                                    {(() => {
-                                                        const partnerships = calculatePartnershipStats();
-
-                                                        if (partnerships.length === 0) {
-                                                            return (
-                                                                <div className="text-center py-16">
-                                                                    <div className="text-8xl mb-6">🤝</div>
-                                                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                                                        No Partnerships Yet
-                                                                    </h3>
-                                                                    <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                                                        Partnerships will appear here once player pairs have played {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches together
-                                                                    </p>
-                                                                </div>
-                                                            );
-                                                        }
-
-                                                        // Sort partnerships based on selected mode
-                                                        const sortedPartnerships = [...partnerships].sort((a, b) => {
-                                                            if (partnershipSortMode === 'prorata') {
-                                                                const diff = parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
-                                                                return diff !== 0 ? diff : b.matches - a.matches; // Secondary sort by matches
-                                                            } else if (partnershipSortMode === 'matches') {
-                                                                const diff = b.matches - a.matches;
-                                                                return diff !== 0 ? diff : parseFloat(b.proRataScore) - parseFloat(a.proRataScore); // Secondary sort by pro rata
-                                                            } else { // games
-                                                                const diff = b.gameDifferential - a.gameDifferential;
-                                                                return diff !== 0 ? diff : b.matches - a.matches; // Secondary sort by matches
-                                                            }
-                                                        });
-
-                                                        return (
-                                                            <div className="overflow-x-auto">
-                                                                <table className="w-full border-collapse border border-gray-300">
-                                                                    <thead>
-                                                                        <tr className="bg-gray-100">
-                                                                            <th className="border border-gray-300 px-4 py-3 text-left font-bold">Rank</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-left font-bold">Partnership</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Win %</th>
-                                                                            <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {sortedPartnerships.map((partnership, index) => {
-                                                                            const player1 = players.find(p => p.id === partnership.player1Id);
-                                                                            const player2 = players.find(p => p.id === partnership.player2Id);
-
-                                                                            return (
-                                                                                <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center font-bold">
-                                                                                        {index + 1}
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3">
-                                                                                        <span className={`${getClasses('body')} font-bold`}>
-                                                                                            {player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown'} & {player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown'}
-                                                                                        </span>
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                        <span className={`${getClasses('body')} font-bold text-purple-600`}>
-                                                                                            {partnership.proRataScore}
-                                                                                        </span>
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                        <span className={`${getClasses('body')} font-bold`}>
-                                                                                            {partnership.matches}
-                                                                                        </span>
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                        {partnership.won}
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                        <span className="text-gray-600">
-                                                                                            {partnership.winRate}%
-                                                                                        </span>
-                                                                                    </td>
-                                                                                    <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                        <span className={partnership.gameDifferential >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                                                                                            {partnership.gameDifferential >= 0 ? '+' : ''}{partnership.gameDifferential}
-                                                                                        </span>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        })}
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            )}
                                         </div>
 
                                         {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length > 0 && (
@@ -1905,77 +1767,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </div>
                                             </div>
                                         )}
-                                        {activeTab === 'partnerships' && (
-                                            <div>
-                                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-8`}>
-                                                    Partnership Statistics
-                                                </h3>
-                                                <div className="text-center py-16">
-                                                    <div className="text-8xl mb-6">🤝</div>
-                                                    <p className={`${getClasses('body')} text-gray-600`}>
-                                                        Partnership analysis will show here...
-                                                    </p>
-                                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl max-w-2xl mx-auto">
-                                                        <p className={`${getClasses('small')} text-blue-700`}>
-                                                            <strong>Coming soon:</strong> View statistics for all player partnerships, sortable by Pro Rata Score, Matches Played, and Games +/-.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {/* Add Existing Players Modal */}
-                                        {showAddPlayersModal && (
-                                            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                                                <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-96 overflow-y-auto border border-gray-200">
-                                                    <div className="p-6">
-                                                        <div className="flex justify-between items-center mb-6">
-                                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                                                Add Existing Players
-                                                            </h3>
-                                                            <button
-                                                                onClick={() => setShowAddPlayersModal(false)}
-                                                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                                                            >
-                                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
-
-                                                        <div className="space-y-3 max-h-64 overflow-y-auto">
-                                                            {players
-                                                                .filter(p => p.isActive && !currentChampionship.players.includes(p.id))
-                                                                .map((player) => (
-                                                                    <div key={player.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                                                        <div>
-                                                                            <p className={`${getClasses('small')} font-bold text-gray-800`}>
-                                                                                {player.firstName} {player.surname}
-                                                                            </p>
-                                                                            <p className={`${getClasses('small')} text-gray-600`}>
-                                                                                {player.userId}
-                                                                            </p>
-                                                                        </div>
-                                                                        <button
-                                                                            onClick={() => {
-                                                                                addPlayerToChampionship(player.id);
-                                                                            }}
-                                                                            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded"
-                                                                        >
-                                                                            Add
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                        </div>
-
-                                                        {players.filter(p => p.isActive && !currentChampionship.players.includes(p.id)).length === 0 && (
-                                                            <p className={`${getClasses('small')} text-gray-500 text-center py-4`}>
-                                                                All available players are already in this championship
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
 
                                         {/* Add New Player Modal */}
                                         <PlayerManagementModal
@@ -1991,6 +1782,146 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                     </div>
                                 )}
+                                {activeTab === 'partnerships' && (
+                                    <div>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                                Partnership Statistics
+                                            </h3>
+
+                                            {/* Sorting Toggle Buttons */}
+                                            <div className="flex items-center space-x-2 bg-gray-100 rounded-2xl p-2 flex-wrap">
+                                                <button
+                                                    onClick={() => setPartnershipSortMode('prorata')}
+                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'prorata'
+                                                        ? 'bg-white text-blue-600 shadow-lg'
+                                                        : 'text-gray-600 hover:text-gray-900'
+                                                        }`}
+                                                >
+                                                    Pro Rata
+                                                </button>
+                                                <button
+                                                    onClick={() => setPartnershipSortMode('matches')}
+                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'matches'
+                                                        ? 'bg-white text-blue-600 shadow-lg'
+                                                        : 'text-gray-600 hover:text-gray-900'
+                                                        }`}
+                                                >
+                                                    Matches
+                                                </button>
+                                                <button
+                                                    onClick={() => setPartnershipSortMode('games')}
+                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'games'
+                                                        ? 'bg-white text-blue-600 shadow-lg'
+                                                        : 'text-gray-600 hover:text-gray-900'
+                                                        }`}
+                                                >
+                                                    Games +/-
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Info message about minimum matches */}
+                                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                            <p className={`${getClasses('small')} text-blue-700`}>
+                                                <strong>Showing partnerships with {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches played together.</strong> This uses the same minimum as Pro Rata standings.
+                                            </p>
+                                        </div>
+
+                                        {(() => {
+                                            const partnerships = calculatePartnershipStats();
+
+                                            if (partnerships.length === 0) {
+                                                return (
+                                                    <div className="text-center py-16">
+                                                        <div className="text-8xl mb-6">🤝</div>
+                                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                                            No Partnerships Yet
+                                                        </h3>
+                                                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                                            Partnerships will appear here once player pairs have played {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches together
+                                                        </p>
+                                                    </div>
+                                                );
+                                            }
+
+                                            // Sort partnerships based on selected mode
+                                            const sortedPartnerships = [...partnerships].sort((a, b) => {
+                                                if (partnershipSortMode === 'prorata') {
+                                                    const diff = parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
+                                                    return diff !== 0 ? diff : b.matches - a.matches;
+                                                } else if (partnershipSortMode === 'matches') {
+                                                    const diff = b.matches - a.matches;
+                                                    return diff !== 0 ? diff : parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
+                                                } else {
+                                                    const diff = b.gameDifferential - a.gameDifferential;
+                                                    return diff !== 0 ? diff : b.matches - a.matches;
+                                                }
+                                            });
+
+                                            return (
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full border-collapse border border-gray-300">
+                                                        <thead>
+                                                            <tr className="bg-gray-100">
+                                                                <th className="border border-gray-300 px-4 py-3 text-left font-bold">Rank</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-left font-bold">Partnership</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Win %</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {sortedPartnerships.map((partnership, index) => {
+                                                                const player1 = players.find(p => p.id === partnership.player1Id);
+                                                                const player2 = players.find(p => p.id === partnership.player2Id);
+
+                                                                return (
+                                                                    <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center font-bold">
+                                                                            {index + 1}
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3">
+                                                                            <span className={`${getClasses('body')} font-bold`}>
+                                                                                {player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown'} & {player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown'}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={`${getClasses('body')} font-bold text-purple-600`}>
+                                                                                {partnership.proRataScore}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={`${getClasses('body')} font-bold`}>
+                                                                                {partnership.matches}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            {partnership.won}
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className="text-gray-600">
+                                                                                {partnership.winRate}%
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={partnership.gameDifferential >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                                                                                {partnership.gameDifferential >= 0 ? '+' : ''}{partnership.gameDifferential}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
                             </div>
                         </div>
                     </div>
