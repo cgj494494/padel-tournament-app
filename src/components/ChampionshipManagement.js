@@ -1252,25 +1252,27 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                         </div>
 
-                        <div className="flex bg-gray-50/80 border-b-2 border-gray-200">
-                            {[
-                                { id: 'standings', icon: '🏆', title: 'Standings' },
-                                { id: 'matches', icon: '🎾', title: 'Matches' },
-                                { id: 'players', icon: '👥', title: 'Players' },
-                                { id: 'partnerships', icon: '🤝', title: 'Partnerships' }
-                            ].map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    title={tab.title}
-                                    className={`flex-1 py-4 flex items-center justify-center transition-all border-b-4 ${activeTab === tab.id
-                                        ? 'border-blue-500 text-blue-600 bg-white shadow-lg'
-                                        : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    <span className="text-4xl">{tab.icon}</span>
-                                </button>
-                            ))}
+                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+                            <div className="flex bg-gray-50/80 border-b-2 border-gray-200">
+                                {[
+                                    { id: 'standings', label: 'Standings', icon: '🏆' },
+                                    { id: 'matches', label: 'Matches', icon: '🎾' },
+                                    { id: 'players', label: 'Players', icon: '👥' },
+                                    { id: 'partnerships', label: 'Partnerships', icon: '🤝' }
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex-1 ${getClasses('small')} font-bold flex items-center justify-center space-x-2 transition-all border-b-4 ${activeTab === tab.id
+                                            ? 'border-blue-500 text-blue-600 bg-white shadow-lg'
+                                            : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <span className="text-3xl">{tab.icon}</span>
+                                        <span>{tab.label}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         <div className="p-8">
