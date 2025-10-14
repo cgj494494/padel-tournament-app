@@ -645,8 +645,8 @@ const HomePage = ({ activeSection, setActiveSection }) => {
     const [exportScope, setExportScope] = useState('championship'); // 'championship' or 'player'
     const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
-    const [exportExcel, setExportExcel] = useState(true);
-    const [exportPdf, setExportPdf] = useState(true);
+    const [exportExcel, setExportExcel] = useState(false);
+    const [exportPdf, setExportPdf] = useState(true);  // Default to PDF
     const [championships, setChampionships] = useState([]);
     const [players, setPlayers] = useState([]);
     // Add these three lines for import functionality
@@ -1275,11 +1275,15 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                 <div className="mb-6">
                                     <h3 className="text-lg font-bold mb-3">Export Format:</h3>
                                     <div className="space-y-2">
+                                        {/* Excel Option */}
                                         <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
                                                 checked={exportExcel}
-                                                onChange={(e) => setExportExcel(e.target.checked)}
+                                                onChange={(e) => {
+                                                    setExportExcel(e.target.checked);
+                                                    if (e.target.checked) setExportPdf(false);  // Uncheck PDF when Excel is checked
+                                                }}
                                                 className="mr-3"
                                             />
                                             <div>
@@ -1288,11 +1292,15 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                             </div>
                                         </label>
 
+                                        {/* PDF Option */}
                                         <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
                                                 checked={exportPdf}
-                                                onChange={(e) => setExportPdf(e.target.checked)}
+                                                onChange={(e) => {
+                                                    setExportPdf(e.target.checked);
+                                                    if (e.target.checked) setExportExcel(false);  // Uncheck Excel when PDF is checked
+                                                }}
                                                 className="mr-3"
                                             />
                                             <div>
@@ -1300,313 +1308,331 @@ const HomePage = ({ activeSection, setActiveSection }) => {
                                                 <div className="text-sm text-gray-600">Nicely formatted report for sharing</div>
                                             </div>
                                         </label>
-                                    </div>
-                                </div>
+                                        <div>
+                                            <div className="font-bold">Excel (.xlsx)</div>
+                                            <div className="text-sm text-gray-600">Comprehensive data with multiple sheets for analysis</div>
+                                        </div>
+                                    </label>
 
-                                {/* Preview */}
-                                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                                    <div className="text-sm text-blue-800">
-                                        {exportScope === 'championship' && selectedChampionshipId && (
-                                            <>Preview: {championships.find(c => c.id === parseInt(selectedChampionshipId))?.matches?.length || 0} matches from {championships.find(c => c.id === parseInt(selectedChampionshipId))?.name}</>
-                                        )}
-                                        {exportScope === 'player' && selectedPlayerId && (
-                                            <>Preview: All matches for {players.find(p => p.id === selectedPlayerId)?.firstName} {players.find(p => p.id === selectedPlayerId)?.surname}</>
-                                        )}
-                                        {(!selectedChampionshipId && exportScope === 'championship') || (!selectedPlayerId && exportScope === 'player') ? (
-                                            <>Please select a {exportScope} to export</>
-                                        ) : null}
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowExportModal(false);
-                                            setShowGlobalSettings(true);
-                                        }}
-                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                    >
-                                        Back
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            if (exportExcel) {
-                                                if (exportScope === 'championship') {
-                                                    const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
-                                                    if (championship) {
-                                                        exportChampionshipToExcel(championship, players);
-                                                    }
-                                                } else if (exportScope === 'player') {
-                                                    exportPlayerToExcel(selectedPlayerId, championships, players);
-                                                }
-                                            }
-
-                                            if (exportPdf) {
-                                                if (exportScope === 'championship') {
-                                                    const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
-                                                    if (championship) {
-                                                        exportChampionshipToPDF(championship, players);
-                                                    }
-                                                } else if (exportScope === 'player') {
-                                                    exportPlayerToPDF(selectedPlayerId, championships, players);
-                                                }
-                                            }
-
-                                            // Close modal
-                                            setShowExportModal(false);
-                                        }}
-                                        disabled={
-                                            (!exportExcel && !exportPdf) ||
-                                            (exportScope === 'championship' && !selectedChampionshipId) ||
-                                            (exportScope === 'player' && !selectedPlayerId)
-                                        }
-                                        className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
-                                    >
-                                        Export ⬇
-                                    </button>
+                                    <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                        <input
+                                            type="checkbox"
+                                            checked={exportPdf}
+                                            onChange={(e) => setExportPdf(e.target.checked)}
+                                            className="mr-3"
+                                        />
+                                        <div>
+                                            <div className="font-bold">PDF (.pdf)</div>
+                                            <div className="text-sm text-gray-600">Nicely formatted report for sharing</div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                )}
 
-                {/* ⬇️ ADD THE IMPORT MODAL HERE ⬇️ */}
-                {/* Import Modal */}
-                {showImportModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-8">
-                                <h2 className="text-3xl font-bold mb-6 text-green-800">📥 Import Championship Data</h2>
-
-                                {/* File Picker */}
-                                <div className="mb-6">
-                                    <label className="block text-lg font-bold mb-2 text-gray-700">
-                                        Select Excel File
-                                    </label>
-                                    <input
-                                        type="file"
-                                        accept=".xlsx"
-                                        onChange={(e) => setImportFile(e.target.files[0])}
-                                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
-                                    />
-                                    {importFile && (
-                                        <p className="text-sm text-green-600 mt-2 font-medium">
-                                            ✓ Selected: {importFile.name}
-                                        </p>
+                            {/* Preview */}
+                            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                                <div className="text-sm text-blue-800">
+                                    {exportScope === 'championship' && selectedChampionshipId && (
+                                        <>Preview: {championships.find(c => c.id === parseInt(selectedChampionshipId))?.matches?.length || 0} matches from {championships.find(c => c.id === parseInt(selectedChampionshipId))?.name}</>
                                     )}
+                                    {exportScope === 'player' && selectedPlayerId && (
+                                        <>Preview: All matches for {players.find(p => p.id === selectedPlayerId)?.firstName} {players.find(p => p.id === selectedPlayerId)?.surname}</>
+                                    )}
+                                    {(!selectedChampionshipId && exportScope === 'championship') || (!selectedPlayerId && exportScope === 'player') ? (
+                                        <>Please select a {exportScope} to export</>
+                                    ) : null}
                                 </div>
+                            </div>
 
-                                {/* Import Mode Selection */}
-                                <div className="mb-6">
-                                    <p className="text-lg font-bold mb-3 text-gray-700">Import Mode:</p>
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowExportModal(false);
+                                        setShowGlobalSettings(true);
+                                    }}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (exportExcel) {
+                                            if (exportScope === 'championship') {
+                                                const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                                                if (championship) {
+                                                    exportChampionshipToExcel(championship, players);
+                                                }
+                                            } else if (exportScope === 'player') {
+                                                exportPlayerToExcel(selectedPlayerId, championships, players);
+                                            }
+                                        }
 
-                                    <label className="flex items-start mb-4 cursor-pointer p-4 border-2 rounded-xl hover:bg-green-50 transition-colors"
-                                        style={{ borderColor: importMode === 'merge' ? '#16a34a' : '#d1d5db', backgroundColor: importMode === 'merge' ? '#f0fdf4' : 'white' }}>
-                                        <input
-                                            type="radio"
-                                            value="merge"
-                                            checked={importMode === 'merge'}
-                                            onChange={(e) => setImportMode(e.target.value)}
-                                            className="mr-3 mt-1"
-                                        />
-                                        <div>
-                                            <span className="font-bold text-lg">Merge - Add to existing championships</span>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                Imported championships will be added alongside your current ones. Nothing will be deleted.
-                                            </p>
-                                        </div>
-                                    </label>
+                                        if (exportPdf) {
+                                            if (exportScope === 'championship') {
+                                                const championship = championships.find(c => c.id === parseInt(selectedChampionshipId));
+                                                if (championship) {
+                                                    exportChampionshipToPDF(championship, players);
+                                                }
+                                            } else if (exportScope === 'player') {
+                                                exportPlayerToPDF(selectedPlayerId, championships, players);
+                                            }
+                                        }
 
-                                    <label className="flex items-start cursor-pointer p-4 border-2 rounded-xl hover:bg-red-50 transition-colors"
-                                        style={{ borderColor: importMode === 'replace' ? '#dc2626' : '#d1d5db', backgroundColor: importMode === 'replace' ? '#fef2f2' : 'white' }}>
-                                        <input
-                                            type="radio"
-                                            value="replace"
-                                            checked={importMode === 'replace'}
-                                            onChange={(e) => setImportMode(e.target.value)}
-                                            className="mr-3 mt-1"
-                                        />
-                                        <div>
-                                            <span className="font-bold text-lg text-red-600">Replace - Clear existing and import fresh</span>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                ⚠️ <strong>WARNING:</strong> All existing championships will be permanently deleted before importing.
-                                            </p>
-                                        </div>
-                                    </label>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowImportModal(false);
-                                            setImportFile(null);
-                                        }}
-                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleImportPreview}
-                                        disabled={!importFile || isProcessingFile}
-                                        className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        {isProcessingFile ? 'Reading file...' : 'Preview Import →'}
-                                    </button>
-                                </div>
+                                        // Close modal
+                                        setShowExportModal(false);
+                                    }}
+                                    disabled={
+                                        (!exportExcel && !exportPdf) ||
+                                        (exportScope === 'championship' && !selectedChampionshipId) ||
+                                        (exportScope === 'player' && !selectedPlayerId)
+                                    }
+                                    className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors"
+                                >
+                                    Export ⬇
+                                </button>
                             </div>
                         </div>
                     </div>
+                    </div>
                 )}
-                {/* ⬆️ END OF IMPORT MODAL ⬆️ */}
 
-                {/* ⬇️ ADD PREVIEW MODAL HERE ⬇️ */}
-                {/* Preview Modal */}
-                {showPreviewModal && importPreview && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                            <div className="p-8">
-                                <h2 className="text-3xl font-bold mb-6 text-blue-800">📋 Import Preview</h2>
+            {/* ⬇️ ADD THE IMPORT MODAL HERE ⬇️ */}
+            {/* Import Modal */}
+            {showImportModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-8">
+                            <h2 className="text-3xl font-bold mb-6 text-green-800">📥 Import Championship Data</h2>
 
-                                {/* Championship Summary */}
-                                <div className="mb-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
-                                    <h3 className="font-bold text-lg mb-3 text-blue-900">Championship Details</h3>
-                                    <div className="space-y-2">
-                                        <p className="text-sm"><strong>Name:</strong> {importPreview.name}</p>
-                                        <p className="text-sm"><strong>Players:</strong> {importPreview.players.length}</p>
-                                        <p className="text-sm"><strong>Matches:</strong> {importPreview.matches.length}</p>
-                                        <p className="text-sm"><strong>Start Date:</strong> {formatDate(importPreview.startDate)}</p>
-                                        <p className="text-sm"><strong>Scoring System:</strong> {importPreview.settings.scoringSystem}</p>
-                                    </div>
-                                </div>
-
-                                {/* Duplicate Warning */}
-                                {duplicateDetected.exists && (
-                                    <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-xl">
-                                        <h3 className="font-bold text-yellow-800 mb-2">⚠️ Potential Duplicate Detected</h3>
-                                        <p className="text-sm mb-3">A championship named "{importPreview.name}" already exists.</p>
-                                        <p className="text-sm mb-3">
-                                            <strong>Existing:</strong> {duplicateDetected.existing.matches.length} matches,
-                                            started {formatDate(duplicateDetected.existing.startDate)}
-                                        </p>
-
-                                        <div className="space-y-2 mt-4">
-                                            <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-yellow-100"
-                                                style={{ borderColor: duplicateAction === 'skip' ? '#f59e0b' : '#e5e7eb' }}>
-                                                <input
-                                                    type="radio"
-                                                    name="duplicateAction"
-                                                    value="skip"
-                                                    checked={duplicateAction === 'skip'}
-                                                    onChange={(e) => setDuplicateAction(e.target.value)}
-                                                    className="mr-3 mt-1"
-                                                />
-                                                <div>
-                                                    <span className="font-semibold">Skip - Do not import</span>
-                                                    <p className="text-xs text-gray-600">Cancel this import</p>
-                                                </div>
-                                            </label>
-
-                                            <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-green-100"
-                                                style={{ borderColor: duplicateAction === 'rename' ? '#10b981' : '#e5e7eb' }}>
-                                                <input
-                                                    type="radio"
-                                                    name="duplicateAction"
-                                                    value="rename"
-                                                    checked={duplicateAction === 'rename'}
-                                                    onChange={(e) => setDuplicateAction(e.target.value)}
-                                                    className="mr-3 mt-1"
-                                                />
-                                                <div>
-                                                    <span className="font-semibold">Rename - Import as "{importPreview.name} (1)"</span>
-                                                    <p className="text-xs text-gray-600">Keep both championships</p>
-                                                </div>
-                                            </label>
-
-                                            <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-red-100"
-                                                style={{ borderColor: duplicateAction === 'replace' ? '#ef4444' : '#e5e7eb' }}>
-                                                <input
-                                                    type="radio"
-                                                    name="duplicateAction"
-                                                    value="replace"
-                                                    checked={duplicateAction === 'replace'}
-                                                    onChange={(e) => setDuplicateAction(e.target.value)}
-                                                    className="mr-3 mt-1"
-                                                />
-                                                <div>
-                                                    <span className="font-semibold text-red-600">Replace - Overwrite existing</span>
-                                                    <p className="text-xs text-gray-600">⚠️ Cannot be undone</p>
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
+                            {/* File Picker */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-bold mb-2 text-gray-700">
+                                    Select Excel File
+                                </label>
+                                <input
+                                    type="file"
+                                    accept=".xlsx"
+                                    onChange={(e) => setImportFile(e.target.files[0])}
+                                    className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:outline-none"
+                                />
+                                {importFile && (
+                                    <p className="text-sm text-green-600 mt-2 font-medium">
+                                        ✓ Selected: {importFile.name}
+                                    </p>
                                 )}
+                            </div>
 
-                                {/* Scoring System Warning */}
-                                {scoringWarning.show && (
-                                    <div className="mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-xl">
-                                        <h3 className="font-bold text-red-800 mb-2">🛑 Cannot Import Yet</h3>
-                                        <p className="text-sm mb-2">
-                                            This championship uses: <strong>{scoringWarning.importedSystem}</strong>
+                            {/* Import Mode Selection */}
+                            <div className="mb-6">
+                                <p className="text-lg font-bold mb-3 text-gray-700">Import Mode:</p>
+
+                                <label className="flex items-start mb-4 cursor-pointer p-4 border-2 rounded-xl hover:bg-green-50 transition-colors"
+                                    style={{ borderColor: importMode === 'merge' ? '#16a34a' : '#d1d5db', backgroundColor: importMode === 'merge' ? '#f0fdf4' : 'white' }}>
+                                    <input
+                                        type="radio"
+                                        value="merge"
+                                        checked={importMode === 'merge'}
+                                        onChange={(e) => setImportMode(e.target.value)}
+                                        className="mr-3 mt-1"
+                                    />
+                                    <div>
+                                        <span className="font-bold text-lg">Merge - Add to existing championships</span>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Imported championships will be added alongside your current ones. Nothing will be deleted.
                                         </p>
-                                        <p className="text-sm mb-3">
-                                            This scoring system is not recognized. Custom scoring systems are not yet supported.
+                                    </div>
+                                </label>
+
+                                <label className="flex items-start cursor-pointer p-4 border-2 rounded-xl hover:bg-red-50 transition-colors"
+                                    style={{ borderColor: importMode === 'replace' ? '#dc2626' : '#d1d5db', backgroundColor: importMode === 'replace' ? '#fef2f2' : 'white' }}>
+                                    <input
+                                        type="radio"
+                                        value="replace"
+                                        checked={importMode === 'replace'}
+                                        onChange={(e) => setImportMode(e.target.value)}
+                                        className="mr-3 mt-1"
+                                    />
+                                    <div>
+                                        <span className="font-bold text-lg text-red-600">Replace - Clear existing and import fresh</span>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            ⚠️ <strong>WARNING:</strong> All existing championships will be permanently deleted before importing.
                                         </p>
-                                        <div className="bg-orange-50 p-3 rounded border border-orange-300">
-                                            <p className="text-sm font-semibold text-orange-800 mb-2">What to do:</p>
-                                            <ol className="text-sm space-y-1 list-decimal list-inside">
-                                                <li>Ask the creator to change to a standard system (CJ, Simple, or Margin)</li>
-                                                <li>Have them re-export and send you the new file</li>
-                                                <li>Keep this file - custom scoring support is coming soon</li>
-                                            </ol>
-                                        </div>
                                     </div>
-                                )}
+                                </label>
+                            </div>
 
-                                {/* Player List Preview */}
-                                <div className="mb-6">
-                                    <h3 className="font-bold mb-2">Players ({importPreview.players.length}):</h3>
-                                    <div className="max-h-32 overflow-y-auto bg-gray-50 p-3 rounded border">
-                                        {importPreview.players.map(playerId => {
-                                            const player = players.find(p => p.id === playerId);
-                                            return (
-                                                <div key={playerId} className="text-sm">
-                                                    {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setShowPreviewModal(false);
-                                            setShowImportModal(true);
-                                            setDuplicateAction('rename'); // Reset
-                                        }}
-                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
-                                    >
-                                        Back
-                                    </button>
-                                    <button
-                                        onClick={executeImport}
-                                        disabled={scoringWarning.type === 'custom-not-available'}
-                                        className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        {duplicateAction === 'skip' ? 'Cancel Import' :
-                                            importMode === 'merge' ? 'Confirm Merge Import' : 'Confirm Replace Import'}
-                                    </button>
-                                </div>
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowImportModal(false);
+                                        setImportFile(null);
+                                    }}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleImportPreview}
+                                    disabled={!importFile || isProcessingFile}
+                                    className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {isProcessingFile ? 'Reading file...' : 'Preview Import →'}
+                                </button>
                             </div>
                         </div>
                     </div>
-                )}
-                {/* ⬆️ END OF PREVIEW MODAL ⬆️ */}
-            </div>
+                </div>
+            )}
+            {/* ⬆️ END OF IMPORT MODAL ⬆️ */}
+
+            {/* ⬇️ ADD PREVIEW MODAL HERE ⬇️ */}
+            {/* Preview Modal */}
+            {showPreviewModal && importPreview && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-8">
+                            <h2 className="text-3xl font-bold mb-6 text-blue-800">📋 Import Preview</h2>
+
+                            {/* Championship Summary */}
+                            <div className="mb-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
+                                <h3 className="font-bold text-lg mb-3 text-blue-900">Championship Details</h3>
+                                <div className="space-y-2">
+                                    <p className="text-sm"><strong>Name:</strong> {importPreview.name}</p>
+                                    <p className="text-sm"><strong>Players:</strong> {importPreview.players.length}</p>
+                                    <p className="text-sm"><strong>Matches:</strong> {importPreview.matches.length}</p>
+                                    <p className="text-sm"><strong>Start Date:</strong> {formatDate(importPreview.startDate)}</p>
+                                    <p className="text-sm"><strong>Scoring System:</strong> {importPreview.settings.scoringSystem}</p>
+                                </div>
+                            </div>
+
+                            {/* Duplicate Warning */}
+                            {duplicateDetected.exists && (
+                                <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-xl">
+                                    <h3 className="font-bold text-yellow-800 mb-2">⚠️ Potential Duplicate Detected</h3>
+                                    <p className="text-sm mb-3">A championship named "{importPreview.name}" already exists.</p>
+                                    <p className="text-sm mb-3">
+                                        <strong>Existing:</strong> {duplicateDetected.existing.matches.length} matches,
+                                        started {formatDate(duplicateDetected.existing.startDate)}
+                                    </p>
+
+                                    <div className="space-y-2 mt-4">
+                                        <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-yellow-100"
+                                            style={{ borderColor: duplicateAction === 'skip' ? '#f59e0b' : '#e5e7eb' }}>
+                                            <input
+                                                type="radio"
+                                                name="duplicateAction"
+                                                value="skip"
+                                                checked={duplicateAction === 'skip'}
+                                                onChange={(e) => setDuplicateAction(e.target.value)}
+                                                className="mr-3 mt-1"
+                                            />
+                                            <div>
+                                                <span className="font-semibold">Skip - Do not import</span>
+                                                <p className="text-xs text-gray-600">Cancel this import</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-green-100"
+                                            style={{ borderColor: duplicateAction === 'rename' ? '#10b981' : '#e5e7eb' }}>
+                                            <input
+                                                type="radio"
+                                                name="duplicateAction"
+                                                value="rename"
+                                                checked={duplicateAction === 'rename'}
+                                                onChange={(e) => setDuplicateAction(e.target.value)}
+                                                className="mr-3 mt-1"
+                                            />
+                                            <div>
+                                                <span className="font-semibold">Rename - Import as "{importPreview.name} (1)"</span>
+                                                <p className="text-xs text-gray-600">Keep both championships</p>
+                                            </div>
+                                        </label>
+
+                                        <label className="flex items-start p-3 border-2 rounded-lg cursor-pointer hover:bg-red-100"
+                                            style={{ borderColor: duplicateAction === 'replace' ? '#ef4444' : '#e5e7eb' }}>
+                                            <input
+                                                type="radio"
+                                                name="duplicateAction"
+                                                value="replace"
+                                                checked={duplicateAction === 'replace'}
+                                                onChange={(e) => setDuplicateAction(e.target.value)}
+                                                className="mr-3 mt-1"
+                                            />
+                                            <div>
+                                                <span className="font-semibold text-red-600">Replace - Overwrite existing</span>
+                                                <p className="text-xs text-gray-600">⚠️ Cannot be undone</p>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Scoring System Warning */}
+                            {scoringWarning.show && (
+                                <div className="mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-xl">
+                                    <h3 className="font-bold text-red-800 mb-2">🛑 Cannot Import Yet</h3>
+                                    <p className="text-sm mb-2">
+                                        This championship uses: <strong>{scoringWarning.importedSystem}</strong>
+                                    </p>
+                                    <p className="text-sm mb-3">
+                                        This scoring system is not recognized. Custom scoring systems are not yet supported.
+                                    </p>
+                                    <div className="bg-orange-50 p-3 rounded border border-orange-300">
+                                        <p className="text-sm font-semibold text-orange-800 mb-2">What to do:</p>
+                                        <ol className="text-sm space-y-1 list-decimal list-inside">
+                                            <li>Ask the creator to change to a standard system (CJ, Simple, or Margin)</li>
+                                            <li>Have them re-export and send you the new file</li>
+                                            <li>Keep this file - custom scoring support is coming soon</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Player List Preview */}
+                            <div className="mb-6">
+                                <h3 className="font-bold mb-2">Players ({importPreview.players.length}):</h3>
+                                <div className="max-h-32 overflow-y-auto bg-gray-50 p-3 rounded border">
+                                    {importPreview.players.map(playerId => {
+                                        const player = players.find(p => p.id === playerId);
+                                        return (
+                                            <div key={playerId} className="text-sm">
+                                                {player ? `${player.firstName} ${player.surname}` : 'Unknown Player'}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowPreviewModal(false);
+                                        setShowImportModal(true);
+                                        setDuplicateAction('rename'); // Reset
+                                    }}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg transition-colors"
+                                >
+                                    Back
+                                </button>
+                                <button
+                                    onClick={executeImport}
+                                    disabled={scoringWarning.type === 'custom-not-available'}
+                                    className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {duplicateAction === 'skip' ? 'Cancel Import' :
+                                        importMode === 'merge' ? 'Confirm Merge Import' : 'Confirm Replace Import'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* ⬆️ END OF PREVIEW MODAL ⬆️ */}
         </div>
+        </div >
     );
 };
 
