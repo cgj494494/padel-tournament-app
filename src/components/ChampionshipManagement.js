@@ -496,6 +496,91 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             return `${gamesA}-${gamesB}`;
         }
     };
+    // Partnership Statistics Calculator
+const calculatePartnershipStats = () => {
+    if (!currentChampionship || !currentChampionship.matches || currentChampionship.matches.length === 0) {
+        return [];
+    }
+
+    const partnershipMap = new Map();
+    const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
+
+    // Loop through all matches
+    currentChampionship.matches.forEach(match => {
+        // Process Team A partnerships
+        if (match.teamA && match.teamA.length === 2) {
+            const [player1, player2] = match.teamA.sort(); // Sort to ensure consistent key
+            const partnershipKey = `${player1}_${player2}`;
+
+            if (!partnershipMap.has(partnershipKey)) {
+                partnershipMap.set(partnershipKey, {
+                    player1Id: player1,
+                    player2Id: player2,
+                    matches: 0,
+                    won: 0,
+                    lost: 0,
+                    totalPoints: 0,
+                    gamesWon: 0,
+                    gamesLost: 0
+                });
+            }
+
+            const stats = partnershipMap.get(partnershipKey);
+            stats.matches += 1;
+            stats.totalPoints += match.points.teamA;
+            stats.gamesWon += match.gamesA;
+            stats.gamesLost += match.gamesB;
+
+            if (match.points.teamA > match.points.teamB) {
+                stats.won += 1;
+            } else if (match.points.teamA < match.points.teamB) {
+                stats.lost += 1;
+            }
+        }
+
+        // Process Team B partnerships
+        if (match.teamB && match.teamB.length === 2) {
+            const [player1, player2] = match.teamB.sort(); // Sort to ensure consistent key
+            const partnershipKey = `${player1}_${player2}`;
+
+            if (!partnershipMap.has(partnershipKey)) {
+                partnershipMap.set(partnershipKey, {
+                    player1Id: player1,
+                    player2Id: player2,
+                    matches: 0,
+                    won: 0,
+                    lost: 0,
+                    totalPoints: 0,
+                    gamesWon: 0,
+                    gamesLost: 0
+                });
+            }
+
+            const stats = partnershipMap.get(partnershipKey);
+            stats.matches += 1;
+            stats.totalPoints += match.points.teamB;
+            stats.gamesWon += match.gamesB;
+            stats.gamesLost += match.gamesA;
+
+            if (match.points.teamB > match.points.teamA) {
+                stats.won += 1;
+            } else if (match.points.teamB < match.points.teamA) {
+                stats.lost += 1;
+            }
+        }
+    });
+
+    // Convert to array and calculate derived stats
+    const partnerships = Array.from(partnershipMap.values()).map(stats => ({
+        ...stats,
+        proRataScore: stats.matches > 0 ? (stats.totalPoints / stats.matches).toFixed(2) : '0.00',
+        gameDifferential: stats.gamesWon - stats.gamesLost,
+        winRate: stats.matches > 0 ? ((stats.won / stats.matches) * 100).toFixed(1) : '0.0'
+    }));
+
+    // Filter by minimum matches (same as pro rata standings)
+    return partnerships.filter(p => p.matches >= minMatches);
+};
     const getClasses = (element) => {
         const styles = {
             small: {
