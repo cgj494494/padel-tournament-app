@@ -1257,8 +1257,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 {[
                                     { id: 'standings', label: 'Standings', icon: '🏆' },
                                     { id: 'matches', label: 'Matches', icon: '🎾' },
-                                    { id: 'players', label: 'Players', icon: '👥' },
-                                    { id: 'partnerships', label: 'Partnerships', icon: '🤝' }
+                                    { id: 'players', label: 'Players', icon: '👥' }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -1680,24 +1679,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </div>
                                             </div>
                                         )}
-                                        {activeTab === 'partnerships' && (
-                                            <div>
-                                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-8`}>
-                                                    Partnership Statistics
-                                                </h3>
-                                                <div className="text-center py-16">
-                                                    <div className="text-8xl mb-6">🤝</div>
-                                                    <p className={`${getClasses('body')} text-gray-600`}>
-                                                        Partnership analysis will show here...
-                                                    </p>
-                                                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl max-w-2xl mx-auto">
-                                                        <p className={`${getClasses('small')} text-blue-700`}>
-                                                            <strong>Coming soon:</strong> View statistics for all player partnerships, sortable by Pro Rata Score, Matches Played, and Games +/-.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+
                                         {/* Add Existing Players Modal */}
                                         {showAddPlayersModal && (
                                             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
