@@ -1614,7 +1614,10 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                                                 ) : (
                                                                     <button
-                                                                        onClick={() => handleEditMatchClick(match)}
+                                                                        onClick={() => {
+                                                                            alert("Edit button clicked for match!");
+                                                                            handleEditMatchClick(match);
+                                                                        }}
                                                                         className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
                                                                     >
                                                                         <span>{new Date(match.date).toLocaleDateString()}</span>
