@@ -408,10 +408,19 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
     };
     const handleEditMatchClick = (match) => {
-        // Make sure we're not in date editing mode
-        setEditingMatchDate(null);
+        // Create and show a fixed position element directly
+        const testElement = document.createElement('div');
+        testElement.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; background-color: red; color: white; padding: 20px; z-index: 9999; font-size: 24px; text-align: center;">
+            Match Edit Dialog Should Be Here! ID: ${match.id}
+            <button onclick="this.parentElement.remove()" style="background: white; color: black; padding: 5px 10px; margin-left: 10px; border-radius: 4px;">
+                Close
+            </button>
+        </div>
+    `;
+        document.body.appendChild(testElement.firstElementChild);
 
-        // Now set up our match editing mode
+        // Also still set the state variables
         setEditingMatch(match);
         setEditScores({
             teamA: match.gamesA.toString(),
@@ -1618,10 +1627,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                                                 ) : (
                                                                     <button
-                                                                        onClick={() => {
-                                                                            alert("Edit button clicked for match!");
-                                                                            handleEditMatchClick(match);
-                                                                        }}
+                                                                        onClick={() => handleEditMatchClick(match)}
                                                                         className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
                                                                     >
                                                                         <span>{new Date(match.date).toLocaleDateString()}</span>
