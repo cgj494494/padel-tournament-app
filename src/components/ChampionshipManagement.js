@@ -38,6 +38,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [setScores, setSetScores] = useState({ teamA: '', teamB: '' });
     const [editingMatchDate, setEditingMatchDate] = useState(null);
     const [standingsSortMode, setStandingsSortMode] = useState('total'); // 'total' or 'prorata'
+    // ADD THESE NEW STATE VARIABLES:
+    const [editingMatch, setEditingMatch] = useState(null);
+    const [editScores, setEditScores] = useState({ teamA: '', teamB: '' });
+    const [editComplete, setEditComplete] = useState(true);
+    const [showEditDialog, setShowEditDialog] = useState(false);
 
     // Load preferences and data on mount
     useEffect(() => {
@@ -401,6 +406,15 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             const isComplete = detectComplete(gamesA, gamesB);
             saveMatchWithStatus(gamesA, gamesB, isComplete);
         }
+    };
+    const handleEditMatchClick = (match) => {
+        setEditingMatch(match);
+        setEditScores({
+            teamA: match.gamesA.toString(),
+            teamB: match.gamesB.toString()
+        });
+        setEditComplete(match.isComplete !== false); // Default to true if not specified
+        setShowEditDialog(true);
     };
     const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
         const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
@@ -1594,7 +1608,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                     </div>
                                                                 ) : (
                                                                     <button
-                                                                        onClick={() => setEditingMatchDate(match.id)}
+                                                                        onClick={() => handleEditMatchClick(match)}
                                                                         className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
                                                                     >
                                                                         <span>{new Date(match.date).toLocaleDateString()}</span>
@@ -1603,6 +1617,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                         </svg>
                                                                     </button>
                                                                 )}
+
                                                                 <span className={`${getClasses('small')} text-gray-400`}>
                                                                     Match {currentChampionship.matches.length - index}
                                                                 </span>
