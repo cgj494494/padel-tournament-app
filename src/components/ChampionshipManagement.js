@@ -416,6 +416,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setEditComplete(match.isComplete !== false); // Default to true if not specified
         setShowEditDialog(true);
     };
+    const handleSaveEditedMatch = () => {
+        // Temporary placeholder until we implement Stage 5
+        console.log("Save button clicked - this function will be implemented in Stage 5");
+        setShowEditDialog(false); // Close the dialog for now
+    };
     const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
         const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
 
