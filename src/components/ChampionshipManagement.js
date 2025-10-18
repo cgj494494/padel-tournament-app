@@ -2388,6 +2388,94 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         </div>
                     </div>
                 )}
+                {/* Edit Match Dialog */}
+                {showEditDialog && editingMatch && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                            <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
+
+                            {/* Date field */}
+                            <div className="mb-6">
+                                <label className="block text-gray-600 font-medium mb-2">Match Date</label>
+                                <input
+                                    type="date"
+                                    value={editingMatch.date}
+                                    onChange={(e) => setEditingMatch({ ...editingMatch, date: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                                />
+                            </div>
+
+                            {/* Team information and scores */}
+                            <div className="mb-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-gray-600 font-medium mb-1">Team A</p>
+                                        <p className="text-gray-800 font-semibold mb-4">
+                                            {editingMatch.teamA.map(id => getPlayerName(id)).join(' & ')}
+                                        </p>
+                                        <label className="block text-gray-600 font-medium mb-2">Score</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editScores.teamA}
+                                            onChange={(e) => setEditScores({ ...editScores, teamA: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-center text-lg"
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-600 font-medium mb-1">Team B</p>
+                                        <p className="text-gray-800 font-semibold mb-4">
+                                            {editingMatch.teamB.map(id => getPlayerName(id)).join(' & ')}
+                                        </p>
+                                        <label className="block text-gray-600 font-medium mb-2">Score</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editScores.teamB}
+                                            onChange={(e) => setEditScores({ ...editScores, teamB: e.target.value })}
+                                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-center text-lg"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label
+                                    className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${editComplete ? 'border-green-600 bg-green-50' : 'border-gray-200'}`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={editComplete}
+                                        onChange={(e) => setEditComplete(e.target.checked)}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <div className="font-bold">Match Completed</div>
+                                        <div className="text-sm text-gray-600">
+                                            Completed matches award full points based on the score
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={() => setShowEditDialog(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveEditedMatch}
+                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </div >
 
         );
