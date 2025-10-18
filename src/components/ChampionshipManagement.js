@@ -2486,9 +2486,25 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 </button>
                             </div>
                         </div>
+
                     </div>
                 )}
-
+                {/* Simple Test Dialog - SEPARATE from Edit Dialog */}
+                {showEditDialog && (
+                    <div className="fixed inset-0 bg-red-500 bg-opacity-80 z-[100] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-lg p-6 max-w-sm mx-auto">
+                            <h2 className="text-xl font-bold mb-4">Test Dialog</h2>
+                            <p>This is a test dialog to verify state is working.</p>
+                            <p>If you see this, your state is working correctly!</p>
+                            <button
+                                onClick={() => setShowEditDialog(false)}
+                                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div >
 
         );
