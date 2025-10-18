@@ -408,12 +408,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
     };
     const handleEditMatchClick = (match) => {
+        // Make sure we're not in date editing mode
+        setEditingMatchDate(null);
+
+        // Now set up our match editing mode
         setEditingMatch(match);
         setEditScores({
             teamA: match.gamesA.toString(),
             teamB: match.gamesB.toString()
         });
-        setEditComplete(match.isComplete !== false); // Default to true if not specified
+        setEditComplete(match.isComplete !== false);
         setShowEditDialog(true);
     };
     const handleSaveEditedMatch = () => {
