@@ -1606,11 +1606,12 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                         />
                                                                         <button
                                                                             onClick={() => setEditingMatchDate(null)}
-                                                                            className="text-gray-500 hover:text-gray-700"
+                                                                            className="px-2 py-1 text-sm bg-blue-600 text-white rounded"
                                                                         >
-                                                                            ✕
+                                                                            Save
                                                                         </button>
                                                                     </div>
+
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => handleEditMatchClick(match)}
