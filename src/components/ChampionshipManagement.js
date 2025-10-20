@@ -2495,19 +2495,29 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                     </div>
                 )}
-                {/* Simple Test Dialog - SEPARATE from Edit Dialog */}
+                {/* Edit Match Dialog - Simplified Version */}
                 {showEditDialog && (
-                    <div className="fixed inset-0 bg-red-500 bg-opacity-80 z-[100] flex items-center justify-center p-4">
-                        <div className="bg-white rounded-lg p-6 max-w-sm mx-auto">
-                            <h2 className="text-xl font-bold mb-4">Test Dialog</h2>
-                            <p>This is a test dialog to verify state is working.</p>
-                            <p>If you see this, your state is working correctly!</p>
-                            <button
-                                onClick={() => setShowEditDialog(false)}
-                                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-                            >
-                                Close
-                            </button>
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                            <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
+
+                            {/* Simple content for initial testing */}
+                            <p className="mb-4">You're editing a match. This dialog is working!</p>
+
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={() => setShowEditDialog(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => setShowEditDialog(false)}
+                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
