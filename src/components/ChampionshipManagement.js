@@ -407,21 +407,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             saveMatchWithStatus(gamesA, gamesB, isComplete);
         }
     };
-    const handleEditMatchClick = (match) => {
-        // Clean, simple function - no DOM manipulation
-        setEditingMatch(match);
-        setEditScores({
-            teamA: match.gamesA.toString(),
-            teamB: match.gamesB.toString()
-        });
-
-    };
-    setEditComplete(match.isComplete !== false);
-    setShowEditDialog(true);
-};
-
-// Correct function definition with no duplicate code
-const handleEditMatchClick = (match) => {
+   const handleEditMatchClick = (match) => {
+    // Clean, simple function - no DOM manipulation
     setEditingMatch(match);
     setEditScores({
         teamA: match.gamesA.toString(),
@@ -430,6 +417,7 @@ const handleEditMatchClick = (match) => {
     setEditComplete(match.isComplete !== false);
     setShowEditDialog(true);
 };
+
 
 // Full implementation of the save function
 const handleSaveEditedMatch = () => {
