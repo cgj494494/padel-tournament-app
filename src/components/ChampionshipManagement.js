@@ -419,11 +419,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     setEditComplete(match.isComplete !== false);
     setShowEditDialog(true);
 };
-const handleSaveEditedMatch = () => {
-    // Temporary placeholder until we implement Stage 5
-    console.log("Save button clicked - this function will be implemented in Stage 5");
-    setShowEditDialog(false); // Close the dialog for now
-};
+
 // Correct function definition with no duplicate code
 const handleEditMatchClick = (match) => {
     setEditingMatch(match);
