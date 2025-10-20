@@ -408,13 +408,18 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     };
     // Add with your other event handlers at the component level
     // Find a good spot near other handler functions like handleScoreSubmit ~b3
+    // Find your existing function and modify it slightly to add debugging
     const handleEditMatchClick = (match) => {
+        console.log("Edit button clicked!", match); // Will show in console when clicked
+        alert("Edit button clicked!"); // Will show a visible alert when clicked
+
+        // Then the rest of your function
         setEditingMatch(match);
         setEditScores({
             teamA: match.gamesA.toString(),
             teamB: match.gamesB.toString()
         });
-        setEditComplete(match.isComplete !== false); // Default to true if not specified
+        setEditComplete(match.isComplete !== false);
         setShowEditDialog(true);
     };
     // Add with your other event handlers, near handleEditMatchClick  ~b4
