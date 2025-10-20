@@ -2524,6 +2524,8 @@ if (view === 'session') {
                     </div>
                 </div>
             )}
+        </div>
+            </div >
         </div >
     );
 }
