@@ -2429,115 +2429,103 @@ if (view === 'session') {
                     </div>
                 </div>
             )}
-            
-                {/* Match Edit Dialog */}
-                {showEditDialog && editingMatch && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                            <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
 
-                            <div className="space-y-6">
+            {/* Match Edit Dialog */}
+            {showEditDialog && editingMatch && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                        <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
+
+                        <div className="space-y-6">
+                            <div>
+                                <p className="text-gray-600 mb-3">
+                                    <span className="font-bold text-blue-600">Team A:</span> {editingMatch.teamA?.map(id => getPlayerName(id)).join(' & ')}
+                                </p>
+                                <p className="text-gray-600 mb-6">
+                                    <span className="font-bold text-green-600">Team B:</span> {editingMatch.teamB?.map(id => getPlayerName(id)).join(' & ')}
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-gray-600 mb-3">
-                                        <span className="font-bold text-blue-600">Team A:</span> {editingMatch.teamA?.map(id => getPlayerName(id)).join(' & ')}
-                                    </p>
-                                    <p className="text-gray-600 mb-6">
-                                        <span className="font-bold text-green-600">Team B:</span> {editingMatch.teamB?.map(id => getPlayerName(id)).join(' & ')}
-                                    </p>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Team A Score
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="20"
-                                            value={editScores.teamA}
-                                            onChange={(e) => setEditScores({ ...editScores, teamA: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Team B Score
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="20"
-                                            value={editScores.teamB}
-                                            onChange={(e) => setEditScores({ ...editScores, teamB: e.target.value })}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={editComplete}
-                                            onChange={(e) => setEditComplete(e.target.checked)}
-                                            className="w-5 h-5"
-                                        />
-                                        <span className="text-gray-700 font-medium">Match Complete</span>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Team A Score
                                     </label>
-                                    <p className="text-sm text-gray-500 mt-1 ml-7">
-                                        {editComplete ?
-                                            "Marked as complete - full points will be awarded" :
-                                            "Marked as incomplete - reduced points will be awarded"}
-                                    </p>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        value={editScores.teamA}
+                                        onChange={(e) => setEditScores({ ...editScores, teamA: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
+                                    />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Team B Score
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="20"
+                                        value={editScores.teamB}
+                                        onChange={(e) => setEditScores({ ...editScores, teamB: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
+                                    />
+                                </div>
+                            </div>
 
-                                {editScores.teamA && editScores.teamB && (
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <p className="text-sm text-gray-600 mb-2">Points Preview (CJ System):</p>
-                                        <div className="flex justify-between">
-                                            <span className="font-bold text-blue-600">
-                                                Team A: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[0]} pts
-                                            </span>
-                                            <span className="font-bold text-green-600">
-                                                Team B: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[1]} pts
-                                            </span>
-                                        </div>
+                            <div>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={editComplete}
+                                        onChange={(e) => setEditComplete(e.target.checked)}
+                                        className="w-5 h-5"
+                                    />
+                                    <span className="text-gray-700 font-medium">Match Complete</span>
+                                </label>
+                                <p className="text-sm text-gray-500 mt-1 ml-7">
+                                    {editComplete ?
+                                        "Marked as complete - full points will be awarded" :
+                                        "Marked as incomplete - reduced points will be awarded"}
+                                </p>
+                            </div>
+
+                            {editScores.teamA && editScores.teamB && (
+                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-sm text-gray-600 mb-2">Points Preview (CJ System):</p>
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-blue-600">
+                                            Team A: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[0]} pts
+                                        </span>
+                                        <span className="font-bold text-green-600">
+                                            Team B: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[1]} pts
+                                        </span>
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="flex space-x-4 mt-8">
-                                <button
-                                    onClick={() => setShowEditDialog(false)}
-                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEditedMatch}
-                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                )}
 
-
-            // Default view
-                return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-                    <FontToggle />
-                    <DebugInfo />
-                    <div className="pt-20 pb-32 px-6">
-                        <div className="max-w-4xl mx-auto">
-                            <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
+                        <div className="flex space-x-4 mt-8">
+                            <button
+                                onClick={() => setShowEditDialog(false)}
+                                className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEditedMatch}
+                                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                            >
+                                Save Changes
+                            </button>
                         </div>
                     </div>
                 </div>
-                );
-};
+            )}
+        </div >
+    );
+}
 
-                export default ChampionshipManagement;
+export default ChampionshipManagement;
