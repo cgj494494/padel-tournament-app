@@ -406,7 +406,61 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             saveMatchWithStatus(gamesA, gamesB, isComplete);
         }
     };
-    const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
+    // Add with your other event handlers at the component level
+    // Find a good spot near other handler functions like handleScoreSubmit ~b3
+    const handleEditMatchClick = (match) => {
+        setEditingMatch(match);
+        setEditScores({
+            teamA: match.gamesA.toString(),
+            teamB: match.gamesB.toString()
+        });
+        setEditComplete(match.isComplete !== false); // Default to true if not specified
+        setShowEditDialog(true);
+    };
+    // Add with your other event handlers, near handleEditMatchClick  ~b4
+    const handleSaveEditedMatch = () => {
+        if (!validateEditedMatch()) {
+            return;
+        }
+
+        const gamesA = parseInt(editScores.teamA) || 0;
+        const gamesB = parseInt(editScores.teamB) || 0;
+
+        // Handle ambiguous score that might need tiebreak handling
+        if (isAmbiguousScore(gamesA, gamesB) && editComplete) {
+            // For 7-6 type scores with complete flag, we need tiebreak handling
+            // Store the editing match ID in session storage temporarily
+            sessionStorage.setItem('editingMatchId', editingMatch.id.toString());
+
+            // Set the temp scores for the tiebreak dialog
+            setTempScores({ gamesA, gamesB });
+            setSetComplete(editComplete);
+
+            // Close edit dialog and show set status dialog
+            setShowEditDialog(false);
+            setShowSetStatusDialog(true);
+        } else {
+            // For non-ambiguous scores, save directly
+            saveUpdatedMatch(editingMatch.id, gamesA, gamesB, editComplete, editingMatch.date);
+        }
+    };
+    // REPLACE your existing saveMatchWithStatus function with this updated version ~b6
+const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
+    // Check if we're editing an existing match
+    const editingMatchId = sessionStorage.getItem('editingMatchId');
+    
+    if (editingMatchId) {
+        // We're editing an existing match
+        // Get the match to edit
+        const matchToEdit = currentChampionship.matches.find(m => m.id === parseInt(editingMatchId));
+        if (matchToEdit) {
+            // Save with the original date
+            saveUpdatedMatch(parseInt(editingMatchId), gamesA, gamesB, isComplete, matchToEdit.date);
+        }
+        // Clear the stored ID
+        sessionStorage.removeItem('editingMatchId');
+    } else {
+        // We're creating a new match (existing code)
         const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
 
         const match = {
@@ -416,7 +470,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             teamB: [...teamB],
             gamesA,
             gamesB,
-            isComplete,  // Save the status
+            isComplete,
             points: { teamA: pointsA, teamB: pointsB },
             timestamp: new Date().toISOString()
         };
@@ -427,7 +481,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setTeamA([]);
         setTeamB([]);
         setSetScores({ teamA: '', teamB: '' });
-    };
+    }
+};
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
         const margin = Math.abs(gamesA - gamesB);
@@ -451,6 +506,47 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         // Default to true (shouldn't reach here for ambiguous scores)
         return true;
     };
+    // Add this validation function at the component level (not nested inside another function)
+    // Place it with other helper functions before the return statement~b2
+    const validateEditedMatch = () => {
+        const gamesA = parseInt(editScores.teamA) || 0;
+        const gamesB = parseInt(editScores.teamB) || 0;
+
+        // Basic validation
+        if (gamesA < 0 || gamesB < 0) {
+            alert('Scores cannot be negative');
+            return false;
+        }
+
+        // If match is marked as complete, validate the score
+        if (editComplete) {
+            const maxGames = Math.max(gamesA, gamesB);
+            const diff = Math.abs(gamesA - gamesB);
+
+            // For a complete match, one team should have at least 6 games
+            if (maxGames < 6) {
+                const proceed = window.confirm(
+                    'Score is less than 6-x which is unusual for a completed match. ' +
+                    'Mark this match as incomplete instead?'
+                );
+                if (proceed) {
+                    setEditComplete(false);
+                    return true;
+                }
+                return false;
+            }
+
+            if (maxGames === 6 && diff < 2) {
+                // Tie at 6-6 or lead of only 1 game (6-5) is invalid for a completed set
+                const proceed = window.confirm(
+                    'This score is unusual for a completed match. Are you sure this is correct?'
+                );
+                if (!proceed) return false;
+            }
+        }
+
+        return true;
+    };
     const updateMatchDate = (matchId, newDate) => {
         const updatedMatches = currentChampionship.matches.map(match =>
             match.id === matchId ? { ...match, date: newDate } : match
@@ -469,7 +565,93 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setCurrentChampionship(updatedChampionship);
         setEditingMatchDate(null);
     };
+    // Add with your other data manipulation functions, near saveMatch or updateMatchDate ~b5
+    const saveUpdatedMatch = (matchId, gamesA, gamesB, isComplete, matchDate) => {
+        // Calculate points based on new scores
+        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
 
+        // Clone the current championship
+        const updatedChampionship = { ...currentChampionship };
+
+        // Find the match to update
+        const updatedMatches = updatedChampionship.matches.map(match => {
+            if (match.id === matchId) {
+                return {
+                    ...match,
+                    gamesA,
+                    gamesB,
+                    isComplete,
+                    date: matchDate,
+                    points: { teamA: pointsA, teamB: pointsB },
+                    lastModified: new Date().toISOString()
+                };
+            }
+            return match;
+        });
+
+        updatedChampionship.matches = updatedMatches;
+
+        // Reset all standings to recalculate
+        const initialStandings = updatedChampionship.standings.map(standing => ({
+            ...standing,
+            points: 0,
+            matchesPlayed: 0,
+            matchesWon: 0,
+            setsPlayed: 0,
+            gamesWon: 0,
+            gamesLost: 0
+        }));
+
+        // Recalculate all standings from scratch
+        const updatedStandings = initialStandings.map(standing => {
+            // Find all matches for this player
+            updatedChampionship.matches.forEach(match => {
+                const isTeamA = match.teamA.includes(standing.playerId);
+                const isTeamB = match.teamB.includes(standing.playerId);
+
+                if (isTeamA || isTeamB) {
+                    // Add points from this match
+                    standing.points += isTeamA ? match.points.teamA : match.points.teamB;
+
+                    // Add match played
+                    standing.matchesPlayed += 1;
+
+                    // Add match won if applicable
+                    const playerWon = (isTeamA && match.points.teamA > match.points.teamB) ||
+                        (isTeamB && match.points.teamB > match.points.teamA);
+                    if (playerWon) {
+                        standing.matchesWon += 1;
+                    }
+
+                    // Add set played
+                    standing.setsPlayed = (standing.setsPlayed || 0) + 1;
+
+                    // Add games won/lost
+                    standing.gamesWon = (standing.gamesWon || 0) + (isTeamA ? match.gamesA : match.gamesB);
+                    standing.gamesLost = (standing.gamesLost || 0) + (isTeamA ? match.gamesB : match.gamesA);
+                }
+            });
+
+            return standing;
+        });
+
+        // Update championship with new standings
+        updatedChampionship.standings = updatedStandings;
+
+        // Update championships array
+        const updatedChampionships = championships.map(c =>
+            c.id === currentChampionship.id ? updatedChampionship : c
+        );
+
+        // Save to localStorage
+        saveChampionships(updatedChampionships);
+
+        // Update state
+        setCurrentChampionship(updatedChampionship);
+
+        // Close dialog
+        setShowEditDialog(false);
+    };
     const getPlayerName = (playerId) => {
         const player = players.find(p => p.id === playerId);
         return player ? `${player.firstName} ${player.surname}` : 'Unknown';
@@ -2372,90 +2554,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
                                 >
                                     Save Match
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {/* Edit Match Dialog - Add near other modal components in the return statement */}
-                {showEditDialog && editingMatch && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                        <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-                            <h2 className={`${getClasses('heading')} text-xl font-bold mb-4`}>Edit Match</h2>
-
-                            <div className="mb-4">
-                                <label className="block text-gray-700 mb-1">Date</label>
-                                <input
-                                    type="date"
-                                    defaultValue={editingMatch.date}
-                                    onChange={(e) => {
-                                        setEditingMatch({
-                                            ...editingMatch,
-                                            date: e.target.value
-                                        });
-                                    }}
-                                    className="w-full px-3 py-2 border rounded-lg"
-                                />
-                            </div>
-
-                            <div className="flex justify-between mb-6">
-                                <div className="w-1/2 pr-2">
-                                    <label className="block text-gray-700 mb-1">
-                                        Team A Score
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={editScores.teamA}
-                                        onChange={(e) => setEditScores({
-                                            ...editScores,
-                                            teamA: e.target.value
-                                        })}
-                                        className="w-full px-3 py-2 border rounded-lg"
-                                    />
-                                </div>
-                                <div className="w-1/2 pl-2">
-                                    <label className="block text-gray-700 mb-1">
-                                        Team B Score
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={editScores.teamB}
-                                        onChange={(e) => setEditScores({
-                                            ...editScores,
-                                            teamB: e.target.value
-                                        })}
-                                        className="w-full px-3 py-2 border rounded-lg"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center mb-6">
-                                <input
-                                    type="checkbox"
-                                    id="editComplete"
-                                    checked={editComplete}
-                                    onChange={(e) => setEditComplete(e.target.checked)}
-                                    className="mr-2 h-5 w-5 text-indigo-600"
-                                />
-                                <label htmlFor="editComplete" className="text-gray-700">
-                                    Match is complete
-                                </label>
-                            </div>
-
-                            <div className="flex justify-between pt-3 border-t">
-                                <button
-                                    onClick={() => setShowEditDialog(false)}
-                                    className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEditedMatch}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                >
-                                    Save Changes
                                 </button>
                             </div>
                         </div>
