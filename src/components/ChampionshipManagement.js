@@ -414,8 +414,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             teamA: match.gamesA.toString(),
             teamB: match.gamesB.toString()
         });
-        setEditComplete(match.isComplete !== false);
-        setShowEditDialog(true);
+
     };
     setEditComplete(match.isComplete !== false);
     setShowEditDialog(true);
@@ -425,27 +424,63 @@ const handleSaveEditedMatch = () => {
     console.log("Save button clicked - this function will be implemented in Stage 5");
     setShowEditDialog(false); // Close the dialog for now
 };
-const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
-    const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+// Correct function definition with no duplicate code
+const handleEditMatchClick = (match) => {
+    setEditingMatch(match);
+    setEditScores({
+        teamA: match.gamesA.toString(),
+        teamB: match.gamesB.toString()
+    });
+    setEditComplete(match.isComplete !== false);
+    setShowEditDialog(true);
+};
 
-    const match = {
-        id: Date.now(),
-        date: sessionDate,
-        teamA: [...teamA],
-        teamB: [...teamB],
-        gamesA,
-        gamesB,
-        isComplete,  // Save the status
-        points: { teamA: pointsA, teamB: pointsB },
-        timestamp: new Date().toISOString()
+// Full implementation of the save function
+const handleSaveEditedMatch = () => {
+    if (!editingMatch) return;
+
+    // Validate inputs
+    const teamAScore = parseInt(editScores.teamA);
+    const teamBScore = parseInt(editScores.teamB);
+
+    if (isNaN(teamAScore) || isNaN(teamBScore) || teamAScore < 0 || teamBScore < 0) {
+        alert("Please enter valid scores");
+        return;
+    }
+
+    // Calculate points using your CJ system
+    const [pointsA, pointsB] = calculateCJPoints(teamAScore, teamBScore, editComplete);
+
+    // Update matches array
+    const updatedMatches = currentChampionship.matches.map(match =>
+        match.id === editingMatch.id
+            ? {
+                ...match,
+                gamesA: teamAScore,
+                gamesB: teamBScore,
+                isComplete: editComplete,
+                points: { teamA: pointsA, teamB: pointsB }
+            }
+            : match
+    );
+
+    // Update standings as well (recalculating points)
+    // This should remove the original match points and add the updated ones
+
+    const updatedChampionship = {
+        ...currentChampionship,
+        matches: updatedMatches,
+        // Update standings calculation logic here
     };
 
-    saveMatch(match);
+    // Save to localStorage
+    const updatedChampionships = championships.map(c =>
+        c.id === currentChampionship.id ? updatedChampionship : c
+    );
 
-    // Reset for next match
-    setTeamA([]);
-    setTeamB([]);
-    setSetScores({ teamA: '', teamB: '' });
+    saveChampionships(updatedChampionships);
+    setCurrentChampionship(updatedChampionship);
+    setShowEditDialog(false);
 };
 // Helper function to detect ambiguous scores
 const isAmbiguousScore = (gamesA, gamesB) => {
@@ -2400,48 +2435,119 @@ if (view === 'session') {
             )}
 
             {/* Edit Match Dialog - Simplified Version */}
-            {showEditDialog && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                        <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
+            if (view === 'detail') {
+       return (
+            <div className="...">
+                {/* Main content */}
 
-                        {/* Simple content for initial testing */}
-                        <p className="mb-4">You're editing a match. This dialog is working!</p>
+                {/* Match Edit Dialog */}
+                {showEditDialog && editingMatch && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                            <h2 className="text-2xl font-bold mb-4">Edit Match</h2>
 
-                        <div className="flex space-x-4">
-                            <button
-                                onClick={() => setShowEditDialog(false)}
-                                className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => setShowEditDialog(false)}
-                                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-                            >
-                                Close
-                            </button>
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-gray-600 mb-3">
+                                        <span className="font-bold text-blue-600">Team A:</span> {editingMatch.teamA?.map(id => getPlayerName(id)).join(' & ')}
+                                    </p>
+                                    <p className="text-gray-600 mb-6">
+                                        <span className="font-bold text-green-600">Team B:</span> {editingMatch.teamB?.map(id => getPlayerName(id)).join(' & ')}
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Team A Score
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="20"
+                                            value={editScores.teamA}
+                                            onChange={(e) => setEditScores({ ...editScores, teamA: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Team B Score
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="20"
+                                            value={editScores.teamB}
+                                            onChange={(e) => setEditScores({ ...editScores, teamB: e.target.value })}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-2xl text-center"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={editComplete}
+                                            onChange={(e) => setEditComplete(e.target.checked)}
+                                            className="w-5 h-5"
+                                        />
+                                        <span className="text-gray-700 font-medium">Match Complete</span>
+                                    </label>
+                                    <p className="text-sm text-gray-500 mt-1 ml-7">
+                                        {editComplete ?
+                                            "Marked as complete - full points will be awarded" :
+                                            "Marked as incomplete - reduced points will be awarded"}
+                                    </p>
+                                </div>
+
+                                {editScores.teamA && editScores.teamB && (
+                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <p className="text-sm text-gray-600 mb-2">Points Preview (CJ System):</p>
+                                        <div className="flex justify-between">
+                                            <span className="font-bold text-blue-600">
+                                                Team A: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[0]} pts
+                                            </span>
+                                            <span className="font-bold text-green-600">
+                                                Team B: {calculateCJPoints(editScores.teamA, editScores.teamB, editComplete)[1]} pts
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex space-x-4 mt-8">
+                                <button
+                                    onClick={() => setShowEditDialog(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveEditedMatch}
+                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
+            // Default view
+                return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+                    <FontToggle />
+                    <DebugInfo />
+                    <div className="pt-20 pb-32 px-6">
+                        <div className="max-w-4xl mx-auto">
+                            <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
                         </div>
                     </div>
                 </div>
-            )}
-        </div >
-
-    );
-}
-
-// Default view
-return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-        <FontToggle />
-        <DebugInfo />
-        <div className="pt-20 pb-32 px-6">
-            <div className="max-w-4xl mx-auto">
-                <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
-            </div>
-        </div>
-    </div>
-);
+                );
 };
 
-export default ChampionshipManagement;
+                export default ChampionshipManagement;
