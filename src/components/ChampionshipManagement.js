@@ -456,9 +456,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             return; // Extra safety check
         }
 
-        // Filter out the match to delete
+        // Get current championship and create a copy without the deleted match
         const updatedMatches = currentChampionship.matches.filter(
-            m => m.id !== editingMatch.id
+            match => match.id !== editingMatch.id
         );
 
         // Create updated championship
@@ -467,13 +467,60 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             matches: updatedMatches
         };
 
-        // Recalculate standings
-        const updatedStandings = calculateStandings(
-            updatedChampionship.players,
-            updatedMatches,
-            updatedChampionship.settings?.minMatchesForProRata || 3
-        );
+        // Reset standings for recalculation
+        const resetStandings = updatedChampionship.standings.map(standing => ({
+            ...standing,
+            points: 0,
+            matchesPlayed: 0,
+            matchesWon: 0,
+            setsWon: 0,
+            setsLost: 0,
+            gamesWon: 0,
+            gamesLost: 0,
+            setsPlayed: 0
+        }));
 
+        // Recalculate standings with remaining matches
+        const updatedStandings = resetStandings.map(standing => {
+            // For each player's standing, calculate based on all matches
+            const playerId = standing.playerId;
+
+            updatedMatches.forEach(match => {
+                const isInTeamA = match.teamA.includes(playerId);
+                const isInTeamB = match.teamB.includes(playerId);
+
+                if (!isInTeamA && !isInTeamB) {
+                    return; // Player not in this match
+                }
+
+                // Update matches played count
+                standing.matchesPlayed++;
+
+                // Calculate which team won
+                const teamAWon = match.gamesA > match.gamesB;
+                const teamBWon = match.gamesB > match.gamesA;
+
+                // Update wins
+                if ((isInTeamA && teamAWon) || (isInTeamB && teamBWon)) {
+                    standing.matchesWon++;
+                }
+
+                // Update points
+                if (isInTeamA) {
+                    standing.points += (match.points?.teamA || 0);
+                    standing.gamesWon += match.gamesA;
+                    standing.gamesLost += match.gamesB;
+                } else {
+                    standing.points += (match.points?.teamB || 0);
+                    standing.gamesWon += match.gamesB;
+                    standing.gamesLost += match.gamesA;
+                }
+            });
+
+            return standing;
+        });
+
+        // Create final championship with updated standings
         const finalChampionship = {
             ...updatedChampionship,
             standings: updatedStandings
@@ -496,8 +543,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setDeleteConfirmText('');
         setEditingMatch(null);
 
-        // Show confirmation toast/message
-        // If you have a toast system, use it here
+        // Show success message (optional)
         alert("Match deleted successfully");
     };
     // REPLACE your existing saveMatchWithStatus function with this updated version ~b6
