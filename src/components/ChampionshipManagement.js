@@ -2118,6 +2118,90 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                             </div>
                         </div>
+                        {/* Edit Match Dialog - Add near other modals in the return statement */}
+                        {showEditDialog && editingMatch && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+                                    <h2 className={`${getClasses('heading')} text-xl font-bold mb-4`}>Edit Match</h2>
+
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 mb-1">Date</label>
+                                        <input
+                                            type="date"
+                                            defaultValue={editingMatch.date}
+                                            onChange={(e) => {
+                                                setEditingMatch({
+                                                    ...editingMatch,
+                                                    date: e.target.value
+                                                });
+                                            }}
+                                            className="w-full px-3 py-2 border rounded-lg"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between mb-6">
+                                        <div className="w-1/2 pr-2">
+                                            <label className="block text-gray-700 mb-1">
+                                                Team A Score
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={editScores.teamA}
+                                                onChange={(e) => setEditScores({
+                                                    ...editScores,
+                                                    teamA: e.target.value
+                                                })}
+                                                className="w-full px-3 py-2 border rounded-lg"
+                                            />
+                                        </div>
+                                        <div className="w-1/2 pl-2">
+                                            <label className="block text-gray-700 mb-1">
+                                                Team B Score
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={editScores.teamB}
+                                                onChange={(e) => setEditScores({
+                                                    ...editScores,
+                                                    teamB: e.target.value
+                                                })}
+                                                className="w-full px-3 py-2 border rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center mb-6">
+                                        <input
+                                            type="checkbox"
+                                            id="editComplete"
+                                            checked={editComplete}
+                                            onChange={(e) => setEditComplete(e.target.checked)}
+                                            className="mr-2 h-5 w-5 text-indigo-600"
+                                        />
+                                        <label htmlFor="editComplete" className="text-gray-700">
+                                            Match is complete
+                                        </label>
+                                    </div>
+
+                                    <div className="flex justify-between pt-3 border-t">
+                                        <button
+                                            onClick={() => setShowEditDialog(false)}
+                                            className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleSaveEditedMatch}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                        >
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div >
@@ -2564,90 +2648,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         </div>
                     </div>
                 )}
-                {/* Edit Match Dialog - Add near other modals in the return statement */}
-                {showEditDialog && editingMatch && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                        <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-                            <h2 className={`${getClasses('heading')} text-xl font-bold mb-4`}>Edit Match</h2>
 
-                            <div className="mb-4">
-                                <label className="block text-gray-700 mb-1">Date</label>
-                                <input
-                                    type="date"
-                                    defaultValue={editingMatch.date}
-                                    onChange={(e) => {
-                                        setEditingMatch({
-                                            ...editingMatch,
-                                            date: e.target.value
-                                        });
-                                    }}
-                                    className="w-full px-3 py-2 border rounded-lg"
-                                />
-                            </div>
-
-                            <div className="flex justify-between mb-6">
-                                <div className="w-1/2 pr-2">
-                                    <label className="block text-gray-700 mb-1">
-                                        Team A Score
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={editScores.teamA}
-                                        onChange={(e) => setEditScores({
-                                            ...editScores,
-                                            teamA: e.target.value
-                                        })}
-                                        className="w-full px-3 py-2 border rounded-lg"
-                                    />
-                                </div>
-                                <div className="w-1/2 pl-2">
-                                    <label className="block text-gray-700 mb-1">
-                                        Team B Score
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={editScores.teamB}
-                                        onChange={(e) => setEditScores({
-                                            ...editScores,
-                                            teamB: e.target.value
-                                        })}
-                                        className="w-full px-3 py-2 border rounded-lg"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center mb-6">
-                                <input
-                                    type="checkbox"
-                                    id="editComplete"
-                                    checked={editComplete}
-                                    onChange={(e) => setEditComplete(e.target.checked)}
-                                    className="mr-2 h-5 w-5 text-indigo-600"
-                                />
-                                <label htmlFor="editComplete" className="text-gray-700">
-                                    Match is complete
-                                </label>
-                            </div>
-
-                            <div className="flex justify-between pt-3 border-t">
-                                <button
-                                    onClick={() => setShowEditDialog(false)}
-                                    className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveEditedMatch}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                >
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
             </div >
 
