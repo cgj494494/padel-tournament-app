@@ -46,7 +46,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
