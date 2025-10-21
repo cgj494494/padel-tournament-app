@@ -410,9 +410,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Find a good spot near other handler functions like handleScoreSubmit ~b3
     // Find your existing function and modify it slightly to add debugging
     const handleEditMatchClick = (match) => {
-        console.log("Edit button clicked!", match); // Will show in console when clicked
-        alert("Edit button clicked!"); // Will show a visible alert when clicked
-
+        
         // Then the rest of your function
         setEditingMatch(match);
         setEditScores({
