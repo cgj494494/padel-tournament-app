@@ -43,10 +43,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [editScores, setEditScores] = useState({ teamA: '', teamB: '' });
     const [editComplete, setEditComplete] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
-    // Add alongside other edit state variables 01on21
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-    const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
-    const [deleteConfirmText, setDeleteConfirmText] = useState('');
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -414,7 +410,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Find a good spot near other handler functions like handleScoreSubmit ~b3
     // Find your existing function and modify it slightly to add debugging
     const handleEditMatchClick = (match) => {
-
+        
         // Then the rest of your function
         setEditingMatch(match);
         setEditScores({
@@ -450,55 +446,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             // For non-ambiguous scores, save directly
             saveUpdatedMatch(editingMatch.id, gamesA, gamesB, editComplete, editingMatch.date);
         }
-    };
-    const handleMatchDelete = () => {
-        if (deleteConfirmText !== editingMatch.date) {
-            return; // Extra safety check
-        }
-
-        // Filter out the match to delete
-        const updatedMatches = currentChampionship.matches.filter(
-            m => m.id !== editingMatch.id
-        );
-
-        // Create updated championship
-        const updatedChampionship = {
-            ...currentChampionship,
-            matches: updatedMatches
-        };
-
-        // Recalculate standings
-        const updatedStandings = calculateStandings(
-            updatedChampionship.players,
-            updatedMatches,
-            updatedChampionship.settings?.minMatchesForProRata || 3
-        );
-
-        const finalChampionship = {
-            ...updatedChampionship,
-            standings: updatedStandings
-        };
-
-        // Update championships array
-        const updatedChampionships = championships.map(c =>
-            c.id === currentChampionship.id ? finalChampionship : c
-        );
-
-        // Save to localStorage
-        saveChampionships(updatedChampionships);
-
-        // Update state
-        setCurrentChampionship(finalChampionship);
-
-        // Close all dialogs
-        setShowSecondaryConfirmation(false);
-        setShowEditDialog(false);
-        setDeleteConfirmText('');
-        setEditingMatch(null);
-
-        // Show confirmation toast/message
-        // If you have a toast system, use it here
-        alert("Match deleted successfully");
     };
     // REPLACE your existing saveMatchWithStatus function with this updated version ~b6
     const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
@@ -2235,18 +2182,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             Match is complete
                                         </label>
                                     </div>
-                                    {/* ADD THE DELETE BUTTON SECTION RIGHT HERE */}
-                                    <div className="mt-6 mb-4 pt-3 border-t">
-                                        <button
-                                            onClick={() => setShowDeleteConfirmation(true)}
-                                            className="w-full px-4 py-2 bg-red-100 text-red-600 border border-red-300 rounded hover:bg-red-200 flex items-center justify-center"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Delete Match
-                                        </button>
-                                    </div>
+
                                     <div className="flex justify-between pt-3 border-t">
                                         <button
                                             onClick={() => setShowEditDialog(false)}
@@ -2259,86 +2195,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                                         >
                                             Save Changes
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {/* First Delete Confirmation Dialog */}
-                        {showDeleteConfirmation && (
-                            <div className="fixed inset-0 bg-black bg-opacity-75 z-60 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                                    <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
-
-                                    <h2 className="text-2xl font-bold text-center mt-4 mb-2">Delete Match?</h2>
-
-                                    <p className="text-gray-600 text-center mb-6">
-                                        Are you sure you want to delete this match? This action cannot be undone.
-                                    </p>
-
-                                    <div className="flex justify-between space-x-4">
-                                        <button
-                                            onClick={() => setShowDeleteConfirmation(false)}
-                                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setShowDeleteConfirmation(false);
-                                                setShowSecondaryConfirmation(true);
-                                            }}
-                                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {/* Second Verification Dialog */}
-                        {showSecondaryConfirmation && (
-                            <div className="fixed inset-0 bg-black bg-opacity-75 z-70 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                                    <h2 className="text-2xl font-bold text-center mb-4">Final Verification</h2>
-
-                                    <p className="text-gray-700 mb-6">
-                                        To confirm deletion, please type the date of this match:<br />
-                                        <span className="font-bold">{editingMatch.date}</span>
-                                    </p>
-
-                                    <input
-                                        type="text"
-                                        value={deleteConfirmText}
-                                        onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                        placeholder="Enter match date (e.g., 2025-10-21)"
-                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl mb-6"
-                                        autoFocus
-                                    />
-
-                                    <div className="flex justify-between space-x-4">
-                                        <button
-                                            onClick={() => {
-                                                setShowSecondaryConfirmation(false);
-                                                setDeleteConfirmText('');
-                                            }}
-                                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleMatchDelete}
-                                            disabled={deleteConfirmText !== editingMatch.date}
-                                            className={`flex-1 px-4 py-3 rounded-xl ${deleteConfirmText === editingMatch.date
-                                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            Confirm Delete
                                         </button>
                                     </div>
                                 </div>
