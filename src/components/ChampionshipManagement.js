@@ -1057,20 +1057,23 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         return (
             <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
                 <div className="bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3">
-                    {/* Animated rotating phone icon */}
-                    <div className="relative w-10 h-10">
-                        <svg className="w-10 h-10 animate-[spin_2s_ease-in-out_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    {/* Rotating phone with circular arrow */}
+                    <div className="relative">
+                        <svg className="w-12 h-12 animate-[spin_3s_ease-in-out_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            {/* Phone body */}
+                            <rect x="7" y="3" width="10" height="18" rx="2" />
+                            {/* Home button */}
+                            <circle cx="12" cy="18" r="0.5" fill="currentColor" />
                         </svg>
-                        {/* Rotation arrow */}
-                        <svg className="w-4 h-4 absolute -top-1 -right-1 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                        {/* Curved rotation arrow */}
+                        <svg className="w-6 h-6 absolute -top-1 -right-1 text-yellow-300 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            <path d="M12 0v4a8 8 0 018 8h4c0-6.627-5.373-12-12-12z" />
                         </svg>
                     </div>
-                    <span className="font-bold text-sm">Rotate for better view</span>
                     <button
                         onClick={() => setDismissed(true)}
-                        className="ml-2 text-white hover:text-blue-200 text-xl leading-none"
+                        className="text-white hover:text-blue-200 text-2xl leading-none font-bold"
                     >
                         ✕
                     </button>
