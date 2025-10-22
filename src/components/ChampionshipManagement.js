@@ -38,6 +38,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [setScores, setSetScores] = useState({ teamA: '', teamB: '' });
     const [editingMatchDate, setEditingMatchDate] = useState(null);
     const [standingsSortMode, setStandingsSortMode] = useState('total'); // 'total' or 'prorata'
+    const [showLandscapeHint, setShowLandscapeHint] = useState(false);
     // Add these state variables after your existing useState declarations ~b
     const [editingMatch, setEditingMatch] = useState(null);
     const [editScores, setEditScores] = useState({ teamA: '', teamB: '' });
@@ -1048,7 +1049,28 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             </div>
         </div>
     );
+    const LandscapeHint = ({ show }) => {
+        const [dismissed, setDismissed] = useState(false);
 
+        if (!show || dismissed) return null;
+
+        return (
+            <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
+                <div className="bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3">
+                    <svg className="w-8 h-8 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-bold">Tip: Rotate for better view</span>
+                    <button
+                        onClick={() => setDismissed(true)}
+                        className="ml-2 text-white hover:text-blue-200"
+                    >
+                        ✕
+                    </button>
+                </div>
+            </div>
+        );
+    };
     const DebugInfo = () => {
         if (process.env.NODE_ENV === 'production') return null;
 
@@ -1677,6 +1699,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </button>
                                             </div>
                                         </div>
+                                        <LandscapeHint show={showLandscapeHint} />
                                         {standingsSortMode === 'prorata' && currentChampionship.standings && currentChampionship.standings.length > 0 && (
                                             (() => {
                                                 const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
@@ -1713,7 +1736,17 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="overflow-x-auto">
+                                            <div
+                                                className="overflow-x-auto"
+                                                onScroll={(e) => {
+                                                    // Show hint if user scrolls horizontally on portrait
+                                                    if (e.target.scrollLeft > 20 && window.innerWidth < 768) {
+                                                        setShowLandscapeHint(true);
+                                                        // Auto-hide after 5 seconds
+                                                        setTimeout(() => setShowLandscapeHint(false), 5000);
+                                                    }
+                                                }}
+                                            >
                                                 <div className="inline-block min-w-full">
                                                     <table className="w-full border-collapse border border-gray-300">
                                                         <thead>
@@ -2150,7 +2183,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                             <thead>
                                                                 <tr className="bg-gray-100">
                                                                     <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-1 py-3 text-center font-bold w-12">Rank</th>
-<th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
+                                                                    <th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
