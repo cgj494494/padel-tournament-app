@@ -1826,7 +1826,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             </div>
                                         ) : (
                                             <div className="space-y-6">
-
                                                 {currentChampionship.matches
                                                     .slice()
                                                     .reverse()
@@ -1834,7 +1833,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                         <div key={match.id || index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
                                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                                                                 <div className="text-center">
-                                                                    <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
                                                                     <p className={`${getClasses('small')} text-gray-700`}>
                                                                         {match.teamA?.map(id => getPlayerName(id)).join(' & ')}
                                                                     </p>
@@ -1848,7 +1846,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                     </p>
                                                                 </div>
                                                                 <div className="text-center">
-                                                                    <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
                                                                     <p className={`${getClasses('small')} text-gray-700`}>
                                                                         {match.teamB?.map(id => getPlayerName(id)).join(' & ')}
                                                                     </p>
@@ -1879,7 +1876,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                     </div>
                                                                 ) : (
                                                                     <button
-                                                                        onClick={() => handleEditMatchClick(match)} // CHANGE THIS LINE ONLY
+                                                                        onClick={() => handleEditMatchClick(match)}
                                                                         className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
                                                                     >
                                                                         <span>{new Date(match.date).toLocaleDateString()}</span>
