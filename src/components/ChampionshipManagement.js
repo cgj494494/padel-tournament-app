@@ -1718,7 +1718,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                     <table className="w-full border-collapse border border-gray-300">
                                                         <thead>
                                                             <tr className="bg-gray-100">
-                                                                <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-2 py-3 text-left font-bold">Pos</th>
+                                                                <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-1 py-3 text-center font-bold w-12">Pos</th>
                                                                 <th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[150px]">Player</th>
                                                                 <th className="border border-gray-300 px-4 py-3 text-center font-bold">Points</th>
                                                                 <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
@@ -1761,7 +1761,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                                     const gameDiff = (standing.gamesWon || 0) - (standing.gamesLost || 0);
                                                                     return (
                                                                         <tr key={standing.playerId} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
-                                                                            <td className={`sticky left-0 z-10 border border-gray-300 px-2 py-3 text-center font-bold ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
+                                                                            <td className={`sticky left-0 z-10 border border-gray-300 px-1 py-3 text-center font-bold w-12 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
                                                                                 {index + 1}
                                                                             </td>
                                                                             <td className={`sticky left-[3rem] z-10 border border-gray-300 px-4 py-3 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
@@ -2149,8 +2149,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                         <table className="w-full border-collapse border border-gray-300">
                                                             <thead>
                                                                 <tr className="bg-gray-100">
-                                                                    <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-2 py-3 text-left font-bold">Rank</th>
-                                                                    <th className="sticky left-[3.5rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
+                                                                    <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-1 py-3 text-center font-bold w-12">Rank</th>
+<th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
                                                                     <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
@@ -2165,8 +2165,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                                                                     return (
                                                                         <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
-                                                                            <td className={`sticky left-0 z-10 border border-gray-300 px-2 py-3 text-center font-bold ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
-                                                                                {index + 1}
+                                                                            <td className={`sticky left-0 z-10 border border-gray-300 px-1 py-3 text-center font-bold w-12 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
                                                                             </td>
                                                                             <td className={`sticky left-[3.5rem] z-10 border border-gray-300 px-4 py-3 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
                                                                                 <span className={`${getClasses('body')} font-bold`}>
