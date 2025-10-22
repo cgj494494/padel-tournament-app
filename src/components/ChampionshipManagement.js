@@ -1031,23 +1031,20 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     };
     // UI Components
     const FontToggle = () => (
-        <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-3">
-            <div className="flex items-center space-x-3">
-                <span className={`${fontSize === 'small' ? 'text-gray-400' : 'text-gray-600'} font-medium`}>A</span>
+        <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-2">
+            <div className="flex items-center space-x-2">
+                <span className={`${fontSize === 'small' ? 'text-gray-400' : 'text-gray-600'} font-medium text-sm`}>A</span>
                 <button
                     onClick={() => setFontSize(fontSize === 'small' ? 'large' : 'small')}
-                    className={`relative inline-flex h-10 w-16 items-center rounded-full transition-all duration-300 ${fontSize === 'large' ? 'bg-gradient-to-r from-blue-500 to-purple-600' : 'bg-gray-300'
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${fontSize === 'large' ? 'bg-gradient-to-r from-blue-500 to-purple-600' : 'bg-gray-300'
                         }`}
                 >
                     <span
-                        className={`inline-block h-8 w-8 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${fontSize === 'large' ? 'translate-x-7' : 'translate-x-1'
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${fontSize === 'large' ? 'translate-x-7' : 'translate-x-1'
                             }`}
                     />
                 </button>
-                <span className={`${fontSize === 'large' ? 'text-gray-400' : 'text-gray-600'} font-medium text-xl`}>A</span>
-            </div>
-            <div className={`text-center mt-2 ${getClasses('small')} text-gray-600 font-medium`}>
-                {fontSize === 'large' ? 'Large' : 'Small'}
+                <span className={`${fontSize === 'large' ? 'text-gray-400' : 'text-gray-600'} font-medium text-lg`}>A</span>
             </div>
         </div>
     );
