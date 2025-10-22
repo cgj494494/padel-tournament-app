@@ -1055,15 +1055,22 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         if (!show || dismissed) return null;
 
         return (
-            <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
+            <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
                 <div className="bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3">
-                    <svg className="w-8 h-8 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <span className="font-bold">Tip: Rotate for better view</span>
+                    {/* Animated rotating phone icon */}
+                    <div className="relative w-10 h-10">
+                        <svg className="w-10 h-10 animate-[spin_2s_ease-in-out_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        {/* Rotation arrow */}
+                        <svg className="w-4 h-4 absolute -top-1 -right-1 text-yellow-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} />
+                        </svg>
+                    </div>
+                    <span className="font-bold text-sm">Rotate for better view</span>
                     <button
                         onClick={() => setDismissed(true)}
-                        className="ml-2 text-white hover:text-blue-200"
+                        className="ml-2 text-white hover:text-blue-200 text-xl leading-none"
                     >
                         ✕
                     </button>
