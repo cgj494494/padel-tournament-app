@@ -1302,7 +1302,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 <FontToggle />
                 <DebugInfo />
 
-                <div className="pt-6 px-2">
+                <div className="pt-6 px-6">
                     <Link
                         to="/"
                         className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 shadow-lg inline-flex`}
@@ -1314,7 +1314,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                     </Link>
                 </div>
 
-                <div className="pt-14 pb-32 px-2">
+                <div className="pt-14 pb-32 px-6">
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-12">
                             <h1 className={`${getClasses('title')} font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 bg-clip-text text-transparent mb-6`}>
@@ -1409,7 +1409,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 <FontToggle />
                 <DebugInfo />
 
-                <div className="pt-20 pb-40 px-2">
+                <div className="pt-20 pb-40 px-6">
                     <div className="max-w-4xl mx-auto">
                         <div className="flex items-center mb-10">
                             <button
@@ -1573,7 +1573,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                     </div>
                 )}
                 {/* DELETE MODALS END HERE */}
-                <div className="pt-20 pb-32 px-2">
+                <div className="pt-20 pb-32 px-6">
                     <div className="max-w-6xl mx-auto">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-6">
                             <div className="flex items-center">
@@ -2407,7 +2407,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 <DebugInfo />
                 <ScoringSystemModal />
                 <ChampionshipSettingsModal />
-                <div className="pt-20 pb-32 px-1 sm:px-2">
+                <div className="pt-20 pb-32 px-2 sm:px-6">
                     <div className="max-w-full sm:max-w-4xl mx-auto">
                         <div className="flex items-center mb-10">
                             <button
@@ -2851,7 +2851,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
             <FontToggle />
             <DebugInfo />
-            <div className="pt-20 pb-32 px-2">
+            <div className="pt-20 pb-32 px-6">
                 <div className="max-w-4xl mx-auto">
                     <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
                 </div>
