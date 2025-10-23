@@ -147,6 +147,18 @@ const exportChampionshipToExcel = (championship, players) => {
     }));
 
     const matchSheet = XLSX.utils.json_to_sheet(matchData);
+    matchSheet['!cols'] = [
+        { wch: 12 },  // Date
+        { wch: 20 },  // Team A Player 1
+        { wch: 20 },  // Team A Player 2
+        { wch: 20 },  // Team B Player 1
+        { wch: 20 },  // Team B Player 2
+        { wch: 10 },  // Score A
+        { wch: 10 },  // Score B
+        { wch: 10 },  // Points A
+        { wch: 10 },  // Points B
+        { wch: 10 }   // Complete
+    ];
     XLSX.utils.book_append_sheet(wb, matchSheet, "Matches");
 
     // SHEET 2: Standings (UNCHANGED)
@@ -165,6 +177,16 @@ const exportChampionshipToExcel = (championship, players) => {
     }).sort((a, b) => b.Points - a.Points);
 
     const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
+    standingsSheet['!cols'] = [
+        { wch: 25 },  // Player (full name)
+        { wch: 15 },  // User ID
+        { wch: 10 },  // Points
+        { wch: 10 },  // Matches
+        { wch: 10 },  // Wins
+        { wch: 12 },  // Games Won
+        { wch: 12 },  // Games Lost
+        { wch: 12 }   // Game Diff
+    ];
     XLSX.utils.book_append_sheet(wb, standingsSheet, "Standings");
 
     // SHEET 3: Championship Info (UNCHANGED)
@@ -178,6 +200,14 @@ const exportChampionshipToExcel = (championship, players) => {
     }];
 
     const infoSheet = XLSX.utils.json_to_sheet(infoData);
+    infoSheet['!cols'] = [
+        { wch: 25 },  // Championship Name
+        { wch: 15 },  // Start Date
+        { wch: 15 },  // Total Players
+        { wch: 15 },  // Total Matches
+        { wch: 25 },  // Scoring System
+        { wch: 15 }   // Export Date
+    ];
     XLSX.utils.book_append_sheet(wb, infoSheet, "Championship Info");
 
     // Calculate all partnership statistics
@@ -205,6 +235,19 @@ const exportChampionshipToExcel = (championship, players) => {
         }));
 
     const partnershipStandingsSheet = XLSX.utils.json_to_sheet(filteredPartnerships);
+    // ADD COLUMN WIDTHS
+    partnershipStandingsSheet['!cols'] = [
+        { wch: 8 },   // Rank
+        { wch: 20 },  // Player 1
+        { wch: 20 },  // Player 2
+        { wch: 15 },  // Pro Rata Score
+        { wch: 15 },  // Matches Played
+        { wch: 15 },  // Matches Won
+        { wch: 10 },  // Win %
+        { wch: 12 },  // Games Won
+        { wch: 12 },  // Games Lost
+        { wch: 10 }   // Games +/-
+    ];
     XLSX.utils.book_append_sheet(wb, partnershipStandingsSheet, 'Partnership Standings');
 
     // SHEET 5: All Partnerships (NEW - COMPLETE DATA)
@@ -223,6 +266,19 @@ const exportChampionshipToExcel = (championship, players) => {
     }));
 
     const allPartnershipsSheet = XLSX.utils.json_to_sheet(allPartnershipsData);
+    // ADD COLUMN WIDTHS (SAME AS SHEET 4)
+    allPartnershipsSheet['!cols'] = [
+        { wch: 8 },   // Rank
+        { wch: 20 },  // Player 1
+        { wch: 20 },  // Player 2
+        { wch: 15 },  // Pro Rata Score
+        { wch: 15 },  // Matches Played
+        { wch: 15 },  // Matches Won
+        { wch: 10 },  // Win %
+        { wch: 12 },  // Games Won
+        { wch: 12 },  // Games Lost
+        { wch: 10 }   // Games +/-
+    ];
     XLSX.utils.book_append_sheet(wb, allPartnershipsSheet, 'All Partnerships');
 
     // Generate filename and download (UNCHANGED)
@@ -287,10 +343,33 @@ const exportPlayerToExcel = (playerId, championships, players) => {
     }];
 
     const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    summarySheet['!cols'] = [  // ✅ CORRECT
+        { wch: 20 },  // Player name
+        { wch: 12 },  // Total matches
+        { wch: 12 },  // wins
+        { wch: 12 },  // losses
+        { wch: 10 },  // Win %
+        { wch: 12 },  // CJ Points 
+        { wch: 12 },  // Avg points  // ✅ Added comma
+        { wch: 16 }   // export date
+
+    ];
     XLSX.utils.book_append_sheet(wb, summarySheet, "Player Summary");
 
     // SHEET 2: Match History
     const historySheet = XLSX.utils.json_to_sheet(playerMatches);
+    // ADDED: Column widths for Match History sheet
+    historySheet['!cols'] = [
+        { wch: 12 },  // Date
+        { wch: 25 },  // Championship
+        { wch: 20 },  // Partner
+        { wch: 20 },  // Opponent 1
+        { wch: 20 },  // Opponent 2
+        { wch: 10 },  // Score
+        { wch: 10 },  // Result
+        { wch: 12 },  // CJ Points
+        { wch: 10 }   // Complete
+    ];
     XLSX.utils.book_append_sheet(wb, historySheet, "Match History");
 
     // Generate filename and download
