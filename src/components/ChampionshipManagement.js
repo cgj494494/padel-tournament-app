@@ -1069,41 +1069,14 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         return (
             <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
                 <div className="bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3">
-                    {/* Phone rotating from portrait to landscape */}
-                    <div className="relative">
-                        <svg
-                            className="w-12 h-12"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            strokeWidth={2}
-                            style={{
-                                animation: 'rotatePhone 2s ease-in-out infinite'
-                            }}
-                        >
-                            {/* Phone body */}
-                            <rect x="7" y="3" width="10" height="18" rx="2" />
-                            {/* Home button */}
-                            <circle cx="12" cy="18" r="0.5" fill="currentColor" />
-                        </svg>
-                        {/* Curved arrow showing rotation direction */}
-                        <svg className="w-6 h-6 absolute -top-1 -right-1 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clipRule="evenodd" transform="rotate(45 10 10)" />
-                        </svg>
-                    </div>
+                    <span className="font-bold">Rotate for easier viewing</span>
                     <button
                         onClick={() => setDismissed(true)}
-                        className="text-white hover:text-blue-200 text-2xl leading-none font-bold"
+                        className="text-white hover:text-blue-200 text-xl leading-none font-bold"
                     >
                         ✕
                     </button>
                 </div>
-                <style jsx>{`
-                @keyframes rotatePhone {
-                    0%, 100% { transform: rotate(0deg); }
-                    50% { transform: rotate(90deg); }
-                }
-            `}</style>
             </div>
         );
     };
