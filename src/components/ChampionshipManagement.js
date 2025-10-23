@@ -1051,20 +1051,30 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     );
     const LandscapeHint = ({ show }) => {
         const [dismissed, setDismissed] = useState(false);
-        const [timesShown, setTimesShown] = useState(0);
+        const [canShow, setCanShow] = useState(false);
+        const hasIncrementedRef = useRef(false);
 
         useEffect(() => {
-            if (show && !dismissed) {
+            if (show && !dismissed && !hasIncrementedRef.current) {
                 const count = parseInt(localStorage.getItem('landscapeHintCount') || '0');
-                setTimesShown(count);
 
                 if (count < 5) {
+                    // Increment and show
                     localStorage.setItem('landscapeHintCount', (count + 1).toString());
+                    setCanShow(true);
+                    hasIncrementedRef.current = true;
+                } else {
+                    // Already shown 5 times
+                    setCanShow(false);
                 }
+            } else if (!show) {
+                // Reset when show becomes false
+                hasIncrementedRef.current = false;
+                setCanShow(false);
             }
         }, [show, dismissed]);
 
-        if (!show || dismissed || timesShown >= 5) return null;
+        if (!canShow || dismissed) return null;
 
         return (
             <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
