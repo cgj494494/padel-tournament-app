@@ -132,10 +132,16 @@ const calculatePartnershipStatsForExport = (championship, players) => {
 // Enhanced Export Championship to Excel
 // Sheet order: Matches, Standings, Info, Partnership Standings, All Partnerships
 
+// ============================================================================
+// CORRECTED ENHANCED EXPORT FUNCTION
+// Replace your existing exportChampionshipToExcel function with this
+// DO NOT add the calculatePartnershipStatsForExport function - you already have it!
+// ============================================================================
+
 const exportChampionshipToExcel = (championship, players) => {
     const wb = XLSX.utils.book_new();
 
-    // SHEET 1: Match Summary
+    // SHEET 1: Match Summary (UNCHANGED)
     const matchData = championship.matches.map(match => ({
         'Date': formatDate(match.date),
         'Team A Player 1': getPlayerName(match.teamA[0], players),
@@ -152,7 +158,7 @@ const exportChampionshipToExcel = (championship, players) => {
     const matchSheet = XLSX.utils.json_to_sheet(matchData);
     XLSX.utils.book_append_sheet(wb, matchSheet, "Matches");
 
-    // SHEET 2: Standings
+    // SHEET 2: Standings (UNCHANGED)
     const standingsData = championship.standings.map(standing => {
         const player = players.find(p => p.id === standing.playerId);
         return {
@@ -165,12 +171,12 @@ const exportChampionshipToExcel = (championship, players) => {
             'Games Lost': standing.gamesLost,
             'Game Diff': (standing.gamesWon || 0) - (standing.gamesLost || 0)
         };
-    }).sort((a, b) => b.Points - a.Points); // Sort by points descending
+    }).sort((a, b) => b.Points - a.Points);
 
     const standingsSheet = XLSX.utils.json_to_sheet(standingsData);
     XLSX.utils.book_append_sheet(wb, standingsSheet, "Standings");
 
-    // SHEET 3: Championship Info
+    // SHEET 3: Championship Info (UNCHANGED)
     const infoData = [{
         'Championship Name': championship.name,
         'Start Date': formatDate(championship.startDate),
@@ -183,13 +189,16 @@ const exportChampionshipToExcel = (championship, players) => {
     const infoSheet = XLSX.utils.json_to_sheet(infoData);
     XLSX.utils.book_append_sheet(wb, infoSheet, "Championship Info");
 
-    // Calculate all partnership statistics
+    // Calculate all partnership statistics using YOUR EXISTING FUNCTION
     const allPartnershipStats = calculatePartnershipStatsForExport(championship, players);
 
-    // SHEET 4: Partnership Standings (Filtered - Display Version)
+    // ========================================================================
+    // SHEET 4: Partnership Standings (NEW - FILTERED VERSION)
+    // ========================================================================
     // Get minimum matches requirement from championship settings
     const minMatchesForDisplay = championship.settings?.minPartnershipMatches || 3;
 
+    // Filter partnerships based on minimum matches
     const filteredPartnerships = allPartnershipStats
         .filter(stats => stats.matches >= minMatchesForDisplay)
         .map((stats, index) => ({
@@ -209,7 +218,9 @@ const exportChampionshipToExcel = (championship, players) => {
     const partnershipStandingsSheet = XLSX.utils.json_to_sheet(filteredPartnerships);
     XLSX.utils.book_append_sheet(wb, partnershipStandingsSheet, 'Partnership Standings');
 
-    // SHEET 5: All Partnerships (Complete Data)
+    // ========================================================================
+    // SHEET 5: All Partnerships (COMPLETE DATA - UNCHANGED LOGIC)
+    // ========================================================================
     const allPartnershipsData = allPartnershipStats.map((stats, index) => ({
         'Rank': index + 1,
         'Player 1': stats.player1Name,
@@ -227,7 +238,7 @@ const exportChampionshipToExcel = (championship, players) => {
     const allPartnershipsSheet = XLSX.utils.json_to_sheet(allPartnershipsData);
     XLSX.utils.book_append_sheet(wb, allPartnershipsSheet, 'All Partnerships');
 
-    // Generate filename and download
+    // Generate filename and download (UNCHANGED)
     const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, filename);
 };
