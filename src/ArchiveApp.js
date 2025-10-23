@@ -129,9 +129,6 @@ const calculatePartnershipStatsForExport = (championship, players) => {
     return partnershipArray.sort((a, b) => b.proRataScore - a.proRataScore);
 };
 // Export Championship to Excel
-// Enhanced Export Championship to Excel
-// Sheet order: Matches, Standings, Info, Partnership Standings, All Partnerships
-
 const exportChampionshipToExcel = (championship, players) => {
     const wb = XLSX.utils.book_new();
 
@@ -182,142 +179,26 @@ const exportChampionshipToExcel = (championship, players) => {
 
     const infoSheet = XLSX.utils.json_to_sheet(infoData);
     XLSX.utils.book_append_sheet(wb, infoSheet, "Championship Info");
-
-    // Calculate all partnership statistics
-    const allPartnershipStats = calculatePartnershipStatsForExport(championship, players);
-
-    // SHEET 4: Partnership Standings (Filtered - Display Version)
-    // Get minimum matches requirement from championship settings
-    const minMatchesForDisplay = championship.settings?.minPartnershipMatches || 3;
-
-    const filteredPartnerships = allPartnershipStats
-        .filter(stats => stats.matches >= minMatchesForDisplay)
-        .map((stats, index) => ({
-            'Rank': index + 1,
-            'Player 1': stats.player1Name,
-            'Player 2': stats.player2Name,
-            'Pro Rata Score': stats.proRataScore.toFixed(2),
-            'Matches Played': stats.matches,
-            'Matches Won': stats.won,
-            'Win %': `${stats.winRate.toFixed(1)}%`,
-            'Games Won': stats.gamesWon,
-            'Games Lost': stats.gamesLost,
-            'Games +/-': stats.gameDifferential > 0 ?
-                `+${stats.gameDifferential}` : stats.gameDifferential
-        }));
-
-    const partnershipStandingsSheet = XLSX.utils.json_to_sheet(filteredPartnerships);
-    XLSX.utils.book_append_sheet(wb, partnershipStandingsSheet, 'Partnership Standings');
-
-    // SHEET 5: All Partnerships (Complete Data)
-    const allPartnershipsData = allPartnershipStats.map((stats, index) => ({
+    // Sheet 4: Partnership Statistics
+    const partnershipStats = calculatePartnershipStatsForExport(championship, players);
+    const partnershipData = partnershipStats.map((stats, index) => ({
         'Rank': index + 1,
         'Player 1': stats.player1Name,
         'Player 2': stats.player2Name,
-        'Pro Rata Score': stats.proRataScore.toFixed(2),
+        'Pro Rata Score': stats.proRataScore,
         'Matches Played': stats.matches,
         'Matches Won': stats.won,
-        'Win %': `${stats.winRate.toFixed(1)}%`,
+        'Win %': `${stats.winRate}%`,
         'Games Won': stats.gamesWon,
         'Games Lost': stats.gamesLost,
-        'Games +/-': stats.gameDifferential > 0 ?
-            `+${stats.gameDifferential}` : stats.gameDifferential
+        'Games +/-': stats.gameDifferential > 0 ? `+${stats.gameDifferential}` : stats.gameDifferential
     }));
 
-    const allPartnershipsSheet = XLSX.utils.json_to_sheet(allPartnershipsData);
-    XLSX.utils.book_append_sheet(wb, allPartnershipsSheet, 'All Partnerships');
-
+    const partnershipSheet = XLSX.utils.json_to_sheet(partnershipData);
+    XLSX.utils.book_append_sheet(wb, partnershipSheet, 'Partnerships');
     // Generate filename and download
     const filename = `${championship.name.replace(/\s+/g, '_')}_${formatDate(new Date().toISOString()).replace(/\//g, '-')}.xlsx`;
     XLSX.writeFile(wb, filename);
-};
-
-// Helper function to calculate partnership statistics (unchanged from original)
-const calculatePartnershipStatsForExport = (championship, players) => {
-    const partnerships = {};
-
-    championship.matches.forEach(match => {
-        if (!match.isComplete) return;
-
-        const processTeam = (team, pointsEarned, gamesWon, gamesLost, won) => {
-            const [player1Id, player2Id] = team.sort();
-            const key = `${player1Id}-${player2Id}`;
-
-            if (!partnerships[key]) {
-                partnerships[key] = {
-                    player1Id,
-                    player2Id,
-                    matches: 0,
-                    won: 0,
-                    lost: 0,
-                    totalPoints: 0,
-                    gamesWon: 0,
-                    gamesLost: 0
-                };
-            }
-
-            partnerships[key].matches += 1;
-            partnerships[key].totalPoints += pointsEarned;
-            partnerships[key].gamesWon += gamesWon;
-            partnerships[key].gamesLost += gamesLost;
-            if (won) {
-                partnerships[key].won += 1;
-            } else {
-                partnerships[key].lost += 1;
-            }
-        };
-
-        const teamAWon = match.points.teamA > match.points.teamB;
-        const teamBWon = match.points.teamB > match.points.teamA;
-
-        processTeam(
-            match.teamA,
-            match.points.teamA,
-            match.gamesA,
-            match.gamesB,
-            teamAWon
-        );
-
-        processTeam(
-            match.teamB,
-            match.points.teamB,
-            match.gamesB,
-            match.gamesA,
-            teamBWon
-        );
-    });
-
-    const partnershipArray = Object.values(partnerships)
-        .map(stats => {
-            const player1 = players.find(p => p.id === stats.player1Id);
-            const player2 = players.find(p => p.id === stats.player2Id);
-
-            const proRataScore = stats.matches > 0
-                ? (stats.totalPoints / stats.matches).toFixed(2)
-                : '0.00';
-
-            const winRate = stats.matches > 0
-                ? ((stats.won / stats.matches) * 100).toFixed(1)
-                : '0.0';
-
-            const gameDifferential = stats.gamesWon - stats.gamesLost;
-
-            return {
-                player1Name: player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown',
-                player2Name: player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown',
-                matches: stats.matches,
-                won: stats.won,
-                lost: stats.lost,
-                proRataScore: parseFloat(proRataScore),
-                gamesWon: stats.gamesWon,
-                gamesLost: stats.gamesLost,
-                gameDifferential: gameDifferential,
-                winRate: parseFloat(winRate)
-            };
-        });
-
-    // Sort by pro rata score (descending)
-    return partnershipArray.sort((a, b) => b.proRataScore - a.proRataScore);
 };
 
 // Export Player to Excel
