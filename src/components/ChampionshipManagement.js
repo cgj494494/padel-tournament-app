@@ -1051,24 +1051,44 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     );
     const LandscapeHint = ({ show }) => {
         const [dismissed, setDismissed] = useState(false);
+        const [timesShown, setTimesShown] = useState(0);
 
-        if (!show || dismissed) return null;
+        useEffect(() => {
+            if (show && !dismissed) {
+                const count = parseInt(localStorage.getItem('landscapeHintCount') || '0');
+                setTimesShown(count);
+
+                if (count < 5) {
+                    localStorage.setItem('landscapeHintCount', (count + 1).toString());
+                }
+            }
+        }, [show, dismissed]);
+
+        if (!show || dismissed || timesShown >= 5) return null;
 
         return (
             <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-40 animate-bounce">
                 <div className="bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3">
-                    {/* Rotating phone with circular arrow */}
+                    {/* Phone rotating from portrait to landscape */}
                     <div className="relative">
-                        <svg className="w-12 h-12 animate-[spin_3s_ease-in-out_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <svg
+                            className="w-12 h-12"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            style={{
+                                animation: 'rotatePhone 2s ease-in-out infinite'
+                            }}
+                        >
                             {/* Phone body */}
                             <rect x="7" y="3" width="10" height="18" rx="2" />
                             {/* Home button */}
                             <circle cx="12" cy="18" r="0.5" fill="currentColor" />
                         </svg>
-                        {/* Curved rotation arrow */}
-                        <svg className="w-6 h-6 absolute -top-1 -right-1 text-yellow-300 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            <path d="M12 0v4a8 8 0 018 8h4c0-6.627-5.373-12-12-12z" />
+                        {/* Curved arrow showing rotation direction */}
+                        <svg className="w-6 h-6 absolute -top-1 -right-1 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clipRule="evenodd" transform="rotate(45 10 10)" />
                         </svg>
                     </div>
                     <button
@@ -1078,6 +1098,12 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         ✕
                     </button>
                 </div>
+                <style jsx>{`
+                @keyframes rotatePhone {
+                    0%, 100% { transform: rotate(0deg); }
+                    50% { transform: rotate(90deg); }
+                }
+            `}</style>
             </div>
         );
     };
