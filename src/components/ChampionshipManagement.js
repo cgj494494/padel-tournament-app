@@ -47,14 +47,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
-    // Add these to the existing state variables in ChampionshipManagement.js
-    const [showGamePointDialog, setShowGamePointDialog] = useState(false);
-    const [gamePoints, setGamePoints] = useState({
-        teamA: '0',  // 0, 15, 30, 40, 'AD'
-        teamB: '0'
-    });
-    const [isTiebreak, setIsTiebreak] = useState(false);
-    const [tempGameScores, setTempGameScores] = useState({ gamesA: 0, gamesB: 0 });
+
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -398,7 +391,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setCurrentChampionship(updatedChampionship);
     };
 
-    // Modify the handleScoreSubmit function to detect tied games
     const handleScoreSubmit = () => {
         if (!teamA.length || !teamB.length || !setScores.teamA || !setScores.teamB) {
             alert('Please select teams and enter scores');
@@ -408,113 +400,30 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
-        // First check if games are tied
-        if (gamesA === gamesB) {
-            // Games are tied, show game point dialog
-            setTempGameScores({ gamesA, gamesB });
-            // Reset game points to 0-0
-            setGamePoints({ teamA: '0', teamB: '0' });
-            // Check if it's a 6-6 tie (potential tiebreak)
-            setIsTiebreak(gamesA === 6 && gamesB === 6);
-            setShowGamePointDialog(true);
+        // Check if ambiguous (7-6, 8-7, 9-8, etc.)
+        if (isAmbiguousScore(gamesA, gamesB)) {
+            setTempScores({ gamesA, gamesB });
+            setSetComplete(true); // Default to complete
+            setShowSetStatusDialog(true);
         } else {
-            // Handle non-tied scores with existing logic
-            // This should use your existing code for ambiguous/complete scores
-            // ...
+            // Auto-detect and save directly
+            const isComplete = detectComplete(gamesA, gamesB);
+            saveMatchWithStatus(gamesA, gamesB, isComplete);
         }
     };
     // Add with your other event handlers at the component level
     // Find a good spot near other handler functions like handleScoreSubmit ~b3
     // Find your existing function and modify it slightly to add debugging
-    // Update your existing handleEditMatch function to include game points
-    const handleEditMatch = (match) => {
-        // Set existing edit fields
+    const handleEditMatchClick = (match) => {
+
+        // Then the rest of your function
         setEditingMatch(match);
-        setEditDate(match.date);
         setEditScores({
             teamA: match.gamesA.toString(),
             teamB: match.gamesB.toString()
         });
-        setEditComplete(match.isComplete !== false); // Default to true if not specified
-
-        // Also set game points if they exist
-        if (match.gamePointDetails) {
-            setGamePoints({
-                teamA: match.gamePointDetails.teamAPoints,
-                teamB: match.gamePointDetails.teamBPoints
-            });
-            setIsTiebreak(match.gamePointDetails.isTiebreak || false);
-        } else {
-            // Reset game points if no details exist
-            setGamePoints({ teamA: '0', teamB: '0' });
-            setIsTiebreak(false);
-        }
-
+        setEditComplete(match.isComplete !== false);
         setShowEditDialog(true);
-    };
-
-    // Update the Save button in Game Point Dialog to use handleSaveGamePoints
-    // Find the Save Points button in your Game Point Dialog and update it:
-    <button
-        onClick={handleSaveGamePoints}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md"
-    >
-        Save Points
-    </button>
-
-    // Add this function to handle saving game points
-    const handleSaveGamePoints = () => {
-        if (!validateGamePoints()) {
-            return;
-        }
-
-        // Calculate advantage for tournament points 
-        // (if one team has AD and other doesn't, they get an additional point)
-        const teamAAdvantage = gamePoints.teamA === 'AD' && gamePoints.teamB !== 'AD';
-        const teamBAdvantage = gamePoints.teamB === 'AD' && gamePoints.teamA !== 'AD';
-
-        // Tied matches are always considered complete since we're recording a final state
-        const isComplete = true;
-
-        // Save match with the additional game point information
-        saveMatchWithGamePoints(
-            tempGameScores.gamesA,
-            tempGameScores.gamesB,
-            isComplete,
-            gamePoints,
-            teamAAdvantage,
-            teamBAdvantage,
-            isTiebreak
-        );
-
-        // Close dialog
-        setShowGamePointDialog(false);
-    };
-
-    // Modify your existing save function for edited matches to preserve game points
-    const handleSaveEdit = () => {
-        // Existing validation code
-
-        // Check if the new scores are tied, and we need to collect game points
-        if (gamesA === gamesB) {
-            // Store the edited values temporarily
-            setTempGameScores({ gamesA, gamesB });
-
-            // If this match didn't have game points before, reset them
-            if (!editingMatch.gamePointDetails) {
-                setGamePoints({ teamA: '0', teamB: '0' });
-            }
-
-            // Check if it's a 6-6 tie (potential tiebreak)
-            setIsTiebreak(gamesA === 6 && gamesB === 6);
-
-            // Show game point dialog
-            setShowEditDialog(false);
-            setShowGamePointDialog(true);
-        } else {
-            // Handle non-tied scores normally
-            // ... existing code ...
-        }
     };
     // Add with your other event handlers, near handleEditMatchClick  ~b4
     const handleSaveEditedMatch = () => {
@@ -676,66 +585,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setTeamB([]);
             setSetScores({ teamA: '', teamB: '' });
         }
-    };
-    // Add this function near your other validation/utility functions, 
-    // NOT inside the dialog JSX
-    const validateGamePoints = () => {
-        if (isTiebreak) {
-            // For tiebreak, just make sure we have valid numbers
-            return true;
-        }
-
-        // For regular scoring, prevent both teams having 'AD'
-        if (gamePoints.teamA === 'AD' && gamePoints.teamB === 'AD') {
-            alert("Both teams cannot have 'AD' simultaneously");
-            return false;
-        }
-
-        return true;
-    };
-    // Add this near your other match-saving functions, NOT in the JSX
-    const saveMatchWithGamePoints = (
-        gamesA,
-        gamesB,
-        isComplete,
-        gamePoints,
-        teamAAdvantage,
-        teamBAdvantage,
-        isTiebreak
-    ) => {
-        // Base point calculation using your existing system
-        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
-
-        // Add tournament point for advantage (as per requirements)
-        const finalPointsA = pointsA + (teamAAdvantage ? 1 : 0);
-        const finalPointsB = pointsB + (teamBAdvantage ? 1 : 0);
-
-        const match = {
-            id: Date.now(),
-            date: sessionDate,
-            teamA: [...teamA],
-            teamB: [...teamB],
-            gamesA,
-            gamesB,
-            isComplete,
-            points: { teamA: finalPointsA, teamB: finalPointsB },
-            gamePointDetails: {
-                teamAPoints: gamePoints.teamA,
-                teamBPoints: gamePoints.teamB,
-                teamAAdvantage,
-                teamBAdvantage,
-                isTiebreak
-            },
-            timestamp: new Date().toISOString()
-        };
-
-        // Save match using your existing saveMatch function
-        saveMatch(match);
-
-        // Reset for next match
-        setTeamA([]);
-        setTeamB([]);
-        setSetScores({ teamA: '', teamB: '' });
     };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
@@ -910,7 +759,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const player = players.find(p => p.id === playerId);
         return player ? `${player.firstName} ${player.surname}` : 'Unknown';
     };
-    // Updated getFormattedScore that preserves existing indicators and adds game points
     const getFormattedScore = (match) => {
         const gamesA = match.gamesA;
         const gamesB = match.gamesB;
@@ -922,36 +770,20 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             Math.abs(gamesA - gamesB) === 1 &&
             (gamesA >= 6 || gamesB >= 6);
 
-        // Start with base score
-        let scoreDisplay = '';
-
-        // Apply existing formatting logic for tiebreak wins and incomplete matches
         if (isTiebreak) {
             // Show W superscript on winner's side only
             if (gamesA > gamesB) {
-                scoreDisplay = `${gamesA}ᵂ-${gamesB}`;
+                return `${gamesA}ᵂ-${gamesB}`;
             } else {
-                scoreDisplay = `${gamesA}-${gamesB}ᵂ`;
+                return `${gamesA}-${gamesB}ᵂ`;
             }
         } else if (!isComplete) {
             // Show I superscript on both sides for incomplete
-            scoreDisplay = `${gamesA}ᴵ-${gamesB}ᴵ`;
+            return `${gamesA}ᴵ-${gamesB}ᴵ`;
         } else {
             // Regular complete match, no indicator
-            scoreDisplay = `${gamesA}-${gamesB}`;
+            return `${gamesA}-${gamesB}`;
         }
-
-        // Add game point indicator if available
-        if (match.gamePointDetails && gamesA === gamesB) {
-            const { teamAPoints, teamBPoints, isTiebreak: isPointTiebreak } = match.gamePointDetails;
-            if (isPointTiebreak) {
-                scoreDisplay += ` [TB: ${teamAPoints}-${teamBPoints}]`;
-            } else {
-                scoreDisplay += ` [${teamAPoints}-${teamBPoints}]`;
-            }
-        }
-
-        return scoreDisplay;
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
@@ -3053,90 +2885,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                         </div>
                     </div>
                 )}
-                {/* Game Point Dialog */}
-                {showGamePointDialog && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-xl p-6 max-w-lg w-full">
-                            <h2 className="text-xl font-bold mb-4">Enter Game Point Status</h2>
 
-                            <p className="mb-4 text-gray-700">
-                                Games are tied {tempGameScores.gamesA}-{tempGameScores.gamesB}.
-                                {isTiebreak ?
-                                    " This is a 6-6 tie. Enter tiebreak points or game points?" :
-                                    " Please enter the current point status."}
-                            </p>
-
-                            {/* Toggle between tiebreak and regular scoring if it's 6-6 */}
-                            {isTiebreak && (
-                                <div className="flex justify-center mb-4">
-                                    <button
-                                        onClick={() => setIsTiebreak(false)}
-                                        className={`px-4 py-2 rounded-l-md ${!isTiebreak ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        Game Points (0-15-30-40)
-                                    </button>
-                                    <button
-                                        onClick={() => setIsTiebreak(true)}
-                                        className={`px-4 py-2 rounded-r-md ${isTiebreak ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        Tiebreak Points (Numeric)
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* STAGE 4 - Regular Game Points UI */}
-                            {!isTiebreak && (
-                                <div className="mb-4">
-                                    {/* Your Stage 4 code here */}
-                                </div>
-                            )}
-
-                            {/* STAGE 5 - ADD TIEBREAK UI RIGHT HERE */}
-                            {isTiebreak && (
-                                <div className="mb-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <h3 className="text-blue-600 font-bold mb-2">Team A Tiebreak Points</h3>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="99"
-                                                value={gamePoints.teamA}
-                                                onChange={(e) => setGamePoints(prev => ({ ...prev, teamA: e.target.value }))}
-                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-green-600 font-bold mb-2">Team B Tiebreak Points</h3>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="99"
-                                                value={gamePoints.teamB}
-                                                onChange={(e) => setGamePoints(prev => ({ ...prev, teamB: e.target.value }))}
-                                                className="w-full p-2 border border-gray-300 rounded-md"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex justify-end mt-6 space-x-2">
-                                <button
-                                    onClick={() => setShowGamePointDialog(false)}
-                                    className="px-4 py-2 border border-gray-300 rounded-md"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                                >
-                                    Save Points
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
             </div >
 
