@@ -426,18 +426,32 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
     };
     // Add with your other event handlers at the component level
-    // Find a good spot near other handler functions like handleScoreSubmit ~b3
-    // Find your existing function and modify it slightly to add debugging
-    const handleEditMatchClick = (match) => {
 
-        // Then the rest of your function
-        setEditingMatch(match);
-        setEditScores({
-            teamA: match.gamesA.toString(),
-            teamB: match.gamesB.toString()
-        });
-        setEditComplete(match.isComplete !== false);
-        setShowEditDialog(true);
+    const handleEditMatch = (match) => {
+        if (editingMatchDate === match.id) {
+            // If already editing this match, cancel editing
+            setEditingMatchDate(null);
+            return;
+        }
+
+        // Set the match being edited
+        setEditingMatchDate(match.id);
+
+        // Save the original date
+        sessionStorage.setItem('originalMatchDate', match.date);
+
+        // If match has game point details, store them
+        if (match.gamePointDetails) {
+            setGamePoints({
+                teamA: match.gamePointDetails.teamAPoints,
+                teamB: match.gamePointDetails.teamBPoints
+            });
+            setIsTiebreak(match.gamePointDetails.isTiebreak || false);
+        } else {
+            // Reset game points if no details exist
+            setGamePoints({ teamA: '0', teamB: '0' });
+            setIsTiebreak(false);
+        }
     };
     // Add with your other event handlers, near handleEditMatchClick  ~b4
     const handleSaveEditedMatch = () => {
@@ -870,20 +884,36 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             Math.abs(gamesA - gamesB) === 1 &&
             (gamesA >= 6 || gamesB >= 6);
 
+        // Start with base score
+        let scoreDisplay = '';
+
+        // Apply existing formatting logic
         if (isTiebreak) {
             // Show W superscript on winner's side only
             if (gamesA > gamesB) {
-                return `${gamesA}ᵂ-${gamesB}`;
+                scoreDisplay = `${gamesA}ᵂ-${gamesB}`;
             } else {
-                return `${gamesA}-${gamesB}ᵂ`;
+                scoreDisplay = `${gamesA}-${gamesB}ᵂ`;
             }
         } else if (!isComplete) {
             // Show I superscript on both sides for incomplete
-            return `${gamesA}ᴵ-${gamesB}ᴵ`;
+            scoreDisplay = `${gamesA}ᴵ-${gamesB}ᴵ`;
         } else {
             // Regular complete match, no indicator
-            return `${gamesA}-${gamesB}`;
+            scoreDisplay = `${gamesA}-${gamesB}`;
         }
+
+        // Add game point indicator if available
+        if (match.gamePointDetails && gamesA === gamesB) {
+            const { teamAPoints, teamBPoints, isTiebreak: isPointTiebreak } = match.gamePointDetails;
+            if (isPointTiebreak) {
+                scoreDisplay += ` [TB: ${teamAPoints}-${teamBPoints}]`;
+            } else {
+                scoreDisplay += ` [${teamAPoints}-${teamBPoints}]`;
+            }
+        }
+
+        return scoreDisplay;
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
@@ -3092,10 +3122,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     Back
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        // This will be implemented in stage 6
-                                        setShowGamePointDialog(false);
-                                    }}
+                                    onClick={handleSaveGamePoints}
                                     className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
                                 >
                                     Save Points
