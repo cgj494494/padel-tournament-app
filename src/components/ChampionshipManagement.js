@@ -600,6 +600,92 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setSetScores({ teamA: '', teamB: '' });
         }
     };
+    // Game point validation
+    const validateGamePoints = () => {
+        if (isTiebreak) {
+            // For tiebreak, make sure we have valid numbers
+            return true;
+        }
+
+        // For regular scoring, prevent both teams having 'AD'
+        if (gamePoints.teamA === 'AD' && gamePoints.teamB === 'AD') {
+            alert("Both teams cannot have 'AD' simultaneously");
+            return false;
+        }
+
+        return true;
+    };
+
+    // Handler for saving game points
+    const handleSaveGamePoints = () => {
+        if (!validateGamePoints()) {
+            return;
+        }
+
+        // Calculate advantage for tournament points 
+        const teamAAdvantage = gamePoints.teamA === 'AD' && gamePoints.teamB !== 'AD';
+        const teamBAdvantage = gamePoints.teamB === 'AD' && gamePoints.teamA !== 'AD';
+
+        // Tied matches are always considered complete since we're recording a final state
+        const isComplete = true;
+
+        // Save match with the additional game point information
+        saveMatchWithGamePoints(
+            tempGameScores.gamesA,
+            tempGameScores.gamesB,
+            isComplete,
+            gamePoints,
+            teamAAdvantage,
+            teamBAdvantage,
+            isTiebreak
+        );
+
+        // Close dialog
+        setShowGamePointDialog(false);
+    };
+    // Function to save match with game points
+    const saveMatchWithGamePoints = (
+        gamesA,
+        gamesB,
+        isComplete,
+        gamePoints,
+        teamAAdvantage,
+        teamBAdvantage,
+        isTiebreak
+    ) => {
+        // Base point calculation using your existing system
+        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+
+        // Add tournament point for advantage
+        const finalPointsA = pointsA + (teamAAdvantage ? 1 : 0);
+        const finalPointsB = pointsB + (teamBAdvantage ? 1 : 0);
+
+        const match = {
+            id: Date.now(),
+            date: sessionDate,
+            teamA: [...teamA],
+            teamB: [...teamB],
+            gamesA,
+            gamesB,
+            isComplete,
+            points: { teamA: finalPointsA, teamB: finalPointsB },
+            gamePointDetails: {
+                teamAPoints: gamePoints.teamA,
+                teamBPoints: gamePoints.teamB,
+                teamAAdvantage,
+                teamBAdvantage,
+                isTiebreak
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        saveMatch(match);
+
+        // Reset for next match
+        setTeamA([]);
+        setTeamB([]);
+        setSetScores({ teamA: '', teamB: '' });
+    };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
         const margin = Math.abs(gamesA - gamesB);
@@ -2930,8 +3016,74 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 </div>
                             )}
 
-                            {/* Content will be added in stages 4-5 */}
-
+                            {!isTiebreak && (
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h3 className="text-blue-600 font-bold mb-2">Team A</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['0', '15', '30', '40', 'AD'].map(point => (
+                                                    <button
+                                                        key={`teamA-${point}`}
+                                                        onClick={() => setGamePoints(prev => ({ ...prev, teamA: point }))}
+                                                        className={`px-3 py-2 border rounded-lg ${gamePoints.teamA === point
+                                                            ? 'bg-blue-100 border-blue-500 font-bold'
+                                                            : 'border-gray-300'
+                                                            }`}
+                                                    >
+                                                        {point}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-green-600 font-bold mb-2">Team B</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['0', '15', '30', '40', 'AD'].map(point => (
+                                                    <button
+                                                        key={`teamB-${point}`}
+                                                        onClick={() => setGamePoints(prev => ({ ...prev, teamB: point }))}
+                                                        className={`px-3 py-2 border rounded-lg ${gamePoints.teamB === point
+                                                            ? 'bg-green-100 border-green-500 font-bold'
+                                                            : 'border-gray-300'
+                                                            }`}
+                                                    >
+                                                        {point}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {isTiebreak && (
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h3 className="text-blue-600 font-bold mb-2">Team A Tiebreak Points</h3>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="99"
+                                                value={gamePoints.teamA}
+                                                onChange={(e) => setGamePoints(prev => ({ ...prev, teamA: e.target.value }))}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-green-600 font-bold mb-2">Team B Tiebreak Points</h3>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="99"
+                                                value={gamePoints.teamB}
+                                                onChange={(e) => setGamePoints(prev => ({ ...prev, teamB: e.target.value }))}
+                                                className="w-full p-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="flex space-x-4 mt-6">
                                 <button
                                     onClick={() => setShowGamePointDialog(false)}
