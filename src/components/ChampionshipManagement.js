@@ -696,6 +696,52 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setSetScores({ teamA: '', teamB: '' });
         }
     };
+    // Add this function in the section with other save-related functions
+    // Look for functions like saveMatch, saveMatchWithStatus, or saveEditedMatch
+    // It should be near other functions that handle saving match data
+    const handleSaveGamePoints = () => {
+        // If no input type selected, just skip
+        if (!pointInputType) {
+            const gamesA = tempGameScores.gamesA;
+            const gamesB = tempGameScores.gamesB;
+            const isComplete = detectComplete(gamesA, gamesB);
+            saveMatchWithStatus(gamesA, gamesB, isComplete);
+            setShowGamePointDialog(false);
+            return;
+        }
+
+        // Validate based on input type
+        if (pointInputType === 'tennis') {
+            // Validate tennis scoring
+            if (gamePoints.teamA === 'AD' && gamePoints.teamB === 'AD') {
+                alert('Both teams cannot have AD at the same time');
+                return;
+            }
+        }
+        else if (pointInputType === 'numeric') {
+            // Validate numeric scoring
+            const teamAPoints = parseInt(tiebreakPoints.teamA);
+            const teamBPoints = parseInt(tiebreakPoints.teamB);
+
+            if (isNaN(teamAPoints) || isNaN(teamBPoints) || teamAPoints < 0 || teamBPoints < 0) {
+                alert('Please enter valid non-negative numbers for tiebreak scores');
+                return;
+            }
+        }
+
+        // Prepare point details
+        const pointDetails = preparePointDetails();
+
+        // Save match with point details
+        const gamesA = tempGameScores.gamesA;
+        const gamesB = tempGameScores.gamesB;
+        const isComplete = detectComplete(gamesA, gamesB);
+
+        saveMatchWithPointDetails(gamesA, gamesB, isComplete, pointDetails);
+
+        // Close dialog
+        setShowGamePointDialog(false);
+    };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
         const margin = Math.abs(gamesA - gamesB);
