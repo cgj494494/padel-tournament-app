@@ -45,7 +45,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [editComplete, setEditComplete] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
     const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
-        championship.settings?.pointsDialogTrigger || 'tied'
+        currentChampionship.settings?.pointsDialogTrigger || 'tied'
     );
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -143,7 +143,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                 // Migrate existing championships to add settings if missing
                 const migratedChampionships = loadedChampionships.map(championship => {
-                    if (!championship.settings) {
+                    if (!currentChampionship.settings) {
                         return {
                             ...championship,
                             settings: {
