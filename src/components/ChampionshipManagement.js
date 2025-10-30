@@ -524,15 +524,42 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Add with your other event handlers at the component level
     // Find a good spot near other handler functions like handleScoreSubmit ~b3
     // Find your existing function and modify it slightly to add debugging
+    // Find your existing handleEditMatchClick function and modify it
+    // Look for the function that handles opening the edit match dialog
     const handleEditMatchClick = (match) => {
-
-        // Then the rest of your function
         setEditingMatch(match);
         setEditScores({
             teamA: match.gamesA.toString(),
             teamB: match.gamesB.toString()
         });
-        setEditComplete(match.isComplete !== false);
+        setEditComplete(match.isComplete !== false); // Default to true if not specified
+
+        // Initialize point inputs based on existing data
+        if (match.pointDetails) {
+            if (match.pointDetails.type === 'tiebreak') {
+                // Initialize for tiebreak
+                setTiebreakPoints({
+                    teamA: match.pointDetails.teamAPoints,
+                    teamB: match.pointDetails.teamBPoints
+                });
+                setGamePoints({ teamA: '0', teamB: '0' });
+                setPointInputType('numeric');
+            } else {
+                // Initialize for regular game points
+                setGamePoints({
+                    teamA: match.pointDetails.teamAPoints,
+                    teamB: match.pointDetails.teamBPoints
+                });
+                setTiebreakPoints({ teamA: '', teamB: '' });
+                setPointInputType('tennis');
+            }
+        } else {
+            // Reset to default
+            setGamePoints({ teamA: '0', teamB: '0' });
+            setTiebreakPoints({ teamA: '', teamB: '' });
+            setPointInputType(null);
+        }
+
         setShowEditDialog(true);
     };
     // Add with your other event handlers, near handleEditMatchClick  ~b4
@@ -868,91 +895,99 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setCurrentChampionship(updatedChampionship);
         setEditingMatchDate(null);
     };
-    // Add with your other data manipulation functions, near saveMatch or updateMatchDate ~b5
-    const saveUpdatedMatch = (matchId, gamesA, gamesB, isComplete, matchDate) => {
-        // Calculate points based on new scores
-        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+    // Find your existing saveUpdatedMatch function and update it
+    // This is typically the function called when saving an edited match
+    const saveUpdatedMatch = () => {
+        // Get values from state
+        const gamesA = parseInt(editScores.teamA) || 0;
+        const gamesB = parseInt(editScores.teamB) || 0;
 
-        // Clone the current championship
-        const updatedChampionship = { ...currentChampionship };
+        // Validate scores
+        if (gamesA < 0 || gamesB < 0) {
+            alert('Game scores cannot be negative');
+            return;
+        }
 
-        // Find the match to update
-        const updatedMatches = updatedChampionship.matches.map(match => {
-            if (match.id === matchId) {
-                return {
-                    ...match,
-                    gamesA,
-                    gamesB,
-                    isComplete,
-                    date: matchDate,
-                    points: { teamA: pointsA, teamB: pointsB },
-                    lastModified: new Date().toISOString()
-                };
-            }
-            return match;
-        });
+        // Check if this is a tied score
+        const isTied = gamesA === gamesB;
+        let pointDetails = null;
 
-        updatedChampionship.matches = updatedMatches;
-
-        // Reset all standings to recalculate
-        const initialStandings = updatedChampionship.standings.map(standing => ({
-            ...standing,
-            points: 0,
-            matchesPlayed: 0,
-            matchesWon: 0,
-            setsPlayed: 0,
-            gamesWon: 0,
-            gamesLost: 0
-        }));
-
-        // Recalculate all standings from scratch
-        const updatedStandings = initialStandings.map(standing => {
-            // Find all matches for this player
-            updatedChampionship.matches.forEach(match => {
-                const isTeamA = match.teamA.includes(standing.playerId);
-                const isTeamB = match.teamB.includes(standing.playerId);
-
-                if (isTeamA || isTeamB) {
-                    // Add points from this match
-                    standing.points += isTeamA ? match.points.teamA : match.points.teamB;
-
-                    // Add match played
-                    standing.matchesPlayed += 1;
-
-                    // Add match won if applicable
-                    const playerWon = (isTeamA && match.points.teamA > match.points.teamB) ||
-                        (isTeamB && match.points.teamB > match.points.teamA);
-                    if (playerWon) {
-                        standing.matchesWon += 1;
-                    }
-
-                    // Add set played
-                    standing.setsPlayed = (standing.setsPlayed || 0) + 1;
-
-                    // Add games won/lost
-                    standing.gamesWon = (standing.gamesWon || 0) + (isTeamA ? match.gamesA : match.gamesB);
-                    standing.gamesLost = (standing.gamesLost || 0) + (isTeamA ? match.gamesB : match.gamesA);
+        if (isTied) {
+            // Use existing point details or show dialog for new ones
+            if (editingMatch.pointDetails || pointInputType) {
+                // If we already have input, use that
+                if (pointInputType) {
+                    pointDetails = preparePointDetails();
+                } else {
+                    // Otherwise use the existing details
+                    pointDetails = editingMatch.pointDetails;
                 }
-            });
+            } else {
+                // Need to get point details
+                setTempGameScores({ gamesA, gamesB });
+                setShowGamePointDialog(true);
+                // Early return - we'll come back after the dialog
+                return;
+            }
+        }
 
-            return standing;
-        });
+        // Calculate points
+        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, editComplete);
 
-        // Update championship with new standings
-        updatedChampionship.standings = updatedStandings;
+        // Apply bonus points if advantage exists
+        let adjustedPointsA = pointsA;
+        let adjustedPointsB = pointsB;
 
-        // Update championships array
+        if (isTied && pointDetails) {
+            if (pointDetails.teamAAdvantage) {
+                adjustedPointsA += 1;
+            } else if (pointDetails.teamBAdvantage) {
+                adjustedPointsB += 1;
+            }
+        }
+
+        // Create updated match object
+        const updatedMatch = {
+            ...editingMatch,
+            date: editingMatch.date,
+            gamesA,
+            gamesB,
+            isComplete: editComplete,
+            points: {
+                teamA: adjustedPointsA,
+                teamB: adjustedPointsB
+            }
+        };
+
+        // Handle point details
+        if (pointDetails) {
+            updatedMatch.pointDetails = pointDetails;
+        } else {
+            // Remove point details if they exist but we no longer need them
+            delete updatedMatch.pointDetails;
+        }
+
+        // Update the match in the championship
+        const updatedMatches = currentChampionship.matches.map(m =>
+            m.id === updatedMatch.id ? updatedMatch : m
+        );
+
+        // Update championship
+        const updatedChampionship = {
+            ...currentChampionship,
+            matches: updatedMatches
+        };
+
+        // Save championships
         const updatedChampionships = championships.map(c =>
             c.id === currentChampionship.id ? updatedChampionship : c
         );
-
-        // Save to localStorage
         saveChampionships(updatedChampionships);
 
         // Update state
         setCurrentChampionship(updatedChampionship);
 
-        // Close dialog
+        // Close edit dialog
         setShowEditDialog(false);
     };
     const getPlayerName = (playerId) => {
@@ -2075,94 +2110,66 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             Match History
                                         </h3>
 
-                                        {(!currentChampionship.matches || currentChampionship.matches.length === 0) ? (
-                                            <div className="text-center py-16">
-                                                <div className="text-8xl mb-6">🎾</div>
-                                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                                    No Matches Recorded
-                                                </h3>
-                                                <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                                    Start recording matches to build your championship history
-                                                </p>
-                                                <button
-                                                    onClick={() => setView('session')}
-                                                    className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg`}
-                                                >
-                                                    Record Match
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="space-y-6">
-                                                {currentChampionship.matches
-                                                    .slice()
-                                                    .reverse()
-                                                    .map((match, index) => (
-                                                        <div key={match.id || index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
-                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                                                <div className="text-center">
-                                                                    <p className={`${getClasses('small')} text-gray-700`}>
-                                                                        {match.teamA?.map(id => getPlayerName(id)).join(' & ')}
-                                                                    </p>
-                                                                </div>
-                                                                <div className="text-center">
-                                                                    <p className={`${getClasses('body')} font-bold`}>
-                                                                        {getFormattedScore(match)}
-                                                                    </p>
-                                                                    <p className={`${getClasses('small')} text-gray-500`}>
-                                                                        {match.points?.teamA} - {match.points?.teamB} pts
-                                                                    </p>
-                                                                </div>
-                                                                <div className="text-center">
-                                                                    <p className={`${getClasses('small')} text-gray-700`}>
-                                                                        {match.teamB?.map(id => getPlayerName(id)).join(' & ')}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
-                                                                {editingMatchDate === match.id ? (
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <input
-                                                                            type="date"
-                                                                            defaultValue={match.date}
-                                                                            onBlur={(e) => updateMatchDate(match.id, e.target.value)}
-                                                                            onKeyPress={(e) => {
-                                                                                if (e.key === 'Enter') {
-                                                                                    updateMatchDate(match.id, e.target.value);
-                                                                                }
-                                                                            }}
-                                                                            className="px-2 py-1 border rounded text-sm"
-                                                                            autoFocus
-                                                                        />
-                                                                        <button
-                                                                            onClick={() => setEditingMatchDate(null)}
-                                                                            className="text-gray-500 hover:text-gray-700"
-                                                                        >
-                                                                            ✕
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <button
-                                                                        onClick={() => handleEditMatchClick(match)}
-                                                                        className={`${getClasses('small')} text-gray-500 hover:text-gray-700 flex items-center space-x-1`}
-                                                                    >
-                                                                        <span>{new Date(match.date).toLocaleDateString()}</span>
-                                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                                        </svg>
-                                                                    </button>
-                                                                )}
-                                                                <span className={`${getClasses('small')} text-gray-400`}>
-                                                                    Match {currentChampionship.matches.length - index}
-                                                                </span>
-                                                            </div>
+                                        {currentChampionship.matches
+                                            .slice()
+                                            .reverse()
+                                            .map((match, index) => (
+                                                <div key={match.id || index} className="p-6 border-2 border-gray-200 rounded-2xl bg-white/60">
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('small')} text-gray-700`}>
+                                                                {match.teamA?.map(id => getPlayerName(id)).join(' & ')}
+                                                            </p>
                                                         </div>
-                                                    ))}
-                                            </div>
-                                        )}
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('body')} font-bold`}>
+                                                                {getFormattedScore(match)}
+                                                            </p>
+                                                            <p className={`${getClasses('small')} text-gray-500`}>
+                                                                {match.points?.teamA} - {match.points?.teamB} pts
+                                                            </p>
+
+                                                            {/* ADD THE POINT DETAILS CODE HERE */}
+                                                            {match.pointDetails && (
+                                                                <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                                                                    {match.pointDetails.type === 'tiebreak' ? (
+                                                                        // Tiebreak points display
+                                                                        <p className="text-sm font-medium text-blue-800">
+                                                                            Tiebreak Points: {match.pointDetails.teamAPoints}-{match.pointDetails.teamBPoints}
+                                                                        </p>
+                                                                    ) : (
+                                                                        // Regular game points display
+                                                                        <p className="text-sm font-medium text-blue-800">
+                                                                            Game Points: {match.pointDetails.teamAPoints}-{match.pointDetails.teamBPoints}
+                                                                        </p>
+                                                                    )}
+
+                                                                    {(match.pointDetails.teamAAdvantage || match.pointDetails.teamBAdvantage) && (
+                                                                        <p className="text-xs text-blue-700">
+                                                                            {match.pointDetails.teamAAdvantage
+                                                                                ? "Team A had advantage (+1 tournament point)"
+                                                                                : "Team B had advantage (+1 tournament point)"}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className={`${getClasses('small')} text-gray-700`}>
+                                                                {match.teamB?.map(id => getPlayerName(id)).join(' & ')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                                                        {/* Rest of match item code... */}
+                                                    </div>
+                                                </div>
+                                            ))}
                                     </div>
                                 )}
-
+                                {/* 
+  
                                 {activeTab === 'players' && (
                                     <div>
                                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
@@ -2321,965 +2328,965 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         )}
 
                                         {/* Add New Player Modal */}
-                                        <PlayerManagementModal
-                                            isOpen={showAddNewPlayerModal}
-                                            onClose={() => setShowAddNewPlayerModal(false)}
-                                            players={players}
-                                            onAddPlayer={handleAddNewPlayer}
-                                            onUpdatePlayer={handleUpdatePlayer}
-                                            onDeletePlayer={handleDeletePlayer}
-                                        />
+                                <PlayerManagementModal
+                                    isOpen={showAddNewPlayerModal}
+                                    onClose={() => setShowAddNewPlayerModal(false)}
+                                    players={players}
+                                    onAddPlayer={handleAddNewPlayer}
+                                    onUpdatePlayer={handleUpdatePlayer}
+                                    onDeletePlayer={handleDeletePlayer}
+                                />
 
 
-
-                                    </div>
-                                )}
-                                {activeTab === 'partnerships' && (
-                                    <div>
-                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
-                                            <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                                Partnership Statistics
-                                            </h3>
-
-                                            {/* Sorting Toggle Buttons */}
-                                            <div className="flex items-center space-x-2 bg-gray-100 rounded-2xl p-2 flex-wrap">
-                                                <button
-                                                    onClick={() => setPartnershipSortMode('prorata')}
-                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'prorata'
-                                                        ? 'bg-white text-blue-600 shadow-lg'
-                                                        : 'text-gray-600 hover:text-gray-900'
-                                                        }`}
-                                                >
-                                                    Pro Rata
-                                                </button>
-                                                <button
-                                                    onClick={() => setPartnershipSortMode('matches')}
-                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'matches'
-                                                        ? 'bg-white text-blue-600 shadow-lg'
-                                                        : 'text-gray-600 hover:text-gray-900'
-                                                        }`}
-                                                >
-                                                    Matches
-                                                </button>
-                                                <button
-                                                    onClick={() => setPartnershipSortMode('games')}
-                                                    className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'games'
-                                                        ? 'bg-white text-blue-600 shadow-lg'
-                                                        : 'text-gray-600 hover:text-gray-900'
-                                                        }`}
-                                                >
-                                                    Games +/-
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Info message about minimum matches */}
-                                        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                            <p className={`${getClasses('small')} text-blue-700`}>
-                                                <strong>Showing partnerships with {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches played together.</strong> This uses the same minimum as Pro Rata standings.
-                                            </p>
-                                        </div>
-
-                                        {(() => {
-                                            const partnerships = calculatePartnershipStats();
-
-                                            if (partnerships.length === 0) {
-                                                return (
-                                                    <div className="text-center py-16">
-                                                        <div className="text-8xl mb-6">🤝</div>
-                                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                                            No Partnerships Yet
-                                                        </h3>
-                                                        <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                                            Partnerships will appear here once player pairs have played {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches together
-                                                        </p>
-                                                    </div>
-                                                );
-                                            }
-
-                                            // Sort partnerships based on selected mode
-                                            const sortedPartnerships = [...partnerships].sort((a, b) => {
-                                                if (partnershipSortMode === 'prorata') {
-                                                    const diff = parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
-                                                    return diff !== 0 ? diff : b.matches - a.matches;
-                                                } else if (partnershipSortMode === 'matches') {
-                                                    const diff = b.matches - a.matches;
-                                                    return diff !== 0 ? diff : parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
-                                                } else {
-                                                    const diff = b.gameDifferential - a.gameDifferential;
-                                                    return diff !== 0 ? diff : b.matches - a.matches;
-                                                }
-                                            });
-
-                                            return (
-                                                <div className="overflow-x-auto">
-                                                    <div className="inline-block min-w-full">
-                                                        <table className="w-full border-collapse border border-gray-300">
-                                                            <thead>
-                                                                <tr className="bg-gray-100">
-                                                                    <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-1 py-3 text-center font-bold w-12">Rank</th>
-                                                                    <th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
-                                                                    <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
-                                                                    <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
-                                                                    <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
-                                                                    <th className="border border-gray-300 px-4 py-3 text-center font-bold">Win %</th>
-                                                                    <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {sortedPartnerships.map((partnership, index) => {
-                                                                    const player1 = players.find(p => p.id === partnership.player1Id);
-                                                                    const player2 = players.find(p => p.id === partnership.player2Id);
-
-                                                                    return (
-                                                                        <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
-                                                                            <td className={`sticky left-0 z-10 border border-gray-300 px-1 py-3 text-center font-bold w-12 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
-                                                                            </td>
-                                                                            <td className={`sticky left-[3.5rem] z-10 border border-gray-300 px-4 py-3 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
-                                                                                <span className={`${getClasses('body')} font-bold`}>
-                                                                                    {player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown'} & {player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown'}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                <span className={`${getClasses('body')} font-bold text-purple-600`}>
-                                                                                    {partnership.proRataScore}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                <span className={`${getClasses('body')} font-bold`}>
-                                                                                    {partnership.matches}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                {partnership.won}
-                                                                            </td>
-                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                <span className="text-gray-600">
-                                                                                    {partnership.winRate}%
-                                                                                </span>
-                                                                            </td>
-                                                                            <td className="border border-gray-300 px-4 py-3 text-center">
-                                                                                <span className={partnership.gameDifferential >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                                                                                    {partnership.gameDifferential >= 0 ? '+' : ''}{partnership.gameDifferential}
-                                                                                </span>
-                                                                            </td>
-                                                                        </tr>
-                                                                    );
-                                                                })}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-                                )}
 
                             </div>
-                        </div>
-                        {/* Edit Match Dialog - Add near other modals in the return statement */}
-                        {showEditDialog && editingMatch && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-                                    <h2 className={`${getClasses('heading')} text-xl font-bold mb-4`}>Edit Match</h2>
+                                )}
+                            {activeTab === 'partnerships' && (
+                                <div>
+                                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
+                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                            Partnership Statistics
+                                        </h3>
 
-                                    <div className="mb-4">
-                                        <label className="block text-gray-700 mb-1">Date</label>
+                                        {/* Sorting Toggle Buttons */}
+                                        <div className="flex items-center space-x-2 bg-gray-100 rounded-2xl p-2 flex-wrap">
+                                            <button
+                                                onClick={() => setPartnershipSortMode('prorata')}
+                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'prorata'
+                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                Pro Rata
+                                            </button>
+                                            <button
+                                                onClick={() => setPartnershipSortMode('matches')}
+                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'matches'
+                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                Matches
+                                            </button>
+                                            <button
+                                                onClick={() => setPartnershipSortMode('games')}
+                                                className={`${getClasses('small')} font-bold px-4 py-2 rounded-xl transition-all ${partnershipSortMode === 'games'
+                                                    ? 'bg-white text-blue-600 shadow-lg'
+                                                    : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                            >
+                                                Games +/-
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Info message about minimum matches */}
+                                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                        <p className={`${getClasses('small')} text-blue-700`}>
+                                            <strong>Showing partnerships with {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches played together.</strong> This uses the same minimum as Pro Rata standings.
+                                        </p>
+                                    </div>
+
+                                    {(() => {
+                                        const partnerships = calculatePartnershipStats();
+
+                                        if (partnerships.length === 0) {
+                                            return (
+                                                <div className="text-center py-16">
+                                                    <div className="text-8xl mb-6">🤝</div>
+                                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                                        No Partnerships Yet
+                                                    </h3>
+                                                    <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                                        Partnerships will appear here once player pairs have played {currentChampionship?.settings?.minMatchesForProRata || 3}+ matches together
+                                                    </p>
+                                                </div>
+                                            );
+                                        }
+
+                                        // Sort partnerships based on selected mode
+                                        const sortedPartnerships = [...partnerships].sort((a, b) => {
+                                            if (partnershipSortMode === 'prorata') {
+                                                const diff = parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
+                                                return diff !== 0 ? diff : b.matches - a.matches;
+                                            } else if (partnershipSortMode === 'matches') {
+                                                const diff = b.matches - a.matches;
+                                                return diff !== 0 ? diff : parseFloat(b.proRataScore) - parseFloat(a.proRataScore);
+                                            } else {
+                                                const diff = b.gameDifferential - a.gameDifferential;
+                                                return diff !== 0 ? diff : b.matches - a.matches;
+                                            }
+                                        });
+
+                                        return (
+                                            <div className="overflow-x-auto">
+                                                <div className="inline-block min-w-full">
+                                                    <table className="w-full border-collapse border border-gray-300">
+                                                        <thead>
+                                                            <tr className="bg-gray-100">
+                                                                <th className="sticky left-0 z-10 bg-gray-100 border border-gray-300 px-1 py-3 text-center font-bold w-12">Rank</th>
+                                                                <th className="sticky left-[3rem] z-10 bg-gray-100 border border-gray-300 px-4 py-3 text-left font-bold min-w-[200px]">Partnership</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Pro Rata</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Matches</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Won</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Win %</th>
+                                                                <th className="border border-gray-300 px-4 py-3 text-center font-bold">Games +/-</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {sortedPartnerships.map((partnership, index) => {
+                                                                const player1 = players.find(p => p.id === partnership.player1Id);
+                                                                const player2 = players.find(p => p.id === partnership.player2Id);
+
+                                                                return (
+                                                                    <tr key={`${partnership.player1Id}_${partnership.player2Id}`} className={index === 0 ? 'bg-yellow-50' : 'hover:bg-gray-50'}>
+                                                                        <td className={`sticky left-0 z-10 border border-gray-300 px-1 py-3 text-center font-bold w-12 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
+                                                                        </td>
+                                                                        <td className={`sticky left-[3.5rem] z-10 border border-gray-300 px-4 py-3 ${index === 0 ? 'bg-yellow-50' : 'bg-white'}`}>
+                                                                            <span className={`${getClasses('body')} font-bold`}>
+                                                                                {player1 ? `${player1.firstName} ${player1.surname}` : 'Unknown'} & {player2 ? `${player2.firstName} ${player2.surname}` : 'Unknown'}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={`${getClasses('body')} font-bold text-purple-600`}>
+                                                                                {partnership.proRataScore}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={`${getClasses('body')} font-bold`}>
+                                                                                {partnership.matches}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            {partnership.won}
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className="text-gray-600">
+                                                                                {partnership.winRate}%
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="border border-gray-300 px-4 py-3 text-center">
+                                                                            <span className={partnership.gameDifferential >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                                                                                {partnership.gameDifferential >= 0 ? '+' : ''}{partnership.gameDifferential}
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                    {/* Edit Match Dialog - Add near other modals in the return statement */}
+                    {showEditDialog && editingMatch && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
+                                <h2 className={`${getClasses('heading')} text-xl font-bold mb-4`}>Edit Match</h2>
+
+                                <div className="mb-4">
+                                    <label className="block text-gray-700 mb-1">Date</label>
+                                    <input
+                                        type="date"
+                                        defaultValue={editingMatch.date}
+                                        onChange={(e) => {
+                                            setEditingMatch({
+                                                ...editingMatch,
+                                                date: e.target.value
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border rounded-lg"
+                                    />
+                                </div>
+
+                                <div className="flex justify-between mb-6">
+                                    <div className="w-1/2 pr-2">
+                                        <label className="block text-gray-700 mb-1">
+                                            Team A Score
+                                        </label>
                                         <input
-                                            type="date"
-                                            defaultValue={editingMatch.date}
-                                            onChange={(e) => {
-                                                setEditingMatch({
-                                                    ...editingMatch,
-                                                    date: e.target.value
-                                                });
-                                            }}
+                                            type="number"
+                                            min="0"
+                                            value={editScores.teamA}
+                                            onChange={(e) => setEditScores({
+                                                ...editScores,
+                                                teamA: e.target.value
+                                            })}
                                             className="w-full px-3 py-2 border rounded-lg"
                                         />
                                     </div>
-
-                                    <div className="flex justify-between mb-6">
-                                        <div className="w-1/2 pr-2">
-                                            <label className="block text-gray-700 mb-1">
-                                                Team A Score
-                                            </label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={editScores.teamA}
-                                                onChange={(e) => setEditScores({
-                                                    ...editScores,
-                                                    teamA: e.target.value
-                                                })}
-                                                className="w-full px-3 py-2 border rounded-lg"
-                                            />
-                                        </div>
-                                        <div className="w-1/2 pl-2">
-                                            <label className="block text-gray-700 mb-1">
-                                                Team B Score
-                                            </label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={editScores.teamB}
-                                                onChange={(e) => setEditScores({
-                                                    ...editScores,
-                                                    teamB: e.target.value
-                                                })}
-                                                className="w-full px-3 py-2 border rounded-lg"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center mb-6">
-                                        <input
-                                            type="checkbox"
-                                            id="editComplete"
-                                            checked={editComplete}
-                                            onChange={(e) => setEditComplete(e.target.checked)}
-                                            className="mr-2 h-5 w-5 text-indigo-600"
-                                        />
-                                        <label htmlFor="editComplete" className="text-gray-700">
-                                            Match is complete
+                                    <div className="w-1/2 pl-2">
+                                        <label className="block text-gray-700 mb-1">
+                                            Team B Score
                                         </label>
-                                    </div>
-                                    {/* ADD THE DELETE BUTTON SECTION RIGHT HERE */}
-                                    <button
-                                        onClick={() => {
-                                            setShowEditDialog(false); // Close edit dialog first
-                                            setTimeout(() => {
-                                                setShowDeleteConfirmation(true); // Then show delete confirmation
-                                            }, 50); // Small timeout to ensure state updates in correct order
-                                        }}
-                                        className="w-full px-4 py-2 bg-red-100 text-red-600 border border-red-300 rounded hover:bg-red-200 flex items-center justify-center"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Delete Match
-                                    </button>
-                                    <div className="flex justify-between pt-3 border-t">
-                                        <button
-                                            onClick={() => setShowEditDialog(false)}
-                                            className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleSaveEditedMatch}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                                        >
-                                            Save Changes
-                                        </button>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={editScores.teamB}
+                                            onChange={(e) => setEditScores({
+                                                ...editScores,
+                                                teamB: e.target.value
+                                            })}
+                                            className="w-full px-3 py-2 border rounded-lg"
+                                        />
                                     </div>
                                 </div>
+
+                                <div className="flex items-center mb-6">
+                                    <input
+                                        type="checkbox"
+                                        id="editComplete"
+                                        checked={editComplete}
+                                        onChange={(e) => setEditComplete(e.target.checked)}
+                                        className="mr-2 h-5 w-5 text-indigo-600"
+                                    />
+                                    <label htmlFor="editComplete" className="text-gray-700">
+                                        Match is complete
+                                    </label>
+                                </div>
+                                {/* ADD THE DELETE BUTTON SECTION RIGHT HERE */}
+                                <button
+                                    onClick={() => {
+                                        setShowEditDialog(false); // Close edit dialog first
+                                        setTimeout(() => {
+                                            setShowDeleteConfirmation(true); // Then show delete confirmation
+                                        }, 50); // Small timeout to ensure state updates in correct order
+                                    }}
+                                    className="w-full px-4 py-2 bg-red-100 text-red-600 border border-red-300 rounded hover:bg-red-200 flex items-center justify-center"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    Delete Match
+                                </button>
+                                <div className="flex justify-between pt-3 border-t">
+                                    <button
+                                        onClick={() => setShowEditDialog(false)}
+                                        className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveEditedMatch}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                    >
+                                        Save Changes
+                                    </button>
+                                </div>
                             </div>
-                        )}
-                        {/* 
+                        </div>
+                    )}
+                    {/* 
    Add this Game Points Dialog at the end of your component's return statement
    It should be placed near other dialog components
    Look for similar modal dialogs like setStatusDialog, editDialog, etc.
    These are typically at the bottom of the return statement 
    (around line ~1800 based on references in RECENT_Implementation_of_Display_Changes.md)
 */}
-                        {showGamePointDialog && (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                                <div className="bg-white rounded-xl p-6 max-w-lg w-full">
-                                    <h2 className="text-xl font-bold mb-4">Game Point Status</h2>
+                    {showGamePointDialog && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl p-6 max-w-lg w-full">
+                                <h2 className="text-xl font-bold mb-4">Game Point Status</h2>
 
-                                    <p className="mb-4 text-gray-700">
-                                        Games are tied {tempGameScores.gamesA}-{tempGameScores.gamesB}.
-                                        Enter the current point status or skip to save without points.
-                                    </p>
+                                <p className="mb-4 text-gray-700">
+                                    Games are tied {tempGameScores.gamesA}-{tempGameScores.gamesB}.
+                                    Enter the current point status or skip to save without points.
+                                </p>
 
-                                    {/* Tiebreak Hint for 6-6 */}
-                                    {tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && (
-                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
-                                            <p className="text-yellow-700">
-                                                <strong>Hint:</strong> For tiebreak scores, please use the numeric input fields.
-                                            </p>
-                                        </div>
-                                    )}
+                                {/* Tiebreak Hint for 6-6 */}
+                                {tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && (
+                                    <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                                        <p className="text-yellow-700">
+                                            <strong>Hint:</strong> For tiebreak scores, please use the numeric input fields.
+                                        </p>
+                                    </div>
+                                )}
 
-                                    <div className="mb-6">
-                                        <div className="grid grid-cols-2 gap-6">
-                                            {/* Team A */}
-                                            <div>
-                                                <p className="font-medium mb-2 text-center">Team A</p>
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        {/* Team A */}
+                                        <div>
+                                            <p className="font-medium mb-2 text-center">Team A</p>
 
-                                                {/* Tennis scoring buttons */}
-                                                <div className="flex flex-wrap gap-2 justify-center mb-2">
-                                                    {['0', '15', '30', '40', 'AD'].map(point => (
-                                                        <button
-                                                            key={`A-${point}`}
-                                                            onClick={() => handleTennisScoreA(point)}
-                                                            disabled={pointInputType === 'numeric'}
-                                                            className={`
+                                            {/* Tennis scoring buttons */}
+                                            <div className="flex flex-wrap gap-2 justify-center mb-2">
+                                                {['0', '15', '30', '40', 'AD'].map(point => (
+                                                    <button
+                                                        key={`A-${point}`}
+                                                        onClick={() => handleTennisScoreA(point)}
+                                                        disabled={pointInputType === 'numeric'}
+                                                        className={`
                                         px-4 py-2 rounded-full 
                                         ${gamePoints.teamA === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
                                         ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
                                     `}
-                                                        >
-                                                            {point}
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                                    >
+                                                        {point}
+                                                    </button>
+                                                ))}
+                                            </div>
 
-                                                <div className="text-center my-2 text-gray-500">OR</div>
+                                            <div className="text-center my-2 text-gray-500">OR</div>
 
-                                                {/* Numeric input */}
-                                                <div>
-                                                    <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={tiebreakPoints.teamA}
-                                                        onChange={(e) => handleNumericScoreA(e.target.value)}
-                                                        disabled={pointInputType === 'tennis'}
-                                                        className={`
+                                            {/* Numeric input */}
+                                            <div>
+                                                <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={tiebreakPoints.teamA}
+                                                    onChange={(e) => handleNumericScoreA(e.target.value)}
+                                                    disabled={pointInputType === 'tennis'}
+                                                    className={`
                                     w-full px-4 py-2 border-2 rounded-lg text-center
                                     ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
                                     ${tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType !== 'tennis'
-                                                                ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
+                                                            ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
                                 `}
-                                                        placeholder="Enter number"
-                                                    />
-                                                </div>
+                                                    placeholder="Enter number"
+                                                />
                                             </div>
+                                        </div>
 
-                                            {/* Team B */}
-                                            <div>
-                                                <p className="font-medium mb-2 text-center">Team B</p>
+                                        {/* Team B */}
+                                        <div>
+                                            <p className="font-medium mb-2 text-center">Team B</p>
 
-                                                {/* Tennis scoring buttons */}
-                                                <div className="flex flex-wrap gap-2 justify-center mb-2">
-                                                    {['0', '15', '30', '40', 'AD'].map(point => (
-                                                        <button
-                                                            key={`B-${point}`}
-                                                            onClick={() => handleTennisScoreB(point)}
-                                                            disabled={pointInputType === 'numeric'}
-                                                            className={`
+                                            {/* Tennis scoring buttons */}
+                                            <div className="flex flex-wrap gap-2 justify-center mb-2">
+                                                {['0', '15', '30', '40', 'AD'].map(point => (
+                                                    <button
+                                                        key={`B-${point}`}
+                                                        onClick={() => handleTennisScoreB(point)}
+                                                        disabled={pointInputType === 'numeric'}
+                                                        className={`
                                         px-4 py-2 rounded-full 
                                         ${gamePoints.teamB === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
                                         ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
                                     `}
-                                                        >
-                                                            {point}
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                                    >
+                                                        {point}
+                                                    </button>
+                                                ))}
+                                            </div>
 
-                                                <div className="text-center my-2 text-gray-500">OR</div>
+                                            <div className="text-center my-2 text-gray-500">OR</div>
 
-                                                {/* Numeric input */}
-                                                <div>
-                                                    <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={tiebreakPoints.teamB}
-                                                        onChange={(e) => handleNumericScoreB(e.target.value)}
-                                                        disabled={pointInputType === 'tennis'}
-                                                        className={`
+                                            {/* Numeric input */}
+                                            <div>
+                                                <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={tiebreakPoints.teamB}
+                                                    onChange={(e) => handleNumericScoreB(e.target.value)}
+                                                    disabled={pointInputType === 'tennis'}
+                                                    className={`
                                     w-full px-4 py-2 border-2 rounded-lg text-center
                                     ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
                                     ${tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType !== 'tennis'
-                                                                ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
+                                                            ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
                                 `}
-                                                        placeholder="Enter number"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Current Point Status Display */}
-                                        {pointInputType && (
-                                            <div className="border-t border-b border-gray-200 py-3 my-4">
-                                                <div className="text-center">
-                                                    <span className="text-xl">Current Point Status: </span>
-                                                    <span className="text-2xl font-bold">
-                                                        {pointInputType === 'tennis'
-                                                            ? `${gamePoints.teamA} - ${gamePoints.teamB}`
-                                                            : `${tiebreakPoints.teamA} - ${tiebreakPoints.teamB}`}
-                                                    </span>
-                                                    <p className="text-sm text-gray-600 mt-1">
-                                                        {pointInputType === 'tennis' ? '(Tennis Scoring)' : '(Tiebreak Scoring)'}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div className="flex space-x-4">
-                                        <button
-                                            onClick={() => {
-                                                // Skip point entry and just save the match
-                                                const gamesA = tempGameScores.gamesA;
-                                                const gamesB = tempGameScores.gamesB;
-                                                const isComplete = detectComplete(gamesA, gamesB);
-                                                saveMatchWithStatus(gamesA, gamesB, isComplete);
-                                                setShowGamePointDialog(false);
-                                            }}
-                                            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
-                                        >
-                                            Skip
-                                        </button>
-                                        <button
-                                            onClick={handleSaveGamePoints}
-                                            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-                                        >
-                                            Save Points
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {/* First Delete Confirmation Dialog */}
-                        {showDeleteConfirmation && (
-                            <div className="fixed inset-0 bg-black bg-opacity-75 z-60 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                                    <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
-
-                                    <h2 className="text-2xl font-bold text-center mt-4 mb-2">Delete Match?</h2>
-
-                                    <p className="text-gray-600 text-center mb-6">
-                                        Are you sure you want to delete this match? This action cannot be undone.
-                                    </p>
-
-                                    <div className="flex justify-between space-x-4">
-                                        <button
-                                            onClick={() => setShowDeleteConfirmation(false)}
-                                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setShowDeleteConfirmation(false);
-                                                setShowSecondaryConfirmation(true);
-                                            }}
-                                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        {/* Second Verification Dialog */}
-                        {showSecondaryConfirmation && (
-                            <div className="fixed inset-0 bg-black bg-opacity-75 z-70 flex items-center justify-center p-4">
-                                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                                    <h2 className="text-2xl font-bold text-center mb-4">Final Verification</h2>
-
-                                    <p className="text-gray-700 mb-6">
-                                        To confirm deletion, please type the date of this match:<br />
-                                        <span className="font-bold">{editingMatch.date}</span>
-                                    </p>
-
-                                    <input
-                                        type="text"
-                                        value={deleteConfirmText}
-                                        onChange={(e) => setDeleteConfirmText(e.target.value)}
-                                        placeholder="Enter match date (e.g., 2025-10-21)"
-                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl mb-6"
-                                        autoFocus
-                                    />
-
-                                    <div className="flex justify-between space-x-4">
-                                        <button
-                                            onClick={() => {
-                                                setShowSecondaryConfirmation(false);
-                                                setDeleteConfirmText('');
-                                            }}
-                                            className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleMatchDelete}
-                                            disabled={deleteConfirmText !== editingMatch.date}
-                                            className={`flex-1 px-4 py-3 rounded-xl ${deleteConfirmText === editingMatch.date
-                                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                }`}
-                                        >
-                                            Confirm Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div >
-        );
-    }
-
-    // SESSION/MATCH RECORDING VIEW
-    if (view === 'session') {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-                <FontToggle />
-                <DebugInfo />
-                <ScoringSystemModal />
-                <ChampionshipSettingsModal />
-                <div className="pt-20 pb-32 px-1 sm:px-2">
-                    <div className="max-w-full sm:max-w-4xl mx-auto">
-                        <div className="flex items-center mb-10">
-                            <button
-                                onClick={() => setView('detail')}
-                                className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                <span>Back</span>
-                            </button>
-                            <div className="flex-1">
-                                <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                    Record Session - {currentChampionship.name}
-                                </h1>
-                                <p className={`${getClasses('body')} text-gray-600 font-medium`}>
-                                    {sessionStep === 'setup' && 'Set up your session'}
-                                    {sessionStep === 'recording' && `Recording matches for ${sessionDate}`}
-                                    {sessionStep === 'complete' && 'Session complete'}
-                                </p>
-                            </div>
-                            {sessionStep === 'recording' && (
-                                <button
-                                    onClick={() => setShowScoringModal(true)}
-                                    className={`${getClasses('button')} bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-2xl flex items-center space-x-3 shadow-lg`}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>Scoring Help</span>
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Session Setup */}
-                        {sessionStep === 'setup' && (
-                            <div className="space-y-8">
-                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Session Date</h3>
-                                    <input
-                                        type="date"
-                                        value={sessionDate}
-                                        onChange={(e) => setSessionDate(e.target.value)}
-                                        className={`${getClasses('input')} border-2 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white/80 w-full max-w-md`}
-                                    />
-                                </div>
-
-                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
-                                        Select Attending Players (minimum 4)
-                                    </h3>
-                                    <div className="grid md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
-                                        {currentChampionship.players?.map((playerId) => {
-                                            const player = players.find(p => p.id === playerId);
-                                            if (!player) return null;
-
-                                            return (
-                                                <label
-                                                    key={playerId}
-                                                    className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${attendingPlayers.includes(playerId)
-                                                        ? 'bg-blue-50 border-blue-300'
-                                                        : 'bg-gray-50 border-gray-200 hover:border-blue-200'
-                                                        }`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={attendingPlayers.includes(playerId)}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                setAttendingPlayers([...attendingPlayers, playerId]);
-                                                            } else {
-                                                                setAttendingPlayers(attendingPlayers.filter(id => id !== playerId));
-                                                            }
-                                                        }}
-                                                        className="w-5 h-5 text-blue-600 rounded"
-                                                    />
-                                                    <div>
-                                                        <span className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                            {player.firstName} {player.surname}
-                                                        </span>
-                                                        <p className={`${getClasses('small')} text-gray-500`}>
-                                                            {player.userId}
-                                                        </p>
-                                                    </div>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="mt-6 text-center">
-                                        <p className={`${getClasses('body')} text-gray-600`}>
-                                            Selected: <span className="font-bold text-blue-600">{attendingPlayers.length}</span> players
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="text-center">
-                                    <button
-                                        onClick={() => attendingPlayers.length >= 4 ? setSessionStep('recording') : alert('Please select at least 4 players')}
-                                        disabled={attendingPlayers.length < 4}
-                                        className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
-                                    >
-                                        Start Session
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Match Recording */}
-                        {sessionStep === 'recording' && (
-                            <div className="space-y-8">
-                                <div className="bg-white/90 backdrop-blur rounded-2xl shadow-lg p-6 border border-gray-200">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                Session: {new Date(sessionDate).toLocaleDateString()}
-                                            </h3>
-                                            <p className={`${getClasses('small')} text-gray-600`}>
-                                                {attendingPlayers.length} players • {sessionMatches.length} matches recorded
-                                            </p>
-                                        </div>
-                                        <button
-                                            onClick={() => setSessionStep('complete')}
-                                            className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg`}
-                                        >
-                                            Finish Session
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Select Teams for Match</h3>
-
-                                    <div className="grid md:grid-cols-2 gap-8">
-                                        <div className="space-y-4">
-                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-blue-600 text-center`}>Team A</h4>
-                                            <div className="min-h-24 p-4 border-2 border-blue-200 rounded-2xl bg-blue-50">
-                                                {teamA.length === 0 ? (
-                                                    <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {teamA.map(playerId => (
-                                                            <div key={playerId} className="flex justify-between items-center">
-                                                                <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
-                                                                    {getPlayerName(playerId)}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => setTeamA(teamA.filter(id => id !== playerId))}
-                                                                    className="text-red-500 hover:text-red-700"
-                                                                >
-                                                                    ✕
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-4">
-                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-green-600 text-center`}>Team B</h4>
-                                            <div className="min-h-24 p-4 border-2 border-green-200 rounded-2xl bg-green-50">
-                                                {teamB.length === 0 ? (
-                                                    <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
-                                                ) : (
-                                                    <div className="space-y-2">
-                                                        {teamB.map(playerId => (
-                                                            <div key={playerId} className="flex justify-between items-center">
-                                                                <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
-                                                                    {getPlayerName(playerId)}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => setTeamB(teamB.filter(id => id !== playerId))}
-                                                                    className="text-red-500 hover:text-red-700"
-                                                                >
-                                                                    ✕
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                    placeholder="Enter number"
+                                                />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-8">
-                                        <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                            {attendingPlayers
-                                                .filter(id => !teamA.includes(id) && !teamB.includes(id))
-                                                .map(playerId => {
-                                                    return (
-                                                        <div key={playerId} className="space-y-2">
-                                                            <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
-                                                                {getPlayerName(playerId)}
-                                                            </p>
-                                                            <div className="flex space-x-2">
-                                                                <button
-                                                                    onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
-                                                                    disabled={teamA.length >= 2}
-                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
-                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-blue-100 text-blue-700 active:bg-blue-300'
-                                                                        }`}
-                                                                >
-                                                                    Team A
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
-                                                                    disabled={teamB.length >= 2}
-                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
-                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-green-100 text-green-700 active:bg-green-300'
-                                                                        }`}
-                                                                >
-                                                                    Team B
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                        </div>
-                                    </div>
-
-                                    {teamA.length === 2 && teamB.length === 2 && (
-                                        <div className="mt-8 py-6 px-2 bg-gray-50 rounded-2xl border border-gray-200">
-                                            <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
-                                                Score
-                                            </h4>
-                                            <div className="grid grid-cols-[5fr_1fr_5fr] gap-1 items-center w-full px-0">
-                                                <div className="text-center">
-                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        value={setScores.teamA}
-                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
-                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        max="20"
-                                                        value={setScores.teamB}
-                                                        onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
-                                                        className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {setScores.teamA && setScores.teamB && (
-                                                <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
-                                                    <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
-                                                    <div className="flex justify-center space-x-6 flex-wrap gap-2">
-                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
-                                                            Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
-                                                        </span>
-                                                        <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
-                                                            Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="text-center mt-6">
-                                                <button
-                                                    onClick={handleScoreSubmit}
-                                                    disabled={!setScores.teamA || !setScores.teamB}
-                                                    className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
-                                                >
-                                                    ✓ Record Match
-                                                </button>
+                                    {/* Current Point Status Display */}
+                                    {pointInputType && (
+                                        <div className="border-t border-b border-gray-200 py-3 my-4">
+                                            <div className="text-center">
+                                                <span className="text-xl">Current Point Status: </span>
+                                                <span className="text-2xl font-bold">
+                                                    {pointInputType === 'tennis'
+                                                        ? `${gamePoints.teamA} - ${gamePoints.teamB}`
+                                                        : `${tiebreakPoints.teamA} - ${tiebreakPoints.teamB}`}
+                                                </span>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {pointInputType === 'tennis' ? '(Tennis Scoring)' : '(Tiebreak Scoring)'}
+                                                </p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {sessionMatches.length > 0 && (
-                                    <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
-                                            Session Matches ({sessionMatches.length})
-                                        </h3>
-                                        <div className="space-y-4">
-                                            {sessionMatches.map((match, index) => (
-                                                <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                    <div className="grid grid-cols-3 gap-4 items-center">
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
-                                                            <p className={`${getClasses('small')} text-gray-700`}>
-                                                                {match.teamA.map(id => getPlayerName(id)).join(' & ')}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('body')} font-bold`}>
-                                                                {getFormattedScore(match)}
-                                                            </p>
-                                                            <p className={`${getClasses('small')} text-gray-500`}>
-                                                                {match.points.teamA} - {match.points.teamB} pts
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
-                                                            <p className={`${getClasses('small')} text-gray-700`}>
-                                                                {match.teamB.map(id => getPlayerName(id)).join(' & ')}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Session Complete */}
-                        {sessionStep === 'complete' && (
-                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
-                                <div className="text-8xl mb-6">🎾</div>
-                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                    Session Complete!
-                                </h3>
-                                <p className={`${getClasses('body')} text-gray-600 mb-8`}>
-                                    Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
-                                </p>
-                                <div className="space-y-4">
+                                {/* Action Buttons */}
+                                <div className="flex space-x-4">
                                     <button
                                         onClick={() => {
-                                            setSessionStep('setup');
-                                            setAttendingPlayers([]);
-                                            setSessionMatches([]);
-                                            setTeamA([]);
-                                            setTeamB([]);
-                                            setSetScores({ teamA: '', teamB: '' });
+                                            // Skip point entry and just save the match
+                                            const gamesA = tempGameScores.gamesA;
+                                            const gamesB = tempGameScores.gamesB;
+                                            const isComplete = detectComplete(gamesA, gamesB);
+                                            saveMatchWithStatus(gamesA, gamesB, isComplete);
+                                            setShowGamePointDialog(false);
                                         }}
-                                        className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
+                                        className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
                                     >
-                                        Record Another Session
+                                        Skip
                                     </button>
                                     <button
-                                        onClick={() => setView('detail')}
-                                        className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
+                                        onClick={handleSaveGamePoints}
+                                        className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
                                     >
-                                        View Championship
+                                        Save Points
                                     </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                </div>
-                {/* Set Status Confirmation Dialog */}
-                {showSetStatusDialog && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
-                            <h2 className="text-2xl font-bold mb-4">Confirm Set Status</h2>
+                        </div>
+                    )}
+                    {/* First Delete Confirmation Dialog */}
+                    {showDeleteConfirmation && (
+                        <div className="fixed inset-0 bg-black bg-opacity-75 z-60 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                                <div className="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
 
-                            <div className="mb-6">
-                                <p className="text-gray-600 mb-2">
-                                    Team A: <span className="font-bold">{tempScores.gamesA} games</span>
+                                <h2 className="text-2xl font-bold text-center mt-4 mb-2">Delete Match?</h2>
+
+                                <p className="text-gray-600 text-center mb-6">
+                                    Are you sure you want to delete this match? This action cannot be undone.
                                 </p>
-                                <p className="text-gray-600 mb-4">
-                                    Team B: <span className="font-bold">{tempScores.gamesB} games</span>
-                                </p>
-                            </div>
 
-                            <div className="space-y-4 mb-6">
-                                <label
-                                    className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
-                                        }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        checked={setComplete}
-                                        onChange={() => setSetComplete(true)}
-                                        className="mt-1 mr-3"
-                                    />
-                                    <div>
-                                        <div className="font-bold">Set Completed (Tiebreak/Won by 2)</div>
-                                        <div className="text-sm text-gray-600">
-                                            Points: 4 pts vs 3 pts
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <label
-                                    className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${!setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
-                                        }`}
-                                >
-                                    <input
-                                        type="radio"
-                                        checked={!setComplete}
-                                        onChange={() => setSetComplete(false)}
-                                        className="mt-1 mr-3"
-                                    />
-                                    <div>
-                                        <div className="font-bold">Incomplete (Time ran out)</div>
-                                        <div className="text-sm text-gray-600">
-                                            Points: 3 pts vs 2 pts
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div className="flex space-x-4">
-                                <button
-                                    onClick={() => setShowSetStatusDialog(false)}
-                                    className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
-                                >
-                                    Back
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        saveMatchWithStatus(tempScores.gamesA, tempScores.gamesB, setComplete);
-                                        setShowSetStatusDialog(false);
-                                    }}
-                                    className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-                                >
-                                    Save Match
-                                </button>
+                                <div className="flex justify-between space-x-4">
+                                    <button
+                                        onClick={() => setShowDeleteConfirmation(false)}
+                                        className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowDeleteConfirmation(false);
+                                            setShowSecondaryConfirmation(true);
+                                        }}
+                                        className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                    {/* Second Verification Dialog */}
+                    {showSecondaryConfirmation && (
+                        <div className="fixed inset-0 bg-black bg-opacity-75 z-70 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                                <h2 className="text-2xl font-bold text-center mb-4">Final Verification</h2>
 
+                                <p className="text-gray-700 mb-6">
+                                    To confirm deletion, please type the date of this match:<br />
+                                    <span className="font-bold">{editingMatch.date}</span>
+                                </p>
 
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                    placeholder="Enter match date (e.g., 2025-10-21)"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl mb-6"
+                                    autoFocus
+                                />
+
+                                <div className="flex justify-between space-x-4">
+                                    <button
+                                        onClick={() => {
+                                            setShowSecondaryConfirmation(false);
+                                            setDeleteConfirmText('');
+                                        }}
+                                        className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleMatchDelete}
+                                        disabled={deleteConfirmText !== editingMatch.date}
+                                        className={`flex-1 px-4 py-3 rounded-xl ${deleteConfirmText === editingMatch.date
+                                            ? 'bg-red-600 text-white hover:bg-red-700'
+                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        Confirm Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
             </div >
-
         );
     }
 
-    // Default view
+// SESSION/MATCH RECORDING VIEW
+if (view === 'session') {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
             <FontToggle />
             <DebugInfo />
-            <div className="pt-20 pb-32 px-2">
-                <div className="max-w-4xl mx-auto">
-                    <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
+            <ScoringSystemModal />
+            <ChampionshipSettingsModal />
+            <div className="pt-20 pb-32 px-1 sm:px-2">
+                <div className="max-w-full sm:max-w-4xl mx-auto">
+                    <div className="flex items-center mb-10">
+                        <button
+                            onClick={() => setView('detail')}
+                            className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            <span>Back</span>
+                        </button>
+                        <div className="flex-1">
+                            <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                Record Session - {currentChampionship.name}
+                            </h1>
+                            <p className={`${getClasses('body')} text-gray-600 font-medium`}>
+                                {sessionStep === 'setup' && 'Set up your session'}
+                                {sessionStep === 'recording' && `Recording matches for ${sessionDate}`}
+                                {sessionStep === 'complete' && 'Session complete'}
+                            </p>
+                        </div>
+                        {sessionStep === 'recording' && (
+                            <button
+                                onClick={() => setShowScoringModal(true)}
+                                className={`${getClasses('button')} bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold rounded-2xl flex items-center space-x-3 shadow-lg`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Scoring Help</span>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Session Setup */}
+                    {sessionStep === 'setup' && (
+                        <div className="space-y-8">
+                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Session Date</h3>
+                                <input
+                                    type="date"
+                                    value={sessionDate}
+                                    onChange={(e) => setSessionDate(e.target.value)}
+                                    className={`${getClasses('input')} border-2 border-gray-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all font-medium bg-white/80 w-full max-w-md`}
+                                />
+                            </div>
+
+                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                    Select Attending Players (minimum 4)
+                                </h3>
+                                <div className="grid md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                                    {currentChampionship.players?.map((playerId) => {
+                                        const player = players.find(p => p.id === playerId);
+                                        if (!player) return null;
+
+                                        return (
+                                            <label
+                                                key={playerId}
+                                                className={`flex items-center space-x-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${attendingPlayers.includes(playerId)
+                                                    ? 'bg-blue-50 border-blue-300'
+                                                    : 'bg-gray-50 border-gray-200 hover:border-blue-200'
+                                                    }`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={attendingPlayers.includes(playerId)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            setAttendingPlayers([...attendingPlayers, playerId]);
+                                                        } else {
+                                                            setAttendingPlayers(attendingPlayers.filter(id => id !== playerId));
+                                                        }
+                                                    }}
+                                                    className="w-5 h-5 text-blue-600 rounded"
+                                                />
+                                                <div>
+                                                    <span className={`${getClasses('body')} font-bold text-gray-800`}>
+                                                        {player.firstName} {player.surname}
+                                                    </span>
+                                                    <p className={`${getClasses('small')} text-gray-500`}>
+                                                        {player.userId}
+                                                    </p>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <div className="mt-6 text-center">
+                                    <p className={`${getClasses('body')} text-gray-600`}>
+                                        Selected: <span className="font-bold text-blue-600">{attendingPlayers.length}</span> players
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                <button
+                                    onClick={() => attendingPlayers.length >= 4 ? setSessionStep('recording') : alert('Please select at least 4 players')}
+                                    disabled={attendingPlayers.length < 4}
+                                    className={`${getClasses('button')} bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
+                                >
+                                    Start Session
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Match Recording */}
+                    {sessionStep === 'recording' && (
+                        <div className="space-y-8">
+                            <div className="bg-white/90 backdrop-blur rounded-2xl shadow-lg p-6 border border-gray-200">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h3 className={`${getClasses('body')} font-bold text-gray-800`}>
+                                            Session: {new Date(sessionDate).toLocaleDateString()}
+                                        </h3>
+                                        <p className={`${getClasses('small')} text-gray-600`}>
+                                            {attendingPlayers.length} players • {sessionMatches.length} matches recorded
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => setSessionStep('complete')}
+                                        className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg`}
+                                    >
+                                        Finish Session
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Select Teams for Match</h3>
+
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <h4 className={`${getMatchRecordingClasses('teamHeader')} text-blue-600 text-center`}>Team A</h4>
+                                        <div className="min-h-24 p-4 border-2 border-blue-200 rounded-2xl bg-blue-50">
+                                            {teamA.length === 0 ? (
+                                                <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {teamA.map(playerId => (
+                                                        <div key={playerId} className="flex justify-between items-center">
+                                                            <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
+                                                                {getPlayerName(playerId)}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => setTeamA(teamA.filter(id => id !== playerId))}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <h4 className={`${getMatchRecordingClasses('teamHeader')} text-green-600 text-center`}>Team B</h4>
+                                        <div className="min-h-24 p-4 border-2 border-green-200 rounded-2xl bg-green-50">
+                                            {teamB.length === 0 ? (
+                                                <p className={`${getClasses('small')} text-gray-500 text-center`}>Select 2 players</p>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {teamB.map(playerId => (
+                                                        <div key={playerId} className="flex justify-between items-center">
+                                                            <span className={`${getMatchRecordingClasses('teamDisplay')}`}>
+                                                                {getPlayerName(playerId)}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => setTeamB(teamB.filter(id => id !== playerId))}
+                                                                className="text-red-500 hover:text-red-700"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8">
+                                    <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        {attendingPlayers
+                                            .filter(id => !teamA.includes(id) && !teamB.includes(id))
+                                            .map(playerId => {
+                                                return (
+                                                    <div key={playerId} className="space-y-2">
+                                                        <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
+                                                            {getPlayerName(playerId)}
+                                                        </p>
+                                                        <div className="flex space-x-2">
+                                                            <button
+                                                                onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
+                                                                disabled={teamA.length >= 2}
+                                                                className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
+                                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                    : 'bg-blue-100 text-blue-700 active:bg-blue-300'
+                                                                    }`}
+                                                            >
+                                                                Team A
+                                                            </button>
+                                                            <button
+                                                                onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
+                                                                disabled={teamB.length >= 2}
+                                                                className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
+                                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                    : 'bg-green-100 text-green-700 active:bg-green-300'
+                                                                    }`}
+                                                            >
+                                                                Team B
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                    </div>
+                                </div>
+
+                                {teamA.length === 2 && teamB.length === 2 && (
+                                    <div className="mt-8 py-6 px-2 bg-gray-50 rounded-2xl border border-gray-200">
+                                        <h4 className={`${getMatchRecordingClasses('teamHeader')} text-gray-800 mb-4 text-center`}>
+                                            Score
+                                        </h4>
+                                        <div className="grid grid-cols-[5fr_1fr_5fr] gap-1 items-center w-full px-0">
+                                            <div className="text-center">
+                                                <p className={`${getMatchRecordingClasses('scoreLabel')} text-blue-600`}>Team A</p>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="20"
+                                                    value={setScores.teamA}
+                                                    onChange={(e) => setSetScores(prev => ({ ...prev, teamA: e.target.value }))}
+                                                    className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-blue-300 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-200 bg-white`}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div className="text-center">
+                                                <p className={`${getClasses('body')} font-bold text-gray-500`}>vs</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className={`${getMatchRecordingClasses('scoreLabel')} text-green-600`}>Team B</p>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="20"
+                                                    value={setScores.teamB}
+                                                    onChange={(e) => setSetScores(prev => ({ ...prev, teamB: e.target.value }))}
+                                                    className={`w-full text-center ${getMatchRecordingClasses('scoreInput')} border-4 border-green-300 rounded-2xl focus:border-green-500 focus:ring-4 focus:ring-green-200 bg-white`}
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {setScores.teamA && setScores.teamB && (
+                                            <div className="mt-4 p-4 bg-white rounded-xl border border-gray-200">
+                                                <p className={`${getMatchRecordingClasses('pointsLabel')} text-center text-gray-600 mb-3`}>Points Preview (CJ System):</p>
+                                                <div className="flex justify-center space-x-6 flex-wrap gap-2">
+                                                    <span className={`${getMatchRecordingClasses('pointsPreview')} text-blue-600`}>
+                                                        Team A: {calculateCJPoints(setScores.teamA, setScores.teamB)[0]} pts
+                                                    </span>
+                                                    <span className={`${getMatchRecordingClasses('pointsPreview')} text-green-600`}>
+                                                        Team B: {calculateCJPoints(setScores.teamA, setScores.teamB)[1]} pts
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="text-center mt-6">
+                                            <button
+                                                onClick={handleScoreSubmit}
+                                                disabled={!setScores.teamA || !setScores.teamB}
+                                                className={`${getMatchRecordingClasses('recordButton')} w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white rounded-3xl shadow-2xl active:scale-95 transition-all`}
+                                            >
+                                                ✓ Record Match
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {sessionMatches.length > 0 && (
+                                <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
+                                    <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                        Session Matches ({sessionMatches.length})
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {sessionMatches.map((match, index) => (
+                                            <div key={match.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                                <div className="grid grid-cols-3 gap-4 items-center">
+                                                    <div className="text-center">
+                                                        <p className={`${getClasses('small')} font-bold text-blue-600`}>Team A</p>
+                                                        <p className={`${getClasses('small')} text-gray-700`}>
+                                                            {match.teamA.map(id => getPlayerName(id)).join(' & ')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className={`${getClasses('body')} font-bold`}>
+                                                            {getFormattedScore(match)}
+                                                        </p>
+                                                        <p className={`${getClasses('small')} text-gray-500`}>
+                                                            {match.points.teamA} - {match.points.teamB} pts
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className={`${getClasses('small')} font-bold text-green-600`}>Team B</p>
+                                                        <p className={`${getClasses('small')} text-gray-700`}>
+                                                            {match.teamB.map(id => getPlayerName(id)).join(' & ')}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Session Complete */}
+                    {sessionStep === 'complete' && (
+                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 text-center">
+                            <div className="text-8xl mb-6">🎾</div>
+                            <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                Session Complete!
+                            </h3>
+                            <p className={`${getClasses('body')} text-gray-600 mb-8`}>
+                                Recorded {sessionMatches.length} matches for {attendingPlayers.length} players
+                            </p>
+                            <div className="space-y-4">
+                                <button
+                                    onClick={() => {
+                                        setSessionStep('setup');
+                                        setAttendingPlayers([]);
+                                        setSessionMatches([]);
+                                        setTeamA([]);
+                                        setTeamB([]);
+                                        setSetScores({ teamA: '', teamB: '' });
+                                    }}
+                                    className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg mr-4`}
+                                >
+                                    Record Another Session
+                                </button>
+                                <button
+                                    onClick={() => setView('detail')}
+                                    className={`${getClasses('button')} bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg`}
+                                >
+                                    View Championship
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+            {/* Set Status Confirmation Dialog */}
+            {showSetStatusDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                        <h2 className="text-2xl font-bold mb-4">Confirm Set Status</h2>
+
+                        <div className="mb-6">
+                            <p className="text-gray-600 mb-2">
+                                Team A: <span className="font-bold">{tempScores.gamesA} games</span>
+                            </p>
+                            <p className="text-gray-600 mb-4">
+                                Team B: <span className="font-bold">{tempScores.gamesB} games</span>
+                            </p>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <label
+                                className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    checked={setComplete}
+                                    onChange={() => setSetComplete(true)}
+                                    className="mt-1 mr-3"
+                                />
+                                <div>
+                                    <div className="font-bold">Set Completed (Tiebreak/Won by 2)</div>
+                                    <div className="text-sm text-gray-600">
+                                        Points: 4 pts vs 3 pts
+                                    </div>
+                                </div>
+                            </label>
+
+                            <label
+                                className={`flex items-start p-4 border-2 rounded-xl cursor-pointer transition-colors ${!setComplete ? 'border-blue-600 bg-blue-50' : 'border-gray-200'
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    checked={!setComplete}
+                                    onChange={() => setSetComplete(false)}
+                                    className="mt-1 mr-3"
+                                />
+                                <div>
+                                    <div className="font-bold">Incomplete (Time ran out)</div>
+                                    <div className="text-sm text-gray-600">
+                                        Points: 3 pts vs 2 pts
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div className="flex space-x-4">
+                            <button
+                                onClick={() => setShowSetStatusDialog(false)}
+                                className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={() => {
+                                    saveMatchWithStatus(tempScores.gamesA, tempScores.gamesB, setComplete);
+                                    setShowSetStatusDialog(false);
+                                }}
+                                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                            >
+                                Save Match
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+
+        </div >
+
     );
+}
+
+// Default view
+return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+        <FontToggle />
+        <DebugInfo />
+        <div className="pt-20 pb-32 px-2">
+            <div className="max-w-4xl mx-auto">
+                <p className={`${getClasses('body')} text-gray-600`}>Loading...</p>
+            </div>
+        </div>
+    </div>
+);
 };
 
 export default ChampionshipManagement;
