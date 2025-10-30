@@ -696,6 +696,50 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setSetScores({ teamA: '', teamB: '' });
         }
     };
+    // Add this function right next to your existing saveMatchWithStatus function
+    // Look for the function that handles saving match data to your state or storage
+    const saveMatchWithPointDetails = (gamesA, gamesB, isComplete, pointDetails) => {
+        // Get standard points calculation
+        const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+
+        // Add bonus point for team with advantage
+        let adjustedPointsA = pointsA;
+        let adjustedPointsB = pointsB;
+
+        // If the game is tied and one team has advantage, give them an extra point
+        if (gamesA === gamesB && pointDetails) {
+            if (pointDetails.teamAAdvantage) {
+                adjustedPointsA += 1;
+            } else if (pointDetails.teamBAdvantage) {
+                adjustedPointsB += 1;
+            }
+        }
+
+        // Create the match object
+        const match = {
+            id: Date.now(),
+            date: sessionDate,
+            teamA: [...teamA],
+            teamB: [...teamB],
+            gamesA,
+            gamesB,
+            isComplete,
+            pointDetails, // Store point details
+            points: {
+                teamA: adjustedPointsA,
+                teamB: adjustedPointsB
+            },
+            timestamp: new Date().toISOString()
+        };
+
+        // Save using your existing match-saving function
+        saveMatch(match);
+
+        // Reset for next match
+        setTeamA([]);
+        setTeamB([]);
+        setSetScores({ teamA: '', teamB: '' });
+    };
     // Add this function in the section with other save-related functions
     // Look for functions like saveMatch, saveMatchWithStatus, or saveEditedMatch
     // It should be near other functions that handle saving match data
@@ -915,10 +959,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const player = players.find(p => p.id === playerId);
         return player ? `${player.firstName} ${player.surname}` : 'Unknown';
     };
+    // Find the existing getFormattedScore function and modify it
+    // Look for a function that formats match scores for display
     const getFormattedScore = (match) => {
         const gamesA = match.gamesA;
         const gamesB = match.gamesB;
         const isComplete = match.isComplete !== false; // Default to true if not specified
+        const hasPointDetails = match.pointDetails !== undefined;
 
         // Determine if this is a tiebreak win scenario
         // Tiebreak: complete set with margin of 1 and at least one team has 6+
@@ -926,21 +973,33 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             Math.abs(gamesA - gamesB) === 1 &&
             (gamesA >= 6 || gamesB >= 6);
 
-        if (isTiebreak) {
-            // Show W superscript on winner's side only
-            if (gamesA > gamesB) {
-                return `${gamesA}ᵂ-${gamesB}`;
+        // Handle game point scenario (when games are tied with recorded point advantage)
+        if (hasPointDetails && gamesA === gamesB) {
+            const pointDetails = match.pointDetails;
+
+            // Show appropriate indicator based on point type
+            const indicator = pointDetails.type === 'tiebreak' ? 'ᵗ' : 'ᵖ'; // T for Tiebreak, P for Points
+
+            if (pointDetails.teamAAdvantage) {
+                return `${gamesA}${indicator}-${gamesB}`; // Indicator for team A advantage
+            } else if (pointDetails.teamBAdvantage) {
+                return `${gamesA}-${gamesB}${indicator}`; // Indicator for team B advantage
             } else {
-                return `${gamesA}-${gamesB}ᵂ`;
+                return `${gamesA}-${gamesB}`; // Equal points
+            }
+        }
+        // Otherwise use existing formatting
+        else if (isTiebreak) {
+            if (gamesA > gamesB) {
+                return `${gamesA}ᵗ-${gamesB}`;
+            } else {
+                return `${gamesA}-${gamesB}ᵗ`;
             }
         } else if (!isComplete) {
-            // Show I superscript on both sides for incomplete
-            return `${gamesA}ᴵ-${gamesB}ᴵ`;
+            return `${gamesA}ᶦ-${gamesB}ᶦ`;
         } else {
-            // Regular complete match, no indicator
             return `${gamesA}-${gamesB}`;
         }
-
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
