@@ -48,7 +48,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
     // Add these right after your other useState declarations 
-    // Look for existing state variables like teamA, teamB, setScores, etc.
     const [showGamePointDialog, setShowGamePointDialog] = useState(false);
     const [gamePoints, setGamePoints] = useState({
         teamA: '0',  // 0, 15, 30, 40, 'AD'
@@ -237,7 +236,92 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             saveChampionships(updatedChampionships);
         }
     };
+    // Add these functions in the section with other event handlers
+    // Look for functions like handleScoreChange, handleEditMatchClick, handleDeleteMatch, etc.
+    // This would be after all state declarations but before useEffect hooks
+    const handleTennisScoreA = (score) => {
+        setPointInputType('tennis');
+        setGamePoints({ ...gamePoints, teamA: score });
+        setTiebreakPoints({ ...tiebreakPoints, teamA: '' }); // Clear numeric input
+    };
 
+    const handleTennisScoreB = (score) => {
+        setPointInputType('tennis');
+        setGamePoints({ ...gamePoints, teamB: score });
+        setTiebreakPoints({ ...tiebreakPoints, teamB: '' }); // Clear numeric input
+    };
+
+    const handleNumericScoreA = (value) => {
+        if (value === '') {
+            setTiebreakPoints({ ...tiebreakPoints, teamA: '' });
+            // Don't set input type if empty
+            if (tiebreakPoints.teamB === '') {
+                setPointInputType(null);
+            }
+        } else {
+            setPointInputType('numeric');
+            setTiebreakPoints({ ...tiebreakPoints, teamA: value });
+            setGamePoints({ ...gamePoints, teamA: '0' }); // Reset tennis selection
+        }
+    };
+
+    const handleNumericScoreB = (value) => {
+        if (value === '') {
+            setTiebreakPoints({ ...tiebreakPoints, teamB: '' });
+            // Don't set input type if empty
+            if (tiebreakPoints.teamA === '') {
+                setPointInputType(null);
+            }
+        } else {
+            setPointInputType('numeric');
+            setTiebreakPoints({ ...tiebreakPoints, teamB: value });
+            setGamePoints({ ...gamePoints, teamB: '0' }); // Reset tennis selection
+        }
+    };
+
+    const preparePointDetails = () => {
+        if (pointInputType === 'tennis') {
+            // Regular tennis scoring
+            const pointValues = { '0': 0, '15': 1, '30': 2, '40': 3, 'AD': 4 };
+
+            let teamAAdvantage = false;
+            let teamBAdvantage = false;
+
+            if (gamePoints.teamA === 'AD' ||
+                (pointValues[gamePoints.teamA] > pointValues[gamePoints.teamB] && gamePoints.teamB !== 'AD')) {
+                teamAAdvantage = true;
+            } else if (gamePoints.teamB === 'AD' ||
+                (pointValues[gamePoints.teamB] > pointValues[gamePoints.teamA] && gamePoints.teamA !== 'AD')) {
+                teamBAdvantage = true;
+            }
+
+            return {
+                type: 'regular',
+                teamAPoints: gamePoints.teamA,
+                teamBPoints: gamePoints.teamB,
+                teamAAdvantage,
+                teamBAdvantage
+            };
+        }
+        else if (pointInputType === 'numeric') {
+            // Tiebreak scoring
+            const teamAPoints = parseInt(tiebreakPoints.teamA) || 0;
+            const teamBPoints = parseInt(tiebreakPoints.teamB) || 0;
+
+            const teamAAdvantage = teamAPoints > teamBPoints;
+            const teamBAdvantage = teamBPoints > teamAPoints;
+
+            return {
+                type: 'tiebreak',
+                teamAPoints: teamAPoints.toString(),
+                teamBPoints: teamBPoints.toString(),
+                teamAAdvantage,
+                teamBAdvantage
+            };
+        }
+
+        return null;
+    };
     // Championship player management
     const addPlayerToChampionship = (playerId) => {
         if (!currentChampionship.players.includes(playerId)) {
@@ -403,6 +487,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setCurrentChampionship(updatedChampionship);
     };
 
+    // Find the existing handleScoreSubmit function in the component
+    // It should be in the event handlers section, likely handling form submissions
+    // Search for "function handleScoreSubmit" or similar
     const handleScoreSubmit = () => {
         if (!teamA.length || !teamB.length || !setScores.teamA || !setScores.teamB) {
             alert('Please select teams and enter scores');
@@ -412,8 +499,19 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
-        // Check if ambiguous (7-6, 8-7, 9-8, etc.)
-        if (isAmbiguousScore(gamesA, gamesB)) {
+        // Initial implementation - show dialog for tied games
+        // We'll enhance this later to use championship settings
+        if (gamesA === gamesB) {
+            // Games are tied, show game point dialog
+            setTempGameScores({ gamesA, gamesB });
+            // Reset points
+            setGamePoints({ teamA: '0', teamB: '0' });
+            setTiebreakPoints({ teamA: '', teamB: '' });
+            setPointInputType(null);
+            setShowGamePointDialog(true);
+        }
+        // Keep your existing logic for non-tied scores
+        else if (isAmbiguousScore(gamesA, gamesB)) {
             setTempScores({ gamesA, gamesB });
             setSetComplete(true); // Default to complete
             setShowSetStatusDialog(true);
@@ -796,7 +894,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             // Regular complete match, no indicator
             return `${gamesA}-${gamesB}`;
         }
-        
+
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
@@ -2367,6 +2465,166 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                                         >
                                             Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {/* 
+   Add this Game Points Dialog at the end of your component's return statement
+   It should be placed near other dialog components
+   Look for similar modal dialogs like setStatusDialog, editDialog, etc.
+   These are typically at the bottom of the return statement 
+   (around line ~1800 based on references in RECENT_Implementation_of_Display_Changes.md)
+*/}
+                        {showGamePointDialog && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-xl p-6 max-w-lg w-full">
+                                    <h2 className="text-xl font-bold mb-4">Game Point Status</h2>
+
+                                    <p className="mb-4 text-gray-700">
+                                        Games are tied {tempGameScores.gamesA}-{tempGameScores.gamesB}.
+                                        Enter the current point status or skip to save without points.
+                                    </p>
+
+                                    {/* Tiebreak Hint for 6-6 */}
+                                    {tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && (
+                                        <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                                            <p className="text-yellow-700">
+                                                <strong>Hint:</strong> For tiebreak scores, please use the numeric input fields.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="mb-6">
+                                        <div className="grid grid-cols-2 gap-6">
+                                            {/* Team A */}
+                                            <div>
+                                                <p className="font-medium mb-2 text-center">Team A</p>
+
+                                                {/* Tennis scoring buttons */}
+                                                <div className="flex flex-wrap gap-2 justify-center mb-2">
+                                                    {['0', '15', '30', '40', 'AD'].map(point => (
+                                                        <button
+                                                            key={`A-${point}`}
+                                                            onClick={() => handleTennisScoreA(point)}
+                                                            disabled={pointInputType === 'numeric'}
+                                                            className={`
+                                        px-4 py-2 rounded-full 
+                                        ${gamePoints.teamA === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
+                                        ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
+                                    `}
+                                                        >
+                                                            {point}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <div className="text-center my-2 text-gray-500">OR</div>
+
+                                                {/* Numeric input */}
+                                                <div>
+                                                    <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={tiebreakPoints.teamA}
+                                                        onChange={(e) => handleNumericScoreA(e.target.value)}
+                                                        disabled={pointInputType === 'tennis'}
+                                                        className={`
+                                    w-full px-4 py-2 border-2 rounded-lg text-center
+                                    ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
+                                    ${tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType !== 'tennis'
+                                                                ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
+                                `}
+                                                        placeholder="Enter number"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Team B */}
+                                            <div>
+                                                <p className="font-medium mb-2 text-center">Team B</p>
+
+                                                {/* Tennis scoring buttons */}
+                                                <div className="flex flex-wrap gap-2 justify-center mb-2">
+                                                    {['0', '15', '30', '40', 'AD'].map(point => (
+                                                        <button
+                                                            key={`B-${point}`}
+                                                            onClick={() => handleTennisScoreB(point)}
+                                                            disabled={pointInputType === 'numeric'}
+                                                            className={`
+                                        px-4 py-2 rounded-full 
+                                        ${gamePoints.teamB === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
+                                        ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
+                                    `}
+                                                        >
+                                                            {point}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <div className="text-center my-2 text-gray-500">OR</div>
+
+                                                {/* Numeric input */}
+                                                <div>
+                                                    <label className="block text-sm text-gray-600 mb-1">Tiebreak Score:</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={tiebreakPoints.teamB}
+                                                        onChange={(e) => handleNumericScoreB(e.target.value)}
+                                                        disabled={pointInputType === 'tennis'}
+                                                        className={`
+                                    w-full px-4 py-2 border-2 rounded-lg text-center
+                                    ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
+                                    ${tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType !== 'tennis'
+                                                                ? 'border-blue-500 ring-2 ring-blue-300' : 'border-gray-200'}
+                                `}
+                                                        placeholder="Enter number"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Current Point Status Display */}
+                                        {pointInputType && (
+                                            <div className="border-t border-b border-gray-200 py-3 my-4">
+                                                <div className="text-center">
+                                                    <span className="text-xl">Current Point Status: </span>
+                                                    <span className="text-2xl font-bold">
+                                                        {pointInputType === 'tennis'
+                                                            ? `${gamePoints.teamA} - ${gamePoints.teamB}`
+                                                            : `${tiebreakPoints.teamA} - ${tiebreakPoints.teamB}`}
+                                                    </span>
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {pointInputType === 'tennis' ? '(Tennis Scoring)' : '(Tiebreak Scoring)'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex space-x-4">
+                                        <button
+                                            onClick={() => {
+                                                // Skip point entry and just save the match
+                                                const gamesA = tempGameScores.gamesA;
+                                                const gamesB = tempGameScores.gamesB;
+                                                const isComplete = detectComplete(gamesA, gamesB);
+                                                saveMatchWithStatus(gamesA, gamesB, isComplete);
+                                                setShowGamePointDialog(false);
+                                            }}
+                                            className="flex-1 px-6 py-3 bg-gray-200 hover:bg-gray-300 font-bold rounded-lg"
+                                        >
+                                            Skip
+                                        </button>
+                                        <button
+                                            onClick={handleSaveGamePoints}
+                                            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
+                                        >
+                                            Save Points
                                         </button>
                                     </div>
                                 </div>
