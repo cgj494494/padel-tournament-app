@@ -47,19 +47,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
-    // Add these right after your other useState declarations 
-    // Look for existing state variables like teamA, teamB, setScores, etc.
-    const [showGamePointDialog, setShowGamePointDialog] = useState(false);
-    const [gamePoints, setGamePoints] = useState({
-        teamA: '0',  // 0, 15, 30, 40, 'AD'
-        teamB: '0'
-    });
-    const [tiebreakPoints, setTiebreakPoints] = useState({
-        teamA: '',  // numeric values
-        teamB: ''
-    });
-    const [pointInputType, setPointInputType] = useState(null); // 'tennis' or 'numeric' or null
-    const [tempGameScores, setTempGameScores] = useState({ gamesA: 0, gamesB: 0 });
+
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -796,7 +784,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             // Regular complete match, no indicator
             return `${gamesA}-${gamesB}`;
         }
-        
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
