@@ -521,6 +521,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // It should be in the event handlers section, likely handling form submissions
     // Search for "function handleScoreSubmit" or similar
     const handleScoreSubmit = () => {
+        console.log("handleScoreSubmit called");
         if (!teamA.length || !teamB.length || !setScores.teamA || !setScores.teamB) {
             alert('Please select teams and enter scores');
             return;
