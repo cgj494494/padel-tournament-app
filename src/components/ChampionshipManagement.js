@@ -44,6 +44,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [editScores, setEditScores] = useState({ teamA: '', teamB: '' });
     const [editComplete, setEditComplete] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
+        championship.settings?.pointsDialogTrigger || 'tied'
+    );
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
@@ -588,7 +591,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             // For non-ambiguous scores, save directly
             saveUpdatedMatch(editingMatch.id, gamesA, gamesB, editComplete, editingMatch.date);
         }
+
     };
+
     const handleMatchDelete = () => {
         if (deleteConfirmText !== editingMatch.date) {
             return; // Extra safety check
@@ -1445,11 +1450,72 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                 The system encourages competitive play while rewarding strong performances.
                             </p>
                         </div>
+                        // 2. banana cake Add this UI section to your modal's JSX, alongside other settings sections
+                        <div className="mb-6 p-6 bg-gray-50 rounded-xl">
+                            <h3 className="text-xl font-bold mb-2">Game Points Dialog</h3>
+                            <p className="text-gray-600 mb-3">
+                                Control when the points dialog appears during match recording:
+                            </p>
+
+                            <div className="space-y-3">
+                                <label className="flex items-start">
+                                    <input
+                                        type="radio"
+                                        name="pointsDialogTrigger"
+                                        value="tied"
+                                        checked={pointsDialogTrigger === 'tied'}
+                                        onChange={() => setPointsDialogTrigger('tied')}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <p className="font-medium">Tied Games Only (Default)</p>
+                                        <p className="text-sm text-gray-600">
+                                            Show points dialog when games are tied (e.g., 4-4, 6-6)
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-start">
+                                    <input
+                                        type="radio"
+                                        name="pointsDialogTrigger"
+                                        value="all"
+                                        checked={pointsDialogTrigger === 'all'}
+                                        onChange={() => setPointsDialogTrigger('all')}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <p className="font-medium">All Games</p>
+                                        <p className="text-sm text-gray-600">
+                                            Always show points dialog for every match, regardless of score
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <label className="flex items-start">
+                                    <input
+                                        type="radio"
+                                        name="pointsDialogTrigger"
+                                        value="6-6"
+                                        checked={pointsDialogTrigger === '6-6'}
+                                        onChange={() => setPointsDialogTrigger('6-6')}
+                                        className="mt-1 mr-3"
+                                    />
+                                    <div>
+                                        <p className="font-medium">Tiebreaks Only (6-6)</p>
+                                        <p className="text-sm text-gray-600">
+                                            Show points dialog only for 6-6 tiebreak scenarios
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         );
     };
+
     const ChampionshipSettingsModal = () => {
         const [localMinMatches, setLocalMinMatches] = React.useState(3);
 
@@ -1466,7 +1532,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 ...currentChampionship,
                 settings: {
                     ...currentChampionship.settings,
-                    minMatchesForProRata: localMinMatches
+                    minMatchesForProRata: localMinMatches,
+                    pointsDialogTrigger // Add this line to include the new setting
                 }
             };
 
@@ -1478,7 +1545,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setCurrentChampionship(updatedChampionship);
             setShowChampionshipSettings(false);
         };
-
+        // Add this property to the championship settings object
+        const DEFAULT_SETTINGS = {
+            // Existing settings
+            minMatchesForProRata: 3,
+            scoringSystem: 'cj-updated-2025',
+            scoringSystemSource: 'global',
+            // New setting
+            pointsDialogTrigger: 'tied', // Default: 'tied', 'all', or '6-6'
+            // Other settings...
+        };
         return (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
                 <div className="min-h-screen flex items-center justify-center p-4">
@@ -2550,6 +2626,125 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         Match is complete
                                     </label>
                                 </div>
+                                {/* ADD THE POINT EDITING UI HERE - Code from step 2.5 */}
+                                {parseInt(editScores.teamA) === parseInt(editScores.teamB) && (
+                                    <div className="mt-4 border-t pt-4">
+                                        <h3 className="text-lg font-semibold mb-2">Game Point Status</h3>
+
+                                        {/* Tiebreak hint for 6-6 */}
+                                        {parseInt(editScores.teamA) === 6 && parseInt(editScores.teamB) === 6 && (
+                                            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-3 mb-3 text-sm">
+                                                <p className="text-yellow-700">
+                                                    <strong>Hint:</strong> For tiebreak scores, please use the numeric input fields.
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {/* Team A */}
+                                            <div>
+                                                <p className="font-medium mb-2 text-center">Team A</p>
+
+                                                {/* Tennis scoring buttons */}
+                                                <div className="flex flex-wrap gap-1 justify-center mb-2">
+                                                    {['0', '15', '30', '40', 'AD'].map(point => (
+                                                        <button
+                                                            key={`edit-A-${point}`}
+                                                            onClick={() => handleTennisScoreA(point)}
+                                                            disabled={pointInputType === 'numeric'}
+                                                            className={`
+                                px-3 py-1 rounded-full text-sm
+                                ${gamePoints.teamA === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
+                                ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
+                            `}
+                                                        >
+                                                            {point}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <div className="text-center my-1 text-gray-500 text-xs">OR</div>
+
+                                                {/* Numeric input */}
+                                                <div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={tiebreakPoints.teamA}
+                                                        onChange={(e) => handleNumericScoreA(e.target.value)}
+                                                        disabled={pointInputType === 'tennis'}
+                                                        className={`
+                            w-full px-3 py-1 border-2 rounded-lg text-center text-sm
+                            ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
+                            ${parseInt(editScores.teamA) === 6 && parseInt(editScores.teamB) === 6 && pointInputType !== 'tennis'
+                                                                ? 'border-blue-500' : 'border-gray-200'}
+                        `}
+                                                        placeholder="Tiebreak score"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Team B */}
+                                            <div>
+                                                <p className="font-medium mb-2 text-center">Team B</p>
+
+                                                {/* Tennis scoring buttons */}
+                                                <div className="flex flex-wrap gap-1 justify-center mb-2">
+                                                    {['0', '15', '30', '40', 'AD'].map(point => (
+                                                        <button
+                                                            key={`edit-B-${point}`}
+                                                            onClick={() => handleTennisScoreB(point)}
+                                                            disabled={pointInputType === 'numeric'}
+                                                            className={`
+                                px-3 py-1 rounded-full text-sm
+                                ${gamePoints.teamB === point && pointInputType === 'tennis' ? 'bg-blue-600 text-white' : 'bg-gray-200'} 
+                                ${pointInputType === 'numeric' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}
+                            `}
+                                                        >
+                                                            {point}
+                                                        </button>
+                                                    ))}
+                                                </div>
+
+                                                <div className="text-center my-1 text-gray-500 text-xs">OR</div>
+
+                                                {/* Numeric input */}
+                                                <div>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={tiebreakPoints.teamB}
+                                                        onChange={(e) => handleNumericScoreB(e.target.value)}
+                                                        disabled={pointInputType === 'tennis'}
+                                                        className={`
+                            w-full px-3 py-1 border-2 rounded-lg text-center text-sm
+                            ${pointInputType === 'tennis' ? 'opacity-50 cursor-not-allowed' : ''}
+                            ${parseInt(editScores.teamA) === 6 && parseInt(editScores.teamB) === 6 && pointInputType !== 'tennis'
+                                                                ? 'border-blue-500' : 'border-gray-200'}
+                        `}
+                                                        placeholder="Tiebreak score"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Current status */}
+                                        {pointInputType && (
+                                            <div className="text-center mt-2 text-sm">
+                                                <span>Current: </span>
+                                                <span className="font-bold">
+                                                    {pointInputType === 'tennis'
+                                                        ? `${gamePoints.teamA} - ${gamePoints.teamB}`
+                                                        : `${tiebreakPoints.teamA} - ${tiebreakPoints.teamB}`}
+                                                </span>
+                                                <span className="text-gray-600 ml-1">
+                                                    {pointInputType === 'tennis' ? '(Tennis)' : '(Tiebreak)'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* ADD THE DELETE BUTTON SECTION RIGHT HERE */}
                                 <button
                                     onClick={() => {
