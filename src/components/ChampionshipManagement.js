@@ -44,9 +44,15 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [editScores, setEditScores] = useState({ teamA: '', teamB: '' });
     const [editComplete, setEditComplete] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
-    const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
-        currentChampionship.settings?.pointsDialogTrigger || 'tied'
-    );
+    // Initialize with default value without relying on currentChampionship
+    const [pointsDialogTrigger, setPointsDialogTrigger] = useState('tied');
+
+    // Then update when currentChampionship changes
+    useEffect(() => {
+        if (currentChampionship?.settings?.pointsDialogTrigger) {
+            setPointsDialogTrigger(currentChampionship.settings.pointsDialogTrigger);
+        }
+    }, [currentChampionship]);
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
