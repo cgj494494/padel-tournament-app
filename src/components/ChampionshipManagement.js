@@ -121,7 +121,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             refreshPlayers();
         }
     }, [activeTab, view]);
-
+    useEffect(() => {
+        // For 6-6 scores, default to tiebreak mode
+        if (tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType === null) {
+            setPointInputType('numeric');
+            setTiebreakPoints({ teamA: '0', teamB: '0' });
+        }
+    }, [tempGameScores, pointInputType]);
     // Listen for localStorage changes
     useEffect(() => {
         const handleStorageChange = (e) => {
@@ -143,11 +149,23 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                 // Migrate existing championships to add settings if missing
                 const migratedChampionships = loadedChampionships.map(championship => {
-                    if (!currentChampionship.settings) {
+                    // If settings is completely missing, add all settings
+                    if (!championship.settings) {  // NOTE: Fixed from currentChampionship to championship
                         return {
                             ...championship,
                             settings: {
-                                minMatchesForProRata: 3
+                                minMatchesForProRata: 3,
+                                pointsDialogTrigger: 'tied' // Add default for new setting
+                            }
+                        };
+                    }
+                    // If settings exists but pointsDialogTrigger is missing
+                    else if (!championship.settings.hasOwnProperty('pointsDialogTrigger')) {
+                        return {
+                            ...championship,
+                            settings: {
+                                ...championship.settings,
+                                pointsDialogTrigger: 'tied' // Add default for new setting
                             }
                         };
                     }
@@ -155,7 +173,10 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 });
 
                 // Save migrated data back if any changes were made
-                const needsMigration = migratedChampionships.some((c, i) => !loadedChampionships[i].settings);
+                const needsMigration = migratedChampionships.some((c, i) =>
+                    !loadedChampionships[i].settings ||
+                    !loadedChampionships[i].settings.hasOwnProperty('pointsDialogTrigger')
+                );
                 if (needsMigration) {
                     localStorage.setItem('padelChampionships', JSON.stringify(migratedChampionships));
                 }
@@ -502,10 +523,27 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
 
-        // Initial implementation - show dialog for tied games
-        // We'll enhance this later to use championship settings
-        if (gamesA === gamesB) {
-            // Games are tied, show game point dialog
+        // Get the current championship setting for points dialog trigger
+        const dialogTrigger = currentChampionship.settings?.pointsDialogTrigger || 'tied';
+
+        // Determine if we should show the points dialog based on settings
+        let showPointsDialog = false;
+
+        if (dialogTrigger === 'all') {
+            // Always show for any score
+            showPointsDialog = true;
+        }
+        else if (dialogTrigger === 'tied' && gamesA === gamesB) {
+            // Show for tied games
+            showPointsDialog = true;
+        }
+        else if (dialogTrigger === '6-6' && gamesA === 6 && gamesB === 6) {
+            // Only show for 6-6 scores
+            showPointsDialog = true;
+        }
+
+        // Show game points dialog if needed
+        if (showPointsDialog) {
             setTempGameScores({ gamesA, gamesB });
             // Reset points
             setGamePoints({ teamA: '0', teamB: '0' });
@@ -513,13 +551,14 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setPointInputType(null);
             setShowGamePointDialog(true);
         }
-        // Keep your existing logic for non-tied scores
+        // If not showing points dialog, check if ambiguous (existing logic)
         else if (isAmbiguousScore(gamesA, gamesB)) {
             setTempScores({ gamesA, gamesB });
             setSetComplete(true); // Default to complete
             setShowSetStatusDialog(true);
-        } else {
-            // Auto-detect and save directly
+        }
+        else {
+            // Auto-detect and save directly (existing logic)
             const isComplete = detectComplete(gamesA, gamesB);
             saveMatchWithStatus(gamesA, gamesB, isComplete);
         }
@@ -1509,6 +1548,20 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                     </div>
                                 </label>
                             </div>
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-gray-200">
+                            <h4 className="font-bold mb-2 text-gray-700">About Game Points</h4>
+                            <p className="mb-2 text-gray-600">
+                                The game points dialog allows recording detailed point status (0-15-30-40-AD) or tiebreak points.
+                            </p>
+                            <ul className="list-disc pl-5 space-y-1 text-gray-600 text-sm">
+                                <li><strong>Tied Games Only:</strong> Shows for any tied score (default)</li>
+                                <li><strong>All Games:</strong> Always shows the points dialog for every match</li>
+                                <li><strong>Tiebreaks Only:</strong> Only shows for 6-6 tiebreak scenarios</li>
+                            </ul>
+                            <p className="mt-2 text-sm text-gray-600">
+                                <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded">Tip:</span> When a team has advantage in points, they receive an extra tournament point.
+                            </p>
                         </div>
                     </div>
                 </div>
