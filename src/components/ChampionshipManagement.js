@@ -62,7 +62,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // PLACEMENT INSTRUCTION: Add this state variable to your championship settings component
     // Find where you define settings-related state variables
     const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
-        championship?.settings?.pointsDialogTrigger || 'tied'
+        currentChampionship?.settings?.pointsDialogTrigger || 'tied'
     );
 
     // PLACEMENT INSTRUCTION: Add this UI to your championship settings modal
@@ -801,7 +801,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         // Create base match object
         const match = {
-            id: uuid(),
+            id: Date.now().toString(),
             timestamp: date,
             teamA,
             teamB,
@@ -835,7 +835,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         setCurrentChampionship(updatedChampionship);
 
         // Reset form
-        resetForm();
+        setTeamA([]);
+        setTeamB([]);
+        setSetScores({ teamA: '', teamB: '' });
     };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
