@@ -204,7 +204,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         // For 6-6 scores, default to tiebreak mode
         if (tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType === null) {
             setPointInputType('numeric');
-            setTiebreakPoints({ teamA: '0', teamB: '0' });
+            setTiebreakPoints({ teamA: '', teamB: '' });  // Changed from '0' to ''
         }
     }, [tempGameScores, pointInputType]);
     // Data loading functions
@@ -1028,12 +1028,18 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         return player ? `${player.firstName} ${player.surname}` : 'Unknown';
     };
     const getFormattedScore = (match) => {
-        const gamesA = match.gamesA;
-        const gamesB = match.gamesB;
-        const isComplete = match.isComplete !== false; // Default to true if not specified
+        // Support both old and new data formats
+        // Try to get scores from both possible locations
+        const gamesA = parseInt(match.gamesA || match.score?.teamA) || 0;
+        const gamesB = parseInt(match.gamesB || match.score?.teamB) || 0;
+
+        // Support both completion status formats
+        const isComplete = (match.isComplete !== undefined) ? match.isComplete : match.complete !== false;
+
+        // Rest of your existing logic for formatting
+        let formattedScore = '';
 
         // Determine if this is a tiebreak win scenario
-        // Tiebreak: complete set with margin of 1 and at least one team has 6+
         const isTiebreak = isComplete &&
             Math.abs(gamesA - gamesB) === 1 &&
             (gamesA >= 6 || gamesB >= 6);
@@ -1041,17 +1047,30 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         if (isTiebreak) {
             // Show W superscript on winner's side only
             if (gamesA > gamesB) {
-                return `${gamesA}ᵂ-${gamesB}`;
+                formattedScore = `${gamesA}ᵂ-${gamesB}`;
             } else {
-                return `${gamesA}-${gamesB}ᵂ`;
+                formattedScore = `${gamesA}-${gamesB}ᵂ`;
             }
         } else if (!isComplete) {
             // Show I superscript on both sides for incomplete
-            return `${gamesA}ᴵ-${gamesB}ᴵ`;
+            formattedScore = `${gamesA}ᴵ-${gamesB}ᴵ`;
         } else {
             // Regular complete match, no indicator
-            return `${gamesA}-${gamesB}`;
+            formattedScore = `${gamesA}-${gamesB}`;
         }
+
+        // Add point details only if they exist (only for new matches)
+        if (match.pointDetails) {
+            if (match.pointDetails.type === 'regular') {
+                // Regular tennis scoring (0-15-30-40-AD)
+                formattedScore += ` (${match.pointDetails.teamAPoints}-${match.pointDetails.teamBPoints})`;
+            } else {
+                // Tiebreak scoring [7-5]
+                formattedScore += ` [${match.pointDetails.teamAPoints}-${match.pointDetails.teamBPoints}]`;
+            }
+        }
+
+        return formattedScore;
     };
     // Partnership Statistics Calculator
     const calculatePartnershipStats = () => {
