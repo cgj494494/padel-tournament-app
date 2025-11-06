@@ -59,6 +59,73 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     });
     const [pointInputType, setPointInputType] = useState(null); // 'tennis' or 'numeric' or null
     const [tempGameScores, setTempGameScores] = useState({ gamesA: 0, gamesB: 0 });
+    // PLACEMENT INSTRUCTION: Add this state variable to your championship settings component
+    // Find where you define settings-related state variables
+    const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
+        championship?.settings?.pointsDialogTrigger || 'tied'
+    );
+
+    // PLACEMENT INSTRUCTION: Add this UI to your championship settings modal
+    // Look for your settings form in the UI and add this as a new section
+    <div className="mb-6 border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-medium mb-4">Game Points Dialog</h3>
+        <p className="text-gray-600 mb-3">
+            Control when the points dialog appears during match recording:
+        </p>
+
+        <div className="space-y-3">
+            <label className="flex items-start">
+                <input
+                    type="radio"
+                    name="pointsDialogTrigger"
+                    value="tied"
+                    checked={pointsDialogTrigger === 'tied'}
+                    onChange={() => setPointsDialogTrigger('tied')}
+                    className="mt-1 mr-3"
+                />
+                <div>
+                    <p className="font-medium">Tied Games Only (Default)</p>
+                    <p className="text-sm text-gray-600">
+                        Show points dialog when games are tied (e.g., 4-4, 6-6)
+                    </p>
+                </div>
+            </label>
+
+            <label className="flex items-start">
+                <input
+                    type="radio"
+                    name="pointsDialogTrigger"
+                    value="all"
+                    checked={pointsDialogTrigger === 'all'}
+                    onChange={() => setPointsDialogTrigger('all')}
+                    className="mt-1 mr-3"
+                />
+                <div>
+                    <p className="font-medium">All Games</p>
+                    <p className="text-sm text-gray-600">
+                        Always show points dialog for every match, regardless of score
+                    </p>
+                </div>
+            </label>
+
+            <label className="flex items-start">
+                <input
+                    type="radio"
+                    name="pointsDialogTrigger"
+                    value="6-6"
+                    checked={pointsDialogTrigger === '6-6'}
+                    onChange={() => setPointsDialogTrigger('6-6')}
+                    className="mt-1 mr-3"
+                />
+                <div>
+                    <p className="font-medium">Tiebreaks Only (6-6)</p>
+                    <p className="text-sm text-gray-600">
+                        Show points dialog only for 6-6 tiebreak scenarios
+                    </p>
+                </div>
+            </label>
+        </div>
+    </div>
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
