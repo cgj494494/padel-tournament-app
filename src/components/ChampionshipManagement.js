@@ -47,7 +47,18 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Add alongside other edit state variables 01on21
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [showSecondaryConfirmation, setShowSecondaryConfirmation] = useState(false);
-
+    // Add these new state variables DIRECTLY AFTER the last useState declaration
+    const [showGamePointDialog, setShowGamePointDialog] = useState(false);
+    const [gamePoints, setGamePoints] = useState({
+        teamA: '0',  // 0, 15, 30, 40, 'AD'
+        teamB: '0'
+    });
+    const [tiebreakPoints, setTiebreakPoints] = useState({
+        teamA: '',  // numeric values
+        teamB: ''
+    });
+    const [pointInputType, setPointInputType] = useState(null); // 'tennis' or 'numeric' or null
+    const [tempGameScores, setTempGameScores] = useState({ gamesA: 0, gamesB: 0 });
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -119,7 +130,16 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
-
+    // PLACEMENT INSTRUCTION: Add this effect with your other useEffect hooks
+    // Locate the section with your existing useEffect hooks
+    // Add this new effect ALONGSIDE your other effects
+    useEffect(() => {
+        // For 6-6 scores, default to tiebreak mode
+        if (tempGameScores.gamesA === 6 && tempGameScores.gamesB === 6 && pointInputType === null) {
+            setPointInputType('numeric');
+            setTiebreakPoints({ teamA: '0', teamB: '0' });
+        }
+    }, [tempGameScores, pointInputType]);
     // Data loading functions
     const loadChampionships = () => {
         const saved = localStorage.getItem('padelChampionships');
@@ -346,8 +366,95 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 return diff > 0 ? [2, 1] : [1, 2];
             }
         }
+
+    };
+    // PLACEMENT INSTRUCTION: Add these functions AFTER your existing utility functions 
+    // but BEFORE the component's return statement
+    // Look for a section with your existing helper functions (calculatePointsForTeam, isAmbiguousScore, etc.)
+    // Add these new functions AFTER those existing functions
+    const handleTennisScoreA = (score) => {
+        setPointInputType('tennis');
+        setGamePoints({ ...gamePoints, teamA: score });
+        setTiebreakPoints({ ...tiebreakPoints, teamA: '' }); // Clear numeric input
     };
 
+    const handleTennisScoreB = (score) => {
+        setPointInputType('tennis');
+        setGamePoints({ ...gamePoints, teamB: score });
+        setTiebreakPoints({ ...tiebreakPoints, teamB: '' }); // Clear numeric input
+    };
+
+    const handleNumericScoreA = (value) => {
+        if (value === '') {
+            setTiebreakPoints({ ...tiebreakPoints, teamA: '' });
+            // Don't set input type if empty
+            if (tiebreakPoints.teamB === '') {
+                setPointInputType(null);
+            }
+        } else {
+            setPointInputType('numeric');
+            setTiebreakPoints({ ...tiebreakPoints, teamA: value });
+            setGamePoints({ ...gamePoints, teamA: '0' }); // Reset tennis selection
+        }
+    };
+
+    const handleNumericScoreB = (value) => {
+        if (value === '') {
+            setTiebreakPoints({ ...tiebreakPoints, teamB: '' });
+            // Don't set input type if empty
+            if (tiebreakPoints.teamA === '') {
+                setPointInputType(null);
+            }
+        } else {
+            setPointInputType('numeric');
+            setTiebreakPoints({ ...tiebreakPoints, teamB: value });
+            setGamePoints({ ...gamePoints, teamB: '0' }); // Reset tennis selection
+        }
+    };
+
+    const preparePointDetails = () => {
+        if (pointInputType === 'tennis') {
+            // Regular tennis scoring
+            const pointValues = { '0': 0, '15': 1, '30': 2, '40': 3, 'AD': 4 };
+
+            let teamAAdvantage = false;
+            let teamBAdvantage = false;
+
+            if (gamePoints.teamA === 'AD' ||
+                (pointValues[gamePoints.teamA] > pointValues[gamePoints.teamB] && gamePoints.teamB !== 'AD')) {
+                teamAAdvantage = true;
+            } else if (gamePoints.teamB === 'AD' ||
+                (pointValues[gamePoints.teamB] > pointValues[gamePoints.teamA] && gamePoints.teamA !== 'AD')) {
+                teamBAdvantage = true;
+            }
+
+            return {
+                type: 'regular',
+                teamAPoints: gamePoints.teamA,
+                teamBPoints: gamePoints.teamB,
+                teamAAdvantage,
+                teamBAdvantage
+            };
+        }
+        else if (pointInputType === 'numeric') {
+            // Tiebreak scoring
+            const teamAPoints = parseInt(tiebreakPoints.teamA) || 0;
+            const teamBPoints = parseInt(tiebreakPoints.teamB) || 0;
+
+            const teamAAdvantage = teamAPoints > teamBPoints;
+            const teamBAdvantage = teamBPoints > teamAPoints;
+
+            return {
+                type: 'tiebreak',
+                teamAPoints: teamAPoints.toString(),
+                teamBPoints: teamBPoints.toString(),
+                teamAAdvantage,
+                teamBAdvantage
+            };
+        }
+
+        return null;
+    };
     // Match management functions
     const saveMatch = (match) => {
         const newMatches = [...sessionMatches, match];
