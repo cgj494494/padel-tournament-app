@@ -506,7 +506,39 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
+        // MODIFICATION STARTS HERE - Add this code after the gamesA/gamesB definitions
+        // but BEFORE any existing conditionals like isAmbiguousScore
 
+        // Get the current championship setting for points dialog trigger
+        // CRITICAL: Use optional chaining to handle null currentChampionship
+        const dialogTrigger = currentChampionship?.settings?.pointsDialogTrigger || 'tied';
+
+        // Determine if we should show the points dialog based on settings
+        let showPointsDialog = false;
+
+        if (dialogTrigger === 'all') {
+            // Always show for any score
+            showPointsDialog = true;
+        }
+        else if (dialogTrigger === 'tied' && gamesA === gamesB) {
+            // Show for tied games
+            showPointsDialog = true;
+        }
+        else if (dialogTrigger === '6-6' && gamesA === 6 && gamesB === 6) {
+            // Only show for 6-6 scores
+            showPointsDialog = true;
+        }
+
+        // Show game points dialog if needed
+        if (showPointsDialog) {
+            setTempGameScores({ gamesA, gamesB });
+            // Reset points
+            setGamePoints({ teamA: '0', teamB: '0' });
+            setTiebreakPoints({ teamA: '', teamB: '' });
+            setPointInputType(null);
+            setShowGamePointDialog(true);
+            return; // Add this return to exit the function early
+        }
         // Check if ambiguous (7-6, 8-7, 9-8, etc.)
         if (isAmbiguousScore(gamesA, gamesB)) {
             setTempScores({ gamesA, gamesB });
