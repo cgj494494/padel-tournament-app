@@ -725,6 +725,51 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             setSetScores({ teamA: '', teamB: '' });
         }
     };
+    // PLACEMENT INSTRUCTION: Add this function AFTER your existing saveMatch related functions
+    // Look for your existing saveMatchWithStatus function and add this AFTER it
+    // Make sure this is defined BEFORE it's used in any dialog buttons
+    const saveMatchWithPointDetails = (gamesA, gamesB, isComplete, pointDetails) => {
+        // Get current date and time
+        const date = new Date().toISOString();
+
+        // Create base match object
+        const match = {
+            id: uuid(),
+            timestamp: date,
+            teamA,
+            teamB,
+            score: {
+                teamA: gamesA.toString(),
+                teamB: gamesB.toString()
+            },
+            complete: isComplete
+        };
+
+        // Add point details if provided
+        if (pointDetails) {
+            match.pointDetails = pointDetails;
+        }
+
+        // Add match to championship
+        const updatedChampionship = {
+            ...currentChampionship,
+            matches: [...currentChampionship.matches, match]
+        };
+
+        // Update championships array
+        const updatedChampionships = championships.map(c =>
+            c.id === currentChampionship.id ? updatedChampionship : c
+        );
+
+        // Save to local storage
+        saveChampionships(updatedChampionships);
+
+        // Update state
+        setCurrentChampionship(updatedChampionship);
+
+        // Reset form
+        resetForm();
+    };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
         const margin = Math.abs(gamesA - gamesB);
