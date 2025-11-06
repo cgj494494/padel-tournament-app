@@ -216,11 +216,23 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                 // Migrate existing championships to add settings if missing
                 const migratedChampionships = loadedChampionships.map(championship => {
+                    // If settings is completely missing, add all settings
                     if (!championship.settings) {
                         return {
                             ...championship,
                             settings: {
-                                minMatchesForProRata: 3
+                                minMatchesForProRata: 3,
+                                pointsDialogTrigger: 'tied' // Add default for new setting
+                            }
+                        };
+                    }
+                    // If settings exists but pointsDialogTrigger is missing
+                    else if (!championship.settings.hasOwnProperty('pointsDialogTrigger')) {
+                        return {
+                            ...championship,
+                            settings: {
+                                ...championship.settings,
+                                pointsDialogTrigger: 'tied' // Add default for new setting
                             }
                         };
                     }
@@ -228,7 +240,10 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 });
 
                 // Save migrated data back if any changes were made
-                const needsMigration = migratedChampionships.some((c, i) => !loadedChampionships[i].settings);
+                const needsMigration = migratedChampionships.some((c, i) =>
+                    !loadedChampionships[i].settings ||
+                    !loadedChampionships[i].settings.hasOwnProperty('pointsDialogTrigger')
+                );
                 if (needsMigration) {
                     localStorage.setItem('padelChampionships', JSON.stringify(migratedChampionships));
                 }
@@ -1468,7 +1483,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 ...currentChampionship,
                 settings: {
                     ...currentChampionship.settings,
-                    minMatchesForProRata: localMinMatches
+                    minMatchesForProRata: localMinMatches,
+                    pointsDialogTrigger // Add the new setting here
                 }
             };
 
