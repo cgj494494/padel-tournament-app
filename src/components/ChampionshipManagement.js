@@ -64,7 +64,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     const [pointsDialogTrigger, setPointsDialogTrigger] = useState(
         currentChampionship?.settings?.pointsDialogTrigger || 'tied'
     );
-
+    const [isTournament, setIsTournament] = useState(false);
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -1165,6 +1165,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             id: Date.now(),
             name: name.trim(),
             startDate: new Date().toISOString(),
+            isTournament: isTournament,  // ADD THIS LINE
             players: selectedPlayers,
             sessions: [],
             matches: [],
@@ -1192,6 +1193,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         // Reset form
         setName('');
         setSelectedPlayers([]);
+        setIsTournament(false);  // ADD THIS LINE
     };
     // Recalculate all matches with new scoring system
     const recalculateChampionshipScoring = () => {
@@ -1762,6 +1764,25 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         <p className={`${getClasses('body')} text-gray-600 font-medium`}>
                                             Selected: <span className="font-bold text-blue-600">{selectedPlayers.length}</span> players
                                         </p>
+                                    </div>
+                                    <div className="mt-8 border-t-2 border-gray-200 pt-8">
+                                        <label className={`flex items-start space-x-4 p-6 hover:bg-blue-50 rounded-2xl cursor-pointer transition-all border-2 ${isTournament ? 'bg-blue-50 border-blue-300' : 'border-gray-200'
+                                            }`}>
+                                            <input
+                                                type="checkbox"
+                                                checked={isTournament}
+                                                onChange={(e) => setIsTournament(e.target.checked)}
+                                                className="w-6 h-6 text-blue-600 rounded-lg mt-1"
+                                            />
+                                            <div>
+                                                <span className={`${getClasses('body')} font-bold text-gray-800`}>
+                                                    Test Tournament Mode (8 Players)
+                                                </span>
+                                                <p className={`${getClasses('small')} text-gray-600 mt-2`}>
+                                                    Uses CJ Tournament scoring (3-2-1-0 system). Game points required for tied games.
+                                                </p>
+                                            </div>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
