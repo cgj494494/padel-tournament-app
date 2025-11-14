@@ -389,6 +389,15 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
 
     };
+    // Filter matches by type for player statistics
+    const getMatchesByType = (matches, type = 'championship') => {
+        if (!matches) return [];
+        return matches.filter(match => {
+            // Default to championship if no type specified (backwards compatibility)
+            const matchType = match.matchType || 'championship';
+            return matchType === type;
+        });
+    };
     // Tournament Scoring Helper - Compares game points
     const isTeamALeadingOnPoints = (pointsA, pointsB) => {
         // Handle numeric tiebreak points (both are numbers)
@@ -1934,6 +1943,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         <div>
                                             <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
                                                 {currentChampionship.name}
+                                                {currentChampionship.isTournament && (
+                                                    <span className="ml-4 px-4 py-2 bg-purple-600 text-white text-sm font-bold rounded-full">
+                                                        🏆 TOURNAMENT
+                                                    </span>
+                                                )}
                                             </h1>
                                             <p className={`${getClasses('body')} text-gray-600 font-medium`}>
                                                 Started {new Date(currentChampionship.startDate).toLocaleDateString()}
