@@ -783,6 +783,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             const match = {
                 id: Date.now(),
                 date: sessionDate,
+                matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
                 teamA: [...teamA],
                 teamB: [...teamB],
                 gamesA,
@@ -811,6 +812,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const match = {
             id: Date.now().toString(),
             timestamp: date,
+            matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
             teamA,
             teamB,
             score: {
@@ -942,6 +944,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             if (match.id === matchId) {
                 return {
                     ...match,
+                    matchType: match.matchType || 'championship',
                     gamesA,
                     gamesB,
                     isComplete,
