@@ -389,6 +389,60 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         }
 
     };
+    // Tournament Scoring Helper - Compares game points
+    const isTeamALeadingOnPoints = (pointsA, pointsB) => {
+        // Handle numeric tiebreak points (both are numbers)
+        if (!isNaN(pointsA) && !isNaN(pointsB)) {
+            return parseInt(pointsA) > parseInt(pointsB);
+        }
+
+        // Handle tennis scoring (0, 15, 30, 40, AD)
+        const pointValues = {
+            '0': 0,
+            '15': 1,
+            '30': 2,
+            '40': 3,
+            'AD': 4
+        };
+
+        const valueA = pointValues[pointsA] !== undefined ? pointValues[pointsA] : 0;
+        const valueB = pointValues[pointsB] !== undefined ? pointValues[pointsB] : 0;
+
+        return valueA > valueB;
+    };
+    // CJ Tournament Scoring - Winner takes all (3-2-1-0 system)
+    const calculateCJTournamentPoints = (gamesA, gamesB, gamePointsA = null, gamePointsB = null) => {
+        const diff = gamesA - gamesB;
+        const absDiff = Math.abs(diff);
+
+        // Margin 2+ games: Winner gets 3 pts, Loser gets 0 pts
+        if (absDiff >= 2) {
+            return diff > 0 ? [3, 0] : [0, 3];
+        }
+
+        // Margin 1 game: Winner gets 2 pts, Loser gets 0 pts
+        if (absDiff === 1) {
+            return diff > 0 ? [2, 0] : [0, 2];
+        }
+
+        // Games are tied - MUST use game points to determine winner
+        if (diff === 0) {
+            // Game points are required for tournaments when tied
+            if (gamePointsA === null || gamePointsB === null) {
+                console.warn('Tournament scoring with tied games requires game points');
+                return [0, 0];
+            }
+
+            // Team with advantage gets 1 pt, other team gets 0 pts
+            if (isTeamALeadingOnPoints(gamePointsA, gamePointsB)) {
+                return [1, 0];
+            } else {
+                return [0, 1];
+            }
+        }
+
+        return [0, 0]; // Fallback
+    };
     // PLACEMENT INSTRUCTION: Add these functions AFTER your existing utility functions 
     // but BEFORE the component's return statement
     // Look for a section with your existing helper functions (calculatePointsForTeam, isAmbiguousScore, etc.)
