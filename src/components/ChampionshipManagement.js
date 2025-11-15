@@ -891,59 +891,130 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         alert("Match deleted successfully");
     };
     // REPLACE your existing saveMatchWithStatus function with this updated version ~b6
-    const saveMatchWithPointDetails = (gamesA, gamesB, isComplete, pointDetails) => {
-        // Calculate points based on match type
-        let pointsA, pointsB;
+    const saveMatchWithStatus = (gamesA, gamesB, isComplete) => {
+        // Check if we're editing an existing match
+        const editingMatchId = sessionStorage.getItem('editingMatchId');
 
-        const isTournamentMode = currentChampionship?.isTournament || false;
-
-        if (isTournamentMode) {
-            // Check if this is a finals round match
-            const isFinalsMatch = currentChampionship.is8PlayerTournament &&
-                (currentChampionship.tournamentCurrentRound || 1) === 8;
-
-            // Extract game points from pointDetails
-            const gamePointsA = pointDetails ? pointDetails.teamAPoints : null;
-            const gamePointsB = pointDetails ? pointDetails.teamBPoints : null;
-
-            // Calculate tournament points (includes finals multiplier if applicable)
-            [pointsA, pointsB] = calculateCJTournamentPoints(gamesA, gamesB, gamePointsA, gamePointsB, isFinalsMatch);
+        if (editingMatchId) {
+            // We're editing an existing match
+            // Get the match to edit
+            const matchToEdit = currentChampionship.matches.find(m => m.id === parseInt(editingMatchId));
+            if (matchToEdit) {
+                // Save with the original date
+                saveUpdatedMatch(parseInt(editingMatchId), gamesA, gamesB, isComplete, matchToEdit.date);
+            }
+            // Clear the stored ID
+            sessionStorage.removeItem('editingMatchId');
         } else {
-            // Championship mode - use regular CJ scoring
-            [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
-        }
+            // We're creating a new match (existing code)
+            let pointsA, pointsB;
 
-        // Create match object with CORRECT structure
+            // Check if this is a tournament
+            const isTournamentMode = currentChampionship?.isTournament || false;
+
+            if (isTournamentMode) {
+                // Use tournament scoring (3-2-1-0 system based on game differential)
+                const finalGamePoints = pointInputType === 'numeric' ? tiebreakPoints : gamePoints;
+                [pointsA, pointsB] = calculateCJTournamentPoints(
+                    gamesA,
+                    gamesB,
+                    finalGamePoints.teamA,
+                    finalGamePoints.teamB
+                );
+            } else {
+                // Use championship scoring (existing CJ system)
+                const isComplete = detectComplete(gamesA, gamesB);
+                [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+
+                // Championship mode: Add bonus point for advantage in game points
+                const pointValues = { '0': 0, '15': 1, '30': 2, '40': 3, 'AD': 4 };
+
+                if (pointInputType === 'tennis') {
+                    const valueA = pointValues[gamePoints.teamA] || 0;
+                    const valueB = pointValues[gamePoints.teamB] || 0;
+
+                    if (valueA > valueB) pointsA += 1;
+                    else if (valueB > valueA) pointsB += 1;
+                } else if (pointInputType === 'numeric') {
+                    const numA = parseInt(tiebreakPoints.teamA) || 0;
+                    const numB = parseInt(tiebreakPoints.teamB) || 0;
+
+                    if (numA > numB) pointsA += 1;
+                    else if (numB > numA) pointsB += 1;
+                }
+            }
+            const match = {
+                id: Date.now(),
+                date: sessionDate,
+                matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
+                tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,
+                court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,
+                teamA: [...teamA],
+                teamB: [...teamB],
+                gamesA,
+                gamesB,
+                isComplete,
+                points: { teamA: pointsA, teamB: pointsB },
+                timestamp: new Date().toISOString()
+            };
+
+            saveMatch(match);
+
+            // Reset for next match
+            setTeamA([]);
+            setTeamB([]);
+            setSetScores({ teamA: '', teamB: '' });
+        }
+    };
+    // PLACEMENT INSTRUCTION: Add this function AFTER your existing saveMatch related functions
+    // Look for your existing saveMatchWithStatus function and add this AFTER it
+    // Make sure this is defined BEFORE it's used in any dialog buttons
+    const saveMatchWithPointDetails = (gamesA, gamesB, isComplete, pointDetails) => {
+        // Get current date and time
+        const date = new Date().toISOString();
+
+        // Create base match object
         const match = {
             id: Date.now().toString(),
-            date: sessionDate,
-            matchType: isTournamentMode ? 'tournament' : 'championship',
-            tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,
-            court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,
-            teamA: [...teamA],
-            teamB: [...teamB],
-            gamesA: gamesA,  // Use gamesA/gamesB, not score object
-            gamesB: gamesB,
-            isComplete: isComplete,  // Use isComplete, not complete
-            points: { teamA: pointsA, teamB: pointsB },  // Include calculated points
-            pointDetails: pointDetails,  // Include point details for reference
-            timestamp: new Date().toISOString()
+            timestamp: date,
+            matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
+            tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,  // NEW
+            court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,  // NEW
+            teamA,
+            teamB,
+            score: {
+                teamA: gamesA.toString(),
+                teamB: gamesB.toString()
+            },
+            complete: isComplete
         };
 
-        // Use the saveMatch function which handles standings updates AND round completion check
-        saveMatch(match);
+        // Add point details if provided
+        if (pointDetails) {
+            match.pointDetails = pointDetails;
+        }
+
+        // Add match to championship
+        const updatedChampionship = {
+            ...currentChampionship,
+            matches: [...currentChampionship.matches, match]
+        };
+
+        // Update championships array
+        const updatedChampionships = championships.map(c =>
+            c.id === currentChampionship.id ? updatedChampionship : c
+        );
+
+        // Save to local storage
+        saveChampionships(updatedChampionships);
+
+        // Update state
+        setCurrentChampionship(updatedChampionship);
 
         // Reset form
         setTeamA([]);
         setTeamB([]);
         setSetScores({ teamA: '', teamB: '' });
-
-        // Auto-clear teams for 8-player tournaments
-        if (currentChampionship.is8PlayerTournament) {
-            setTeamA([]);
-            setTeamB([]);
-            setSetScores({ teamA: '', teamB: '' });
-        }
     };
     // Helper function to detect ambiguous scores
     const isAmbiguousScore = (gamesA, gamesB) => {
