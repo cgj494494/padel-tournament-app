@@ -65,8 +65,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         currentChampionship?.settings?.pointsDialogTrigger || 'tied'
     );
     const [isTournament, setIsTournament] = useState(false);
-    const [is8PlayerTournament, setIs8PlayerTournament] = useState(false);
-    const [includeFinalsRound, setIncludeFinalsRound] = useState(false);
     // Load preferences and data on mount
     useEffect(() => {
         const savedFontSize = localStorage.getItem('padelFontSize') || 'large';
@@ -1263,9 +1261,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             id: Date.now(),
             name: name.trim(),
             startDate: new Date().toISOString(),
-            isTournament: isTournament,
-            is8PlayerTournament: is8PlayerTournament,  // NEW
-            includeFinalsRound: includeFinalsRound,    // NEW
+            isTournament: isTournament,  // ADD THIS LINE
             players: selectedPlayers,
             sessions: [],
             matches: [],
@@ -1293,9 +1289,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         // Reset form
         setName('');
         setSelectedPlayers([]);
-        setIsTournament(false);
-        setIs8PlayerTournament(false);      // NEW
-        setIncludeFinalsRound(false);       // NEW
+        setIsTournament(false);  // ADD THIS LINE
     };
     // Recalculate all matches with new scoring system
     const recalculateChampionshipScoring = () => {
@@ -1885,50 +1879,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                 </p>
                                             </div>
                                         </label>
-
-                                        {/* NEW: 8-Player Balanced Tournament Sub-Checkbox */}
-                                        {isTournament && (
-                                            <div className="mt-4 ml-12 space-y-4">
-                                                <label className={`flex items-start space-x-4 p-6 hover:bg-purple-50 rounded-2xl cursor-pointer transition-all border-2 ${is8PlayerTournament ? 'bg-purple-50 border-purple-300' : 'border-gray-200'
-                                                    }`}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={is8PlayerTournament}
-                                                        onChange={(e) => setIs8PlayerTournament(e.target.checked)}
-                                                        className="w-6 h-6 text-purple-600 rounded-lg mt-1"
-                                                    />
-                                                    <div>
-                                                        <span className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                            🎯 8-Player Balanced Tournament
-                                                        </span>
-                                                        <p className={`${getClasses('small')} text-gray-600 mt-2`}>
-                                                            Uses pre-defined balanced fixtures. Assign players to positions 1-8.
-                                                        </p>
-                                                    </div>
-                                                </label>
-
-                                                {/* NEW: Finals Round Sub-Sub-Checkbox */}
-                                                {is8PlayerTournament && (
-                                                    <label className={`flex items-start space-x-4 p-6 ml-8 hover:bg-indigo-50 rounded-2xl cursor-pointer transition-all border-2 ${includeFinalsRound ? 'bg-indigo-50 border-indigo-300' : 'border-gray-200'
-                                                        }`}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={includeFinalsRound}
-                                                            onChange={(e) => setIncludeFinalsRound(e.target.checked)}
-                                                            className="w-6 h-6 text-indigo-600 rounded-lg mt-1"
-                                                        />
-                                                        <div>
-                                                            <span className={`${getClasses('body')} font-bold text-gray-800`}>
-                                                                🏆 Add Finals Round (Double Points)
-                                                            </span>
-                                                            <p className={`${getClasses('small')} text-gray-600 mt-2`}>
-                                                                8th round: Top 4 vs Bottom 4, double points (6-4-2-0), lower court capped
-                                                            </p>
-                                                        </div>
-                                                    </label>
-                                                )}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
