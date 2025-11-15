@@ -2892,7 +2892,19 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                                     Start recording matches to build your championship history
                                                 </p>
                                                 <button
-                                                    onClick={() => setView('session')}
+                                                    onClick={() => {
+                                                        if (currentChampionship?.is8PlayerTournament) {
+                                                            // Tournament: Skip setup, go straight to recording
+                                                            setSessionDate(new Date().toISOString().split('T')[0]);
+                                                            setAttendingPlayers(currentChampionship.players);
+                                                            setSessionMatches([]);
+                                                            setSessionStep('recording');
+                                                        } else {
+                                                            // Championship: Normal flow with setup
+                                                            setSessionStep('setup');
+                                                        }
+                                                        setView('session');
+                                                    }}
                                                     className={`${getClasses('button')} bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg`}
                                                 >
                                                     Record Match
@@ -3753,44 +3765,47 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-8">
-                                        <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                            {attendingPlayers
-                                                .filter(id => !teamA.includes(id) && !teamB.includes(id))
-                                                .map(playerId => {
-                                                    return (
-                                                        <div key={playerId} className="space-y-2">
-                                                            <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
-                                                                {getPlayerName(playerId)}
-                                                            </p>
-                                                            <div className="flex space-x-2">
-                                                                <button
-                                                                    onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
-                                                                    disabled={teamA.length >= 2}
-                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
-                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-blue-100 text-blue-700 active:bg-blue-300'
-                                                                        }`}
-                                                                >
-                                                                    Team A
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
-                                                                    disabled={teamB.length >= 2}
-                                                                    className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
-                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                                        : 'bg-green-100 text-green-700 active:bg-green-300'
-                                                                        }`}
-                                                                >
-                                                                    Team B
-                                                                </button>
+                                    {/* Available Players - ONLY for championships, NOT tournaments */}
+                                    {!currentChampionship?.is8PlayerTournament && (
+                                        <div className="mt-8">
+                                            <h4 className={`${getClasses('body')} font-bold text-gray-800 mb-4`}>Available Players</h4>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                                {attendingPlayers
+                                                    .filter(id => !teamA.includes(id) && !teamB.includes(id))
+                                                    .map(playerId => {
+                                                        return (
+                                                            <div key={playerId} className="space-y-2">
+                                                                <p className={`${getMatchRecordingClasses('playerName')} text-center mb-2`}>
+                                                                    {getPlayerName(playerId)}
+                                                                </p>
+                                                                <div className="flex space-x-2">
+                                                                    <button
+                                                                        onClick={() => teamA.length < 2 && setTeamA([...teamA, playerId])}
+                                                                        disabled={teamA.length >= 2}
+                                                                        className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamA.length >= 2
+                                                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                            : 'bg-blue-100 text-blue-700 active:bg-blue-300'
+                                                                            }`}
+                                                                    >
+                                                                        Team A
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => teamB.length < 2 && setTeamB([...teamB, playerId])}
+                                                                        disabled={teamB.length >= 2}
+                                                                        className={`flex-1 ${getMatchRecordingClasses('playerButton')} rounded-xl active:scale-95 transition-all ${teamB.length >= 2
+                                                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                            : 'bg-green-100 text-green-700 active:bg-green-300'
+                                                                            }`}
+                                                                    >
+                                                                        Team B
+                                                                    </button>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    })}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {teamA.length === 2 && teamB.length === 2 && (
                                         <div className="mt-8 py-6 px-2 bg-gray-50 rounded-2xl border border-gray-200">
