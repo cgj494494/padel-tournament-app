@@ -692,6 +692,19 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         saveChampionships(updatedChampionships);
         setCurrentChampionship(updatedChampionship);
+        // 👈 ADD THE NEW CODE HERE!
+        // Check if round is complete in 8-player tournament
+        if (currentChampionship.is8PlayerTournament) {
+            const currentRound = currentChampionship.tournamentCurrentRound || 1;
+            const roundMatches = newMatches.filter(m => m.tournamentRound === currentRound);
+
+            // If both matches of current round are complete, offer to advance
+            if (roundMatches.length === 2) {
+                if (window.confirm(`Round ${currentRound} complete! Advance to next round?`)) {
+                    advanceToNextRound();
+                }
+            }
+        }
     };
 
     const handleScoreSubmit = () => {
@@ -934,6 +947,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 id: Date.now(),
                 date: sessionDate,
                 matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
+                tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,
+                court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,
                 teamA: [...teamA],
                 teamB: [...teamB],
                 gamesA,
@@ -963,6 +978,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             id: Date.now().toString(),
             timestamp: date,
             matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
+            tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,  // NEW
+            court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,  // NEW
             teamA,
             teamB,
             score: {
@@ -1376,7 +1393,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             isTournament: isTournament,
             is8PlayerTournament: is8PlayerTournament,  // NEW
             includeFinalsRound: includeFinalsRound,    // NEW
-            playerPositions: is8PlayerTournament ? {} : undefined,  // Maps position (1-8) to playerId
+            playerPositions: is8PlayerTournament ? {} : undefined,
+            tournamentCurrentRound: is8PlayerTournament ? 1 : undefined,  // NEW
+            tournamentTotalRounds: is8PlayerTournament ? (includeFinalsRound ? 8 : 7) : undefined,  // NEW
             players: selectedPlayers,
             sessions: [],
             matches: [],
@@ -1483,6 +1502,131 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const playerId = currentChampionship.playerPositions[position];
         const player = players.find(p => p.id === playerId);
         return player ? `${player.firstName} ${player.surname}` : `Position ${position}`;
+    };
+    // Get fixture for current round in 8-player tournament
+    const getCurrentRoundFixture = () => {
+        if (!currentChampionship?.is8PlayerTournament) return null;
+        const currentRound = currentChampionship.tournamentCurrentRound || 1;
+
+        // For rounds 1-7, use hardcoded fixtures
+        if (currentRound <= 7) {
+            return EIGHT_PLAYER_FIXTURES.find(f => f.round === currentRound);
+        }
+
+        // For round 8 (finals), generate based on standings
+        if (currentRound === 8 && currentChampionship.includeFinalsRound) {
+            return generateFinalsFixture();
+        }
+
+        return null;
+    };
+
+    // Generate finals fixture based on current standings
+    const generateFinalsFixture = () => {
+        // Get standings sorted by rank
+        const sortedStandings = [...currentChampionship.standings]
+            .sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                const diffA = (a.gamesWon || 0) - (a.gamesLost || 0);
+                const diffB = (b.gamesWon || 0) - (b.gamesLost || 0);
+                if (diffB !== diffA) return diffB - diffA;
+                return (b.gamesWon || 0) - (a.gamesWon || 0);
+            });
+
+        // Get position numbers for ranked players
+        const getPosition = (playerId) => {
+            return Object.keys(currentChampionship.playerPositions || {})
+                .find(pos => currentChampionship.playerPositions[pos] === playerId);
+        };
+
+        const rank1Pos = parseInt(getPosition(sortedStandings[0]?.playerId));
+        const rank2Pos = parseInt(getPosition(sortedStandings[1]?.playerId));
+        const rank3Pos = parseInt(getPosition(sortedStandings[2]?.playerId));
+        const rank4Pos = parseInt(getPosition(sortedStandings[3]?.playerId));
+        const rank5Pos = parseInt(getPosition(sortedStandings[4]?.playerId));
+        const rank6Pos = parseInt(getPosition(sortedStandings[5]?.playerId));
+        const rank7Pos = parseInt(getPosition(sortedStandings[6]?.playerId));
+        const rank8Pos = parseInt(getPosition(sortedStandings[7]?.playerId));
+
+        return {
+            round: 8,
+            courts: [
+                {
+                    court: 5,
+                    teamA: [rank1Pos, rank3Pos],  // Rank #1 & #3
+                    teamB: [rank2Pos, rank4Pos]   // Rank #2 & #4
+                },
+                {
+                    court: 6,
+                    teamA: [rank5Pos, rank7Pos],  // Rank #5 & #7
+                    teamB: [rank6Pos, rank8Pos]   // Rank #6 & #8
+                }
+            ]
+        };
+    };
+
+    // Load teams from fixture
+    const loadTeamsFromFixture = (courtFixture) => {
+        const teamAPlayers = courtFixture.teamA.map(pos => currentChampionship.playerPositions[pos]);
+        const teamBPlayers = courtFixture.teamB.map(pos => currentChampionship.playerPositions[pos]);
+
+        setTeamA(teamAPlayers);
+        setTeamB(teamBPlayers);
+
+        alert(`Teams loaded!\nCourt ${courtFixture.court} ready to play.`);
+    };
+
+    // Advance to next round
+    const advanceToNextRound = () => {
+        const currentRound = currentChampionship.tournamentCurrentRound || 1;
+        const totalRounds = currentChampionship.tournamentTotalRounds || 7;
+
+        if (currentRound < totalRounds) {
+            const updated = {
+                ...currentChampionship,
+                tournamentCurrentRound: currentRound + 1
+            };
+            setCurrentChampionship(updated);
+            const updatedChamps = championships.map(c =>
+                c.id === currentChampionship.id ? updated : c
+            );
+            saveChampionships(updatedChamps);
+
+            // Reset teams for next round
+            setTeamA([]);
+            setTeamB([]);
+            setSetScores({ teamA: '', teamB: '' });
+
+            alert(`Round ${currentRound} complete! Moving to Round ${currentRound + 1}.`);
+        } else {
+            alert(`Tournament complete! All ${totalRounds} rounds finished.`);
+        }
+    };
+    // Determine which court based on teams in 8-player tournament
+    const getCurrentCourtNumber = () => {
+        if (!currentChampionship?.is8PlayerTournament) return undefined;
+
+        const currentFixture = getCurrentRoundFixture();
+        if (!currentFixture) return undefined;
+
+        // Check which court fixture matches current teams
+        for (const courtFixture of currentFixture.courts) {
+            const fixtureTeamA = courtFixture.teamA.map(pos => currentChampionship.playerPositions[pos]).sort();
+            const fixtureTeamB = courtFixture.teamB.map(pos => currentChampionship.playerPositions[pos]).sort();
+            const currentTeamA = [...teamA].sort();
+            const currentTeamB = [...teamB].sort();
+
+            const matchesA = JSON.stringify(fixtureTeamA) === JSON.stringify(currentTeamA) &&
+                JSON.stringify(fixtureTeamB) === JSON.stringify(currentTeamB);
+            const matchesB = JSON.stringify(fixtureTeamA) === JSON.stringify(currentTeamB) &&
+                JSON.stringify(fixtureTeamB) === JSON.stringify(currentTeamA);
+
+            if (matchesA || matchesB) {
+                return courtFixture.court;
+            }
+        }
+
+        return undefined;
     };
     // UI Components
     const FontToggle = () => (
@@ -3461,6 +3605,98 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         </button>
                                     </div>
                                 </div>
+                                / 👈 ADD YOUR NEW TOURNAMENT ROUND FIXTURES SECTION RIGHT HERE!
+                                {/* Tournament Round Fixtures - NEW */}
+                                {currentChampionship.is8PlayerTournament && (
+                                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl shadow-2xl p-8 border-2 border-purple-300 mb-8">
+                                        <div className="text-center mb-6">
+                                            <h3 className={`${getClasses('heading')} font-bold text-purple-800`}>
+                                                Round {currentChampionship.tournamentCurrentRound || 1} of {currentChampionship.tournamentTotalRounds || 7}
+                                            </h3>
+                                            <div className="flex justify-center gap-4 mt-4">
+                                                <span className={`${getClasses('small')} px-4 py-2 bg-purple-200 text-purple-800 rounded-xl font-bold`}>
+                                                    {sessionMatches.filter(m => {
+                                                        const matchRound = m.tournamentRound || 1;
+                                                        return matchRound === (currentChampionship.tournamentCurrentRound || 1);
+                                                    }).length} / 2 matches completed
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {(() => {
+                                            const currentFixture = getCurrentRoundFixture();
+                                            if (!currentFixture) return null;
+
+                                            return (
+                                                <div className="space-y-6">
+                                                    {currentFixture.courts.map((courtFixture) => {
+                                                        // Check if this court's match is already recorded
+                                                        const matchRecorded = sessionMatches.some(m => {
+                                                            const matchRound = m.tournamentRound || 1;
+                                                            const matchCourt = m.court || 0;
+                                                            return matchRound === currentFixture.round && matchCourt === courtFixture.court;
+                                                        });
+
+                                                        return (
+                                                            <div key={courtFixture.court} className={`border-2 rounded-2xl p-6 ${courtFixture.court === 6
+                                                                ? 'border-purple-400 bg-purple-100/50'
+                                                                : 'border-blue-400 bg-blue-100/50'
+                                                                }`}>
+                                                                <div className="flex items-center justify-between mb-4">
+                                                                    <span className={`${getClasses('body')} font-bold ${courtFixture.court === 6 ? 'text-purple-700' : 'text-blue-700'
+                                                                        }`}>
+                                                                        Court {courtFixture.court}
+                                                                        {courtFixture.court === 6 && ' 🎯'}
+                                                                    </span>
+                                                                    {matchRecorded && (
+                                                                        <span className={`${getClasses('small')} px-4 py-2 bg-green-200 text-green-800 rounded-xl font-bold`}>
+                                                                            ✓ Completed
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Teams */}
+                                                                <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center mb-4">
+                                                                    <div className="text-center">
+                                                                        <div className={`${getClasses('small')} font-bold text-green-700`}>
+                                                                            {getPlayerNameFromPosition(courtFixture.teamA[0])}
+                                                                        </div>
+                                                                        <div className="text-gray-500">&</div>
+                                                                        <div className={`${getClasses('small')} font-bold text-green-700`}>
+                                                                            {getPlayerNameFromPosition(courtFixture.teamA[1])}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className={`${getClasses('body')} font-bold text-gray-500`}>vs</div>
+
+                                                                    <div className="text-center">
+                                                                        <div className={`${getClasses('small')} font-bold text-blue-700`}>
+                                                                            {getPlayerNameFromPosition(courtFixture.teamB[0])}
+                                                                        </div>
+                                                                        <div className="text-gray-500">&</div>
+                                                                        <div className={`${getClasses('small')} font-bold text-blue-700`}>
+                                                                            {getPlayerNameFromPosition(courtFixture.teamB[1])}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Load Button */}
+                                                                {!matchRecorded && (
+                                                                    <button
+                                                                        onClick={() => loadTeamsFromFixture(courtFixture)}
+                                                                        className={`${getClasses('button')} w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg`}
+                                                                    >
+                                                                        📋 Load Teams for Court {courtFixture.court}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
 
                                 <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-8 border border-gray-200">
                                     <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>Select Teams for Match</h3>
