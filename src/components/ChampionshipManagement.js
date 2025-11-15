@@ -1000,11 +1000,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,
             teamA: [...teamA],
             teamB: [...teamB],
-            gamesA: gamesA,  // Use gamesA/gamesB, not score object
+            gamesA: gamesA,
             gamesB: gamesB,
-            isComplete: isComplete,  // Use isComplete, not complete
-            points: { teamA: pointsA, teamB: pointsB },  // Include calculated points
-            pointDetails: pointDetails,  // Include point details for reference
+            isComplete: isComplete,
+            points: { teamA: pointsA, teamB: pointsB },
+            pointDetails: pointDetails,
             timestamp: new Date().toISOString()
         };
 
@@ -1012,6 +1012,20 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         saveMatch(match);
 
         // Reset form
+        setTeamA([]);
+        setTeamB([]);
+        setSetScores({ teamA: '', teamB: '' });
+
+        // Auto-clear teams for 8-player tournaments
+        if (currentChampionship.is8PlayerTournament) {
+            setTeamA([]);
+            setTeamB([]);
+            setSetScores({ teamA: '', teamB: '' });
+        }
+    };  // 👈 THIS CLOSES THE FUNCTION!
+
+    // Helper function to detect ambiguous scores
+    const isAmbiguousScore = (gamesA, gamesB) => {
         // Helper function to detect ambiguous scores
         const isAmbiguousScore = (gamesA, gamesB) => {
             const margin = Math.abs(gamesA - gamesB);
