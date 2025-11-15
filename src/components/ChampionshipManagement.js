@@ -590,43 +590,38 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         const gamesA = parseInt(setScores.teamA) || 0;
         const gamesB = parseInt(setScores.teamB) || 0;
-        // MODIFICATION STARTS HERE - Add this code after the gamesA/gamesB definitions
-        // but BEFORE any existing conditionals like isAmbiguousScore
 
-        // Get the current championship setting for points dialog trigger
-        // CRITICAL: Use optional chaining to handle null currentChampionship
-        const dialogTrigger = currentChampionship?.settings?.pointsDialogTrigger || 'tied';
+        // Check if this is a tournament
+        const isTournamentMode = currentChampionship?.isTournament || false;
 
-        // Determine if we should show the points dialog based on settings
-        let showPointsDialog = false;
-
-        if (dialogTrigger === 'all') {
-            // Always show for any score
-            showPointsDialog = true;
-        }
-        else if (dialogTrigger === 'tied' && gamesA === gamesB) {
-            // Show for tied games
-            showPointsDialog = true;
-        }
-        else if (dialogTrigger === '6-6' && gamesA === 6 && gamesB === 6) {
-            // Only show for 6-6 scores
-            showPointsDialog = true;
-        }
-
-        // Show game points dialog if needed
-        if (showPointsDialog) {
+        // TOURNAMENT MODE: Game points are MANDATORY for tied games
+        if (isTournamentMode && gamesA === gamesB) {
             setTempGameScores({ gamesA, gamesB });
-            // Reset points
             setGamePoints({ teamA: '0', teamB: '0' });
             setTiebreakPoints({ teamA: '', teamB: '' });
             setPointInputType(null);
             setShowGamePointDialog(true);
-            return; // Add this return to exit the function early
+            return; // Don't continue to other checks
         }
-        // Check if ambiguous (7-6, 8-7, 9-8, etc.)
-        if (isAmbiguousScore(gamesA, gamesB)) {
+
+        // CHAMPIONSHIP MODE: Check if should show dialog based on settings
+        const trigger = currentChampionship?.settings?.pointsDialogTrigger || 'tied';
+        const shouldShowDialog =
+            trigger === 'all' ||
+            (trigger === 'tied' && gamesA === gamesB) ||
+            (trigger === '6-6' && gamesA === 6 && gamesB === 6);
+
+        if (shouldShowDialog) {
+            setTempGameScores({ gamesA, gamesB });
+            setGamePoints({ teamA: '0', teamB: '0' });
+            setTiebreakPoints({ teamA: '', teamB: '' });
+            setPointInputType(null);
+            setShowGamePointDialog(true);
+        }
+        // Check if ambiguous (7-6, 8-7, etc.)
+        else if (isAmbiguousScore(gamesA, gamesB)) {
             setTempScores({ gamesA, gamesB });
-            setSetComplete(true); // Default to complete
+            setSetComplete(true);
             setShowSetStatusDialog(true);
         } else {
             // Auto-detect and save directly
@@ -787,8 +782,42 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             sessionStorage.removeItem('editingMatchId');
         } else {
             // We're creating a new match (existing code)
-            const [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+            let pointsA, pointsB;
 
+            // Check if this is a tournament
+            const isTournamentMode = currentChampionship?.isTournament || false;
+
+            if (isTournamentMode) {
+                // Use tournament scoring (3-2-1-0 system based on game differential)
+                const finalGamePoints = pointInputType === 'numeric' ? tiebreakPoints : gamePoints;
+                [pointsA, pointsB] = calculateCJTournamentPoints(
+                    gamesA,
+                    gamesB,
+                    finalGamePoints.teamA,
+                    finalGamePoints.teamB
+                );
+            } else {
+                // Use championship scoring (existing CJ system)
+                const isComplete = detectComplete(gamesA, gamesB);
+                [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
+
+                // Championship mode: Add bonus point for advantage in game points
+                const pointValues = { '0': 0, '15': 1, '30': 2, '40': 3, 'AD': 4 };
+
+                if (pointInputType === 'tennis') {
+                    const valueA = pointValues[gamePoints.teamA] || 0;
+                    const valueB = pointValues[gamePoints.teamB] || 0;
+
+                    if (valueA > valueB) pointsA += 1;
+                    else if (valueB > valueA) pointsB += 1;
+                } else if (pointInputType === 'numeric') {
+                    const numA = parseInt(tiebreakPoints.teamA) || 0;
+                    const numB = parseInt(tiebreakPoints.teamB) || 0;
+
+                    if (numA > numB) pointsA += 1;
+                    else if (numB > numA) pointsB += 1;
+                }
+            }
             const match = {
                 id: Date.now(),
                 date: sessionDate,
@@ -1086,8 +1115,9 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const partnershipMap = new Map();
         const minMatches = currentChampionship?.settings?.minMatchesForProRata || 3;
 
-        // Loop through all matches
-        currentChampionship.matches.forEach(match => {
+        // Loop through matches of the correct type only
+        const matchesToUse = getMatchesByType(currentChampionship.matches, currentChampionship.isTournament ? 'tournament' : 'championship');
+        matchesToUse.forEach(match => {
             // Process Team A partnerships
             if (match.teamA && match.teamA.length === 2) {
                 const [player1, player2] = match.teamA.sort(); // Sort to ensure consistent key
@@ -3213,7 +3243,11 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                 {showGamePointDialog && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                         <div className="bg-white rounded-xl p-6 max-w-lg w-full">
-                            <h2 className="text-xl font-bold mb-4">Game Point Status</h2>
+                            <h2 className="text-xl font-bold mb-4">
+                                {currentChampionship?.isTournament ?
+                                    'Enter Game Points (Required for Tournament)' :
+                                    'Enter Game Point Status'}
+                            </h2>
 
                             <p className="mb-4 text-gray-700">
                                 Games are tied {tempGameScores.gamesA}-{tempGameScores.gamesB}.
@@ -3342,28 +3376,30 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
                             {/* Buttons */}
                             <div className="flex justify-between">
-                                <button
-                                    onClick={() => {
-                                        setShowGamePointDialog(false);
-                                        setPointInputType(null);
+                                {!currentChampionship?.isTournament && (
+                                    <button
+                                        onClick={() => {
+                                            setShowGamePointDialog(false);
+                                            setPointInputType(null);
 
-                                        // Fall back to standard ambiguous score handling
-                                        if (isAmbiguousScore(tempGameScores.gamesA, tempGameScores.gamesB)) {
-                                            setTempScores({
-                                                gamesA: tempGameScores.gamesA,
-                                                gamesB: tempGameScores.gamesB
-                                            });
-                                            setSetComplete(true);
-                                            setShowSetStatusDialog(true);
-                                        } else {
-                                            const isComplete = detectComplete(tempGameScores.gamesA, tempGameScores.gamesB);
-                                            saveMatchWithStatus(tempGameScores.gamesA, tempGameScores.gamesB, isComplete);
-                                        }
-                                    }}
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-900"
-                                >
-                                    Skip (No Points)
-                                </button>
+                                            // Fall back to standard ambiguous score handling
+                                            if (isAmbiguousScore(tempGameScores.gamesA, tempGameScores.gamesB)) {
+                                                setTempScores({
+                                                    gamesA: tempGameScores.gamesA,
+                                                    gamesB: tempGameScores.gamesB
+                                                });
+                                                setSetComplete(true);
+                                                setShowSetStatusDialog(true);
+                                            } else {
+                                                const isComplete = detectComplete(tempGameScores.gamesA, tempGameScores.gamesB);
+                                                saveMatchWithStatus(tempGameScores.gamesA, tempGameScores.gamesB, isComplete);
+                                            }
+                                        }}
+                                        className="px-4 py-2 text-gray-600 hover:text-gray-900"
+                                    >
+                                        Skip (No Points)
+                                    </button>
+                                )}
 
                                 <div>
                                     <button
