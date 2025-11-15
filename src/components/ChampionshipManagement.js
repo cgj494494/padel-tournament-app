@@ -970,46 +970,46 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
     // Look for your existing saveMatchWithStatus function and add this AFTER it
     // Make sure this is defined BEFORE it's used in any dialog buttons
     const saveMatchWithPointDetails = (gamesA, gamesB, isComplete, pointDetails) => {
-        // Get current date and time
-        const date = new Date().toISOString();
+        // Calculate points based on match type
+        let pointsA, pointsB;
 
-        // Create base match object
-        const match = {
-            id: Date.now().toString(),
-            timestamp: date,
-            matchType: currentChampionship?.isTournament ? 'tournament' : 'championship',
-            tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,  // NEW
-            court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,  // NEW
-            teamA,
-            teamB,
-            score: {
-                teamA: gamesA.toString(),
-                teamB: gamesB.toString()
-            },
-            complete: isComplete
-        };
+        const isTournamentMode = currentChampionship?.isTournament || false;
 
-        // Add point details if provided
-        if (pointDetails) {
-            match.pointDetails = pointDetails;
+        if (isTournamentMode) {
+            // Check if this is a finals round match
+            const isFinalsMatch = currentChampionship.is8PlayerTournament &&
+                (currentChampionship.tournamentCurrentRound || 1) === 8;
+
+            // Extract game points from pointDetails
+            const gamePointsA = pointDetails ? pointDetails.teamAPoints : null;
+            const gamePointsB = pointDetails ? pointDetails.teamBPoints : null;
+
+            // Calculate tournament points (includes finals multiplier if applicable)
+            [pointsA, pointsB] = calculateCJTournamentPoints(gamesA, gamesB, gamePointsA, gamePointsB, isFinalsMatch);
+        } else {
+            // Championship mode - use regular CJ scoring
+            [pointsA, pointsB] = calculateCJPoints(gamesA, gamesB, isComplete);
         }
 
-        // Add match to championship
-        const updatedChampionship = {
-            ...currentChampionship,
-            matches: [...currentChampionship.matches, match]
+        // Create match object with CORRECT structure (matches saveMatchWithStatus)
+        const match = {
+            id: Date.now(),
+            date: sessionDate,
+            matchType: isTournamentMode ? 'tournament' : 'championship',
+            tournamentRound: currentChampionship?.is8PlayerTournament ? (currentChampionship.tournamentCurrentRound || 1) : undefined,
+            court: currentChampionship?.is8PlayerTournament ? getCurrentCourtNumber() : undefined,
+            teamA: [...teamA],
+            teamB: [...teamB],
+            gamesA: gamesA,
+            gamesB: gamesB,
+            isComplete: isComplete,
+            points: { teamA: pointsA, teamB: pointsB },
+            pointDetails: pointDetails,
+            timestamp: new Date().toISOString()
         };
 
-        // Update championships array
-        const updatedChampionships = championships.map(c =>
-            c.id === currentChampionship.id ? updatedChampionship : c
-        );
-
-        // Save to local storage
-        saveChampionships(updatedChampionships);
-
-        // Update state
-        setCurrentChampionship(updatedChampionship);
+        // Use saveMatch function which handles standings updates AND round completion check
+        saveMatch(match);
 
         // Reset form
         setTeamA([]);
