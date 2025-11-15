@@ -1477,13 +1477,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
 
         alert('Scoring system updated! All matches have been recalculated with the new point system.');
     };
-    // Get player name from position in 8-player tournament
-    const getPlayerNameFromPosition = (position) => {
-        if (!currentChampionship?.playerPositions) return `Position ${position}`;
-        const playerId = currentChampionship.playerPositions[position];
-        const player = players.find(p => p.id === playerId);
-        return player ? `${player.firstName} ${player.surname}` : `Position ${position}`;
-    };
     // UI Components
     const FontToggle = () => (
         <div className="fixed bottom-6 right-6 z-50 bg-white/95 backdrop-blur rounded-2xl shadow-2xl border border-gray-200 p-2">
@@ -2245,7 +2238,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             onClick={() => {
                                 const positionsAssigned = Object.keys(currentChampionship.playerPositions || {}).length;
                                 if (positionsAssigned === 8) {
-                                    setView('fixture-preview');  // Changed from 'detail'
+                                    setView('detail');
                                 } else {
                                     alert(`Please assign all 8 positions. Currently assigned: ${positionsAssigned}/8`);
                                 }
@@ -2256,181 +2249,6 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                             {Object.keys(currentChampionship.playerPositions || {}).length === 8
                                 ? '✓ Continue to Tournament'
                                 : `Assign All Positions (${Object.keys(currentChampionship.playerPositions || {}).length}/8)`}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-    if (view === 'fixture-preview') {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-                <FontToggle />
-                <DebugInfo />
-
-                <div className="pt-20 pb-40 px-2">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="flex items-center mb-10">
-                            <button
-                                onClick={() => setView('assign-positions')}
-                                className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                <span>Back</span>
-                            </button>
-                            <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
-                                Fixture Preview
-                            </h1>
-                        </div>
-
-                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 mb-8">
-                            <div className="text-center mb-8">
-                                <h2 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
-                                    {currentChampionship.name}
-                                </h2>
-                                <p className={`${getClasses('body')} text-gray-600 mb-6`}>
-                                    Review your tournament fixtures before starting
-                                </p>
-                                <div className="flex justify-center gap-4 flex-wrap">
-                                    <span className={`${getClasses('small')} px-6 py-3 bg-blue-100 text-blue-800 rounded-xl font-bold`}>
-                                        {currentChampionship.includeFinalsRound ? '8 Rounds' : '7 Rounds'}
-                                    </span>
-                                    <span className={`${getClasses('small')} px-6 py-3 bg-green-100 text-green-800 rounded-xl font-bold`}>
-                                        14 Matches Each Round
-                                    </span>
-                                    {currentChampionship.includeFinalsRound && (
-                                        <span className={`${getClasses('small')} px-6 py-3 bg-purple-100 text-purple-800 rounded-xl font-bold`}>
-                                            Round 8: Finals (Double Points)
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Rounds */}
-                            <div className="space-y-8">
-                                {EIGHT_PLAYER_FIXTURES.map((roundFixture) => (
-                                    <div key={roundFixture.round} className="border-2 border-gray-300 rounded-2xl p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-                                        <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6 text-center`}>
-                                            Round {roundFixture.round}
-                                        </h3>
-
-                                        <div className="space-y-6">
-                                            {roundFixture.courts.map((courtFixture) => (
-                                                <div key={courtFixture.court} className={`border-2 rounded-xl p-6 ${courtFixture.court === 6
-                                                        ? 'border-purple-300 bg-purple-50/50'
-                                                        : 'border-blue-300 bg-blue-50/50'
-                                                    }`}>
-                                                    <div className="text-center mb-4">
-                                                        <span className={`${getClasses('body')} font-bold ${courtFixture.court === 6 ? 'text-purple-700' : 'text-blue-700'
-                                                            }`}>
-                                                            Court {courtFixture.court}
-                                                            {courtFixture.court === 6 && ' 🎯'}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Teams Display */}
-                                                    <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                                                        {/* Team A */}
-                                                        <div className="text-center">
-                                                            <div className={`${getClasses('body')} font-bold text-green-700 mb-2`}>
-                                                                {getPlayerNameFromPosition(courtFixture.teamA[0])}
-                                                            </div>
-                                                            <div className={`${getClasses('small')} text-gray-600`}>
-                                                                &
-                                                            </div>
-                                                            <div className={`${getClasses('body')} font-bold text-green-700 mt-2`}>
-                                                                {getPlayerNameFromPosition(courtFixture.teamA[1])}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* VS */}
-                                                        <div className={`${getClasses('heading')} font-bold text-gray-500`}>
-                                                            vs
-                                                        </div>
-
-                                                        {/* Team B */}
-                                                        <div className="text-center">
-                                                            <div className={`${getClasses('body')} font-bold text-blue-700 mb-2`}>
-                                                                {getPlayerNameFromPosition(courtFixture.teamB[0])}
-                                                            </div>
-                                                            <div className={`${getClasses('small')} text-gray-600`}>
-                                                                &
-                                                            </div>
-                                                            <div className={`${getClasses('body')} font-bold text-blue-700 mt-2`}>
-                                                                {getPlayerNameFromPosition(courtFixture.teamB[1])}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Finals Round Preview (if enabled) */}
-                                {currentChampionship.includeFinalsRound && (
-                                    <div className="border-2 border-purple-400 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-pink-50">
-                                        <h3 className={`${getClasses('heading')} font-bold text-purple-800 mb-6 text-center`}>
-                                            Round 8: Finals (Double Points) 🏆
-                                        </h3>
-
-                                        <div className="space-y-6">
-                                            <div className="border-2 border-purple-300 rounded-xl p-6 bg-purple-50/50">
-                                                <div className="text-center mb-4">
-                                                    <span className={`${getClasses('body')} font-bold text-purple-700`}>
-                                                        Court 5 (Upper Finals)
-                                                    </span>
-                                                </div>
-                                                <div className={`${getClasses('body')} text-center text-gray-700`}>
-                                                    Rank #1 & #3 vs Rank #2 & #4
-                                                </div>
-                                                <div className={`${getClasses('small')} text-center text-gray-600 mt-3`}>
-                                                    Based on standings after Round 7
-                                                </div>
-                                            </div>
-
-                                            <div className="border-2 border-indigo-300 rounded-xl p-6 bg-indigo-50/50">
-                                                <div className="text-center mb-4">
-                                                    <span className={`${getClasses('body')} font-bold text-indigo-700`}>
-                                                        Court 6 (Lower Finals) 🎯
-                                                    </span>
-                                                </div>
-                                                <div className={`${getClasses('body')} text-center text-gray-700`}>
-                                                    Rank #5 & #7 vs Rank #6 & #8
-                                                </div>
-                                                <div className={`${getClasses('small')} text-center text-gray-600 mt-3`}>
-                                                    Points capped at 4th place score
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6 mt-4">
-                                                <div className={`${getClasses('body')} font-bold text-yellow-800 text-center mb-3`}>
-                                                    Finals Scoring: Double Points
-                                                </div>
-                                                <div className={`${getClasses('small')} text-gray-700 text-center space-y-1`}>
-                                                    <div>Win by 2+ games: <strong>6 points</strong> (instead of 3)</div>
-                                                    <div>Win by 1 game: <strong>4 points</strong> (instead of 2)</div>
-                                                    <div>Tied (points advantage): <strong>2 points</strong> (instead of 1)</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Continue Button */}
-                <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t-2 border-gray-200 p-6 shadow-2xl">
-                    <div className="max-w-4xl mx-auto">
-                        <button
-                            onClick={() => setView('detail')}
-                            className={`${getClasses('button')} w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
-                        >
-                            ✓ Start Tournament
                         </button>
                     </div>
                 </div>
