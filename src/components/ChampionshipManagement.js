@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { PlayerManagementModal, PlayerManagementUtils } from './PlayerManagementComponent';
 
 // 8-Player Balanced Tournament Fixtures
+// FINAL VERSION: Mathematically optimal with serving balance
 // Chris (Position 7) always on Court 6
 const EIGHT_PLAYER_FIXTURES = [
     {
@@ -11,13 +12,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [1, 2],  // Position 1 & Position 2
-                teamB: [3, 4]   // Position 3 & Position 4
+                teamA: [6, 3],  // Pete & Paul T
+                teamB: [5, 4]   // Jamie & Ian
             },
             {
                 court: 6,
-                teamA: [5, 6],  // Position 5 & Position 6
-                teamB: [7, 8]   // Position 7 & Position 8
+                teamA: [1, 7],  // Paul S & Chris
+                teamB: [2, 8]   // James & Adrian
             }
         ]
     },
@@ -26,13 +27,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [2, 4],
-                teamB: [6, 8]
+                teamA: [2, 3],  // James & Paul T
+                teamB: [6, 8]   // Pete & Adrian
             },
             {
                 court: 6,
-                teamA: [1, 3],
-                teamB: [5, 7]
+                teamA: [7, 4],  // Chris & Ian
+                teamB: [5, 1]   // Jamie & Paul S
             }
         ]
     },
@@ -41,13 +42,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [2, 3],
-                teamB: [5, 8]
+                teamA: [3, 1],  // Paul T & Paul S
+                teamB: [6, 5]   // Pete & Jamie
             },
             {
                 court: 6,
-                teamA: [1, 4],
-                teamB: [6, 7]
+                teamA: [8, 4],  // Adrian & Ian
+                teamB: [7, 2]   // Chris & James
             }
         ]
     },
@@ -56,13 +57,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [2, 6],
-                teamB: [3, 8]
+                teamA: [1, 2],  // Paul S & James
+                teamB: [8, 5]   // Adrian & Jamie
             },
             {
                 court: 6,
-                teamA: [1, 5],
-                teamB: [4, 7]
+                teamA: [7, 3],  // Chris & Paul T
+                teamB: [6, 4]   // Pete & Ian
             }
         ]
     },
@@ -71,13 +72,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [2, 8],
-                teamB: [4, 5]
+                teamA: [4, 3],  // Ian & Paul T
+                teamB: [5, 2]   // Jamie & James
             },
             {
                 court: 6,
-                teamA: [1, 6],
-                teamB: [3, 7]
+                teamA: [8, 1],  // Adrian & Paul S
+                teamB: [7, 6]   // Chris & Pete
             }
         ]
     },
@@ -86,13 +87,13 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [2, 5],
-                teamB: [3, 6]
+                teamA: [3, 5],  // Paul T & Jamie
+                teamB: [1, 6]   // Paul S & Pete
             },
             {
                 court: 6,
-                teamA: [1, 7],
-                teamB: [4, 8]
+                teamA: [4, 2],  // Ian & James
+                teamB: [8, 7]   // Adrian & Chris
             }
         ]
     },
@@ -101,18 +102,17 @@ const EIGHT_PLAYER_FIXTURES = [
         courts: [
             {
                 court: 5,
-                teamA: [1, 8],
-                teamB: [3, 5]
+                teamA: [4, 1],  // Ian & Paul S
+                teamB: [3, 8]   // Paul T & Adrian
             },
             {
                 court: 6,
-                teamA: [2, 7],
-                teamB: [4, 6]
+                teamA: [2, 6],  // James & Pete
+                teamB: [5, 7]   // Jamie & Chris
             }
         ]
     }
 ];
-
 const ChampionshipManagement = ({ saveLastUsed }) => {
     // Main view states
     const [view, setView] = useState('list');
@@ -2319,8 +2319,8 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
                                         <div className="space-y-6">
                                             {roundFixture.courts.map((courtFixture) => (
                                                 <div key={courtFixture.court} className={`border-2 rounded-xl p-6 ${courtFixture.court === 6
-                                                        ? 'border-purple-300 bg-purple-50/50'
-                                                        : 'border-blue-300 bg-blue-50/50'
+                                                    ? 'border-purple-300 bg-purple-50/50'
+                                                    : 'border-blue-300 bg-blue-50/50'
                                                     }`}>
                                                     <div className="text-center mb-4">
                                                         <span className={`${getClasses('body')} font-bold ${courtFixture.court === 6 ? 'text-purple-700' : 'text-blue-700'
