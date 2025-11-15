@@ -1376,6 +1376,7 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             isTournament: isTournament,
             is8PlayerTournament: is8PlayerTournament,  // NEW
             includeFinalsRound: includeFinalsRound,    // NEW
+            playerPositions: is8PlayerTournament ? {} : undefined,  // Maps position (1-8) to playerId
             players: selectedPlayers,
             sessions: [],
             matches: [],
@@ -1398,7 +1399,13 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
         const updated = [...championships, newChampionship];
         saveChampionships(updated);
         setCurrentChampionship(newChampionship);
-        setView('detail');
+
+        // NEW: If 8-player tournament, go to player assignment first
+        if (is8PlayerTournament) {
+            setView('assign-positions');
+        } else {
+            setView('detail');
+        }
 
         // Reset form
         setName('');
@@ -2066,7 +2073,188 @@ const ChampionshipManagement = ({ saveLastUsed }) => {
             </div>
         );
     }
+    if (view === 'assign-positions') {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+                <FontToggle />
+                <DebugInfo />
 
+                <div className="pt-20 pb-40 px-2">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="flex items-center mb-10">
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Cancel tournament setup? Championship will be deleted.')) {
+                                        const updated = championships.filter(c => c.id !== currentChampionship.id);
+                                        saveChampionships(updated);
+                                        setCurrentChampionship(null);
+                                        setView('list');
+                                    }
+                                }}
+                                className={`${getClasses('button')} bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl flex items-center space-x-4 mr-8 shadow-lg`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                <span>Cancel</span>
+                            </button>
+                            <h1 className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                Assign Players to Positions
+                            </h1>
+                        </div>
+
+                        <div className="bg-white/90 backdrop-blur rounded-3xl shadow-2xl p-10 border border-gray-200 mb-8">
+                            <div className="text-center mb-8">
+                                <h2 className={`${getClasses('heading')} font-bold text-gray-800 mb-4`}>
+                                    {currentChampionship.name}
+                                </h2>
+                                <p className={`${getClasses('body')} text-gray-600`}>
+                                    Assign your 8 players to positions. Position 7 will always play on Court 6.
+                                </p>
+                            </div>
+
+                            {/* Position Slots */}
+                            <div className="space-y-4 mb-10">
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(position => {
+                                    const assignedPlayerId = currentChampionship.playerPositions?.[position];
+                                    const assignedPlayer = assignedPlayerId ? players.find(p => p.id === assignedPlayerId) : null;
+
+                                    return (
+                                        <div key={position} className="border-2 border-gray-300 rounded-2xl p-6 bg-gray-50">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className={`${getClasses('heading')} font-bold ${position === 7 ? 'text-purple-600' : 'text-gray-700'}`}>
+                                                        Position {position}
+                                                    </div>
+                                                    {position === 7 && (
+                                                        <span className={`${getClasses('small')} px-4 py-2 bg-purple-100 text-purple-800 rounded-xl font-bold`}>
+                                                            Always Court 6
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 text-right">
+                                                    {assignedPlayer ? (
+                                                        <div className="inline-flex items-center space-x-4 bg-blue-100 px-6 py-3 rounded-xl">
+                                                            <span className={`${getClasses('body')} font-bold text-blue-800`}>
+                                                                {assignedPlayer.firstName} {assignedPlayer.surname}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const updated = { ...currentChampionship };
+                                                                    delete updated.playerPositions[position];
+                                                                    setCurrentChampionship(updated);
+                                                                    const updatedChamps = championships.map(c =>
+                                                                        c.id === currentChampionship.id ? updated : c
+                                                                    );
+                                                                    saveChampionships(updatedChamps);
+                                                                }}
+                                                                className="text-red-600 hover:text-red-800 font-bold"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span className={`${getClasses('body')} text-gray-400`}>
+                                                            Not assigned
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Available Players */}
+                            <div className="border-t-2 border-gray-300 pt-8">
+                                <h3 className={`${getClasses('heading')} font-bold text-gray-800 mb-6`}>
+                                    Available Players
+                                </h3>
+                                <div className="grid grid-cols-1 gap-4">
+                                    {currentChampionship.players
+                                        .filter(playerId => !Object.values(currentChampionship.playerPositions || {}).includes(playerId))
+                                        .map(playerId => {
+                                            const player = players.find(p => p.id === playerId);
+                                            if (!player) return null;
+
+                                            return (
+                                                <div key={playerId} className="border-2 border-gray-200 rounded-2xl p-6 bg-white">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <span className={`${getClasses('heading')} font-bold text-gray-800`}>
+                                                            {player.firstName} {player.surname}
+                                                        </span>
+                                                        <span className={`${getClasses('small')} text-gray-500`}>
+                                                            ({player.userId})
+                                                        </span>
+                                                    </div>
+                                                    <div className="grid grid-cols-4 gap-2">
+                                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(position => {
+                                                            const isOccupied = currentChampionship.playerPositions?.[position];
+                                                            return (
+                                                                <button
+                                                                    key={position}
+                                                                    onClick={() => {
+                                                                        if (!isOccupied) {
+                                                                            const updated = {
+                                                                                ...currentChampionship,
+                                                                                playerPositions: {
+                                                                                    ...currentChampionship.playerPositions,
+                                                                                    [position]: playerId
+                                                                                }
+                                                                            };
+                                                                            setCurrentChampionship(updated);
+                                                                            const updatedChamps = championships.map(c =>
+                                                                                c.id === currentChampionship.id ? updated : c
+                                                                            );
+                                                                            saveChampionships(updatedChamps);
+                                                                        }
+                                                                    }}
+                                                                    disabled={isOccupied}
+                                                                    className={`${getClasses('button')} rounded-xl font-bold transition-all ${isOccupied
+                                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                                        : position === 7
+                                                                            ? 'bg-purple-100 text-purple-700 hover:bg-purple-200 active:bg-purple-300'
+                                                                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200 active:bg-blue-300'
+                                                                        }`}
+                                                                >
+                                                                    Pos {position}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Continue Button */}
+                <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t-2 border-gray-200 p-6 shadow-2xl">
+                    <div className="max-w-4xl mx-auto">
+                        <button
+                            onClick={() => {
+                                const positionsAssigned = Object.keys(currentChampionship.playerPositions || {}).length;
+                                if (positionsAssigned === 8) {
+                                    setView('detail');
+                                } else {
+                                    alert(`Please assign all 8 positions. Currently assigned: ${positionsAssigned}/8`);
+                                }
+                            }}
+                            disabled={Object.keys(currentChampionship.playerPositions || {}).length !== 8}
+                            className={`${getClasses('button')} w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold rounded-2xl shadow-xl transform hover:scale-105 transition-all`}
+                        >
+                            {Object.keys(currentChampionship.playerPositions || {}).length === 8
+                                ? '✓ Continue to Tournament'
+                                : `Assign All Positions (${Object.keys(currentChampionship.playerPositions || {}).length}/8)`}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     if (view === 'detail') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
